@@ -25,3 +25,9 @@ Synthesis and prose quality are the product; the cost difference is cents per st
 
 ## 2026-10-20 — No tool-generated first commit
 The scaffold was run with `--no-git` so the first commit is written by a person and says why the project exists.
+
+## 2026-10-22 — Route tests run against a real D1 via wrangler's getPlatformProxy
+`worker/routes/notes.test.ts` asks wrangler (already a devDependency) for the same Miniflare-backed `env` the dev server uses, with `persist: false` so each run starts from an empty in-memory database, then applies the committed migrations and the dev seed. Tests call the Hono app directly with `app.request(path, init, env)`. We passed on `@cloudflare/vitest-pool-workers`, which runs tests inside workerd itself, because it only supports Vitest 4 and the project is on 5; and on mocking the database, because a mock would not prove the SQL or the schema. The trade is that route code runs in Node during tests rather than workerd, which matters only if a route starts using a Workers-only API.
+
+## 2026-10-22 — Demo data is a SQL file under scripts/, run by wrangler
+`scripts/seed-dev.sql` holds one synthetic class and eight invented students with fixed ids and `INSERT OR IGNORE`, so `npm run db:seed:local` is safe to rerun and the route tests can load the same file. It lives outside `drizzle/` because wrangler treats every `.sql` in the migrations directory as a migration. We passed on a TypeScript seed script (needs a runner and a way to reach D1 from Node for the same result) and on a `/api/dev/seed` route (ships seeding logic in the Worker and needs guarding against production).

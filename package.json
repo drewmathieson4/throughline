@@ -14,7 +14,8 @@
     "typecheck": "tsc -b",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply throughline-db --local",
-    "db:migrate:remote": "wrangler d1 migrations apply throughline-db --remote"
+    "db:migrate:remote": "wrangler d1 migrations apply throughline-db --remote",
+    "db:seed:local": "wrangler d1 execute throughline-db --local --file=scripts/seed-dev.sql"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.136.0",

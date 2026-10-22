@@ -1,18 +1,17 @@
 // Worker entry point. Hono routes every /api/* request; static assets (the React
 // app) are served by Cloudflare before this code runs, so non-API paths 404 here.
 import { Hono } from "hono";
-import { drizzle } from "drizzle-orm/d1";
-import * as schema from "./db/schema";
+import { withDb, type AppEnv } from "./db/client";
+import classes from "./routes/classes";
+import notes from "./routes/notes";
 
-const app = new Hono<{ Bindings: Env }>();
+const app = new Hono<AppEnv>();
+
+app.use("/api/*", withDb);
 
 app.get("/api/health", (c) => c.json({ ok: true, time: new Date().toISOString() }));
-
-app.get("/api/classes", async (c) => {
-  const db = drizzle(c.env.DB, { schema });
-  const rows = await db.select().from(schema.classes);
-  return c.json(rows);
-});
+app.route("/api/classes", classes);
+app.route("/api/notes", notes);
 
 app.notFound((c) => c.json({ error: "not found" }, 404));
 

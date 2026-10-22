@@ -1,148 +1,115 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import cloudflareLogo from './assets/cloudflare.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useState, type FormEvent } from "react";
+// Type-only import: nothing from the Worker ends up in the browser bundle.
+import type { ClassRow, Note } from "../worker/db/schema";
 
-function App() {
-  const [count, setCount] = useState(0)
-  const [name, setName] = useState('unknown')
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started with Cloudflare</h1>
-          <p>
-            Edit <code>src/App.tsx</code> or <code>worker/index.ts</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <ul style={{ display: 'flex', gap: '1rem', listStyle: 'none', padding: 0 }}>
-          <li>
-            <button
-              className="counter"
-              onClick={() => setCount((count) => count + 1)}
-            >
-              Count is {count}
-            </button>
-          </li>
-          <li>
-          <button
-            className="counter"
-            onClick={() => {
-              fetch('/api/')
-                .then((res) => res.json())
-                .then((data) => setName(data.name))
-            }}
-            aria-label='get name'
-          >
-            Name from API is: {name}
-          </button>
-          </li>
-        </ul>
-
-
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-            <li>
-              <a href="https://workers.cloudflare.com/" target="_blank">
-                <img className="button-icon" src={cloudflareLogo} alt="" />
-                Workers Docs
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+// Every /api error response is { error: string }; surface that message when present.
+async function api<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, init);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as { error?: string }).error ?? `${url} → ${res.status}`);
+  return data as T;
 }
 
-export default App
+const messageOf = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+
+function NoteForm({ classId, onCreated }: { classId: string; onCreated: (note: Note) => void }) {
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      const note = await api<Note>("/api/notes", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ classId, body: draft }),
+      });
+      onCreated(note);
+      setDraft("");
+    } catch (e) {
+      setError(messageOf(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="mt-6 flex flex-col gap-2">
+      <label htmlFor="note" className="text-sm font-medium">
+        New note
+      </label>
+      <textarea
+        id="note"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        rows={3}
+        placeholder="What did you notice today?"
+        className="rounded border border-gray-300 p-2"
+      />
+      <button
+        type="submit"
+        disabled={saving || !draft.trim()}
+        className="self-end rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-40"
+      >
+        {saving ? "Saving…" : "Add note"}
+      </button>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+    </form>
+  );
+}
+
+function App() {
+  const [cls, setCls] = useState<ClassRow | null>(null);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [first] = await api<ClassRow[]>("/api/classes");
+        if (!first) throw new Error("No class found. Run `npm run db:seed:local`.");
+        const rows = await api<Note[]>(`/api/notes?classId=${first.id}`);
+        if (cancelled) return;
+        setCls(first);
+        setNotes(rows);
+      } catch (e) {
+        if (!cancelled) setError(messageOf(e));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <main className="mx-auto max-w-2xl p-6">
+      <h1 className="text-2xl font-semibold">Throughline</h1>
+      <p className="mt-1 text-sm text-gray-500">
+        {cls ? cls.name : "Loading…"} · synthetic demo class, no real students
+      </p>
+
+      {cls && <NoteForm classId={cls.id} onCreated={(note) => setNotes((prev) => [note, ...prev])} />}
+      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+
+      <ul className="mt-6 divide-y divide-gray-200">
+        {notes.map((n) => (
+          <li key={n.id} className="py-3">
+            <time dateTime={n.notedAt} className="block text-xs text-gray-500">
+              {dateFormat.format(new Date(n.notedAt))}
+            </time>
+            <p className="mt-1 whitespace-pre-wrap">{n.body}</p>
+          </li>
+        ))}
+        {cls && notes.length === 0 && <li className="py-3 text-sm text-gray-500">No notes yet.</li>}
+      </ul>
+    </main>
+  );
+}
+
+export default App;

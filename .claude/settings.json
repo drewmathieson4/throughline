@@ -8,6 +8,7 @@
       "Bash(npm run db:generate)",
       "Bash(npm run db:migrate:local)",
       "Bash(npx vitest *)",
+      "Bash(npm run db:seed:local)",
       "Bash(git status *)",
       "Bash(git diff *)",
       "Bash(git log *)",

@@ -99,3 +99,7 @@ export const settings = sqliteTable("settings", {
   styleSamples: text("style_samples"), // teacher's own past reports, never seeded with real data
   reportRules: text("report_rules"), // JSON: target length, banned phrases, etc.
 });
+
+// Row types as the API returns them; the frontend imports these (type-only) too.
+export type ClassRow = typeof classes.$inferSelect;
+export type Note = typeof notes.$inferSelect;

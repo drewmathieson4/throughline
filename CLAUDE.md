@@ -12,7 +12,7 @@ Throughline: a teacher records quick text/voice notes, each note is tagged to th
 npm run dev                # Vite + Worker + local D1 on one port
 npm run typecheck          # tsc -b across app, node, and worker tsconfigs
 npm run lint               # oxlint
-npm run test               # vitest run (no tests exist yet)
+npm run test               # vitest run (route tests use a real in-memory D1 via wrangler)
 npx vitest run path/to/file.test.ts   # single test file
 npm run build              # typecheck + vite build
 npm run deploy             # build + wrangler deploy
@@ -36,9 +36,9 @@ Schema change workflow: edit `worker/db/schema.ts`, run `db:generate`, run `db:m
 
 One Cloudflare Worker serves both halves. Cloudflare serves the built React app as static assets first; only `/api/*` reaches the Worker code.
 
-- `worker/index.ts` is a Hono app. Routes get a Drizzle client via `drizzle(c.env.DB, { schema })`. `Env` (with the `DB` binding) comes from the generated `worker-configuration.d.ts`, driven by `wrangler.jsonc`.
+- `worker/index.ts` is a Hono app. One resource per file under `worker/routes/`; `worker/db/client.ts` middleware attaches the Drizzle client as `c.var.db`. `Env` (with the `DB` binding) comes from the generated `worker-configuration.d.ts`, driven by `wrangler.jsonc`.
 - `worker/db/schema.ts` is the single source of truth for the data model. Drizzle types every query from it and drizzle-kit generates migrations from it. Conventions: text UUIDs minted in the Worker, ISO-8601 strings for dates, integer 0/1 for booleans.
-- `src/` is the React frontend. `src/App.tsx` is still the Cloudflare template demo.
+- `src/` is the React frontend. `src/App.tsx` is the notes page; it imports row types (type-only) from `worker/db/schema.ts`.
 - Three tsconfigs exist because the three environments differ: `tsconfig.app.json` (browser, DOM), `tsconfig.worker.json` (Workers runtime, no DOM), `tsconfig.node.json` (vite.config). `tsconfig.json` only references them.
 
 Data model shape worth knowing before touching routes: a `note` belongs to a class; `note_students` is the many-to-many to students with a `confirmed` flag for teacher-approved tags; a note with no `note_students` rows is class-level context. `syntheses` stores one row per AI run with an `input_hash` to skip reruns; `report_drafts` keeps generated text and the teacher's edits in separate columns.
