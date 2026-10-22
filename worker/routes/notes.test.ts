@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, expect, test } from "vitest";
+import { afterAll, beforeAll, beforeEach, expect, test, vi } from "vitest";
 import { getPlatformProxy, unstable_splitSqlQuery as splitSql } from "wrangler";
 import { drizzle } from "drizzle-orm/d1";
 import { migrate } from "drizzle-orm/d1/migrator";
@@ -15,7 +15,9 @@ let env: Env;
 let dispose = async () => {};
 
 beforeAll(async () => {
-  const proxy = await getPlatformProxy<Env>({ persist: false });
+  // remoteBindings: false keeps the AI binding from dialing Cloudflare; voice tests swap it
+  // for a fake anyway, so Whisper is never called and the suite runs offline.
+  const proxy = await getPlatformProxy<Env>({ persist: false, remoteBindings: false });
   env = proxy.env;
   dispose = proxy.dispose;
   await migrate(drizzle(env.DB), { migrationsFolder: "drizzle" });
@@ -43,6 +45,29 @@ function postNote(body: unknown) {
       body: typeof body === "string" ? body : JSON.stringify(body),
     },
     env,
+  );
+}
+
+// Voice notes: the AI binding is replaced with a fake that returns `text`, or throws.
+function fakeAi(text: string | Error) {
+  return {
+    run: vi.fn(async () => {
+      if (text instanceof Error) throw text;
+      return { text };
+    }),
+  };
+}
+
+function postVoice(
+  classId: string,
+  audio: BodyInit,
+  opts: { ai?: ReturnType<typeof fakeAi>; type?: string; headers?: Record<string, string> } = {},
+) {
+  const ai = opts.ai ?? fakeAi("Transcribed.");
+  return app.request(
+    `/api/notes/voice?classId=${classId}`,
+    { method: "POST", headers: { "content-type": opts.type ?? "audio/webm;codecs=opus", ...opts.headers }, body: audio },
+    { ...env, AI: ai as unknown as Ai },
   );
 }
 
@@ -82,6 +107,13 @@ test("POST /api/notes rejects an empty body with a message", async () => {
   expect(await res.json()).toEqual({ error: "body is required" });
 });
 
+test("POST /api/notes rejects a body over 50,000 characters", async () => {
+  expect((await postNote({ classId: CLASS_ID, body: "x".repeat(50_000) })).status).toBe(201);
+  const res = await postNote({ classId: CLASS_ID, body: "x".repeat(50_001) });
+  expect(res.status).toBe(400);
+  expect(await res.json()).toEqual({ error: "body is too long" });
+});
+
 test("POST /api/notes rejects a notedAt more than a day in the future", async () => {
   const res = await postNote({ classId: CLASS_ID, body: "x", notedAt: "9999-12-31T00:00:00Z" });
   expect(res.status).toBe(400);
@@ -96,4 +128,82 @@ test("POST /api/notes rejects malformed JSON", async () => {
 
 test("POST /api/notes returns 404 for an unknown class", async () => {
   expect((await postNote({ classId: UNKNOWN_CLASS_ID, body: "x" })).status).toBe(404);
+});
+
+test("POST /api/notes/voice transcribes the audio and stores a voice note", async () => {
+  const bytes = new Uint8Array([1, 2, 3, 250, 251, 252]);
+  const ai = fakeAi("  Maya finished the lab early.  ");
+  const res = await postVoice(CLASS_ID, bytes, { ai });
+  expect(res.status).toBe(201);
+  const created = (await res.json()) as Note;
+  expect(created).toMatchObject({ classId: CLASS_ID, kind: "voice", body: "Maya finished the lab early.", audioKey: null });
+
+  // Whisper got the right model and the exact bytes, base64-encoded.
+  expect(ai.run).toHaveBeenCalledTimes(1);
+  const [model, input] = ai.run.mock.calls[0] as unknown as [string, { audio: string }];
+  expect(model).toBe("@cf/openai/whisper-large-v3-turbo");
+  expect(Uint8Array.fromBase64(input.audio)).toEqual(bytes);
+
+  const list = (await (await getNotes(CLASS_ID)).json()) as Note[];
+  expect(list.map((n) => n.kind)).toEqual(["voice"]);
+});
+
+test("POST /api/notes/voice accepts Safari's audio/mp4", async () => {
+  const res = await postVoice(CLASS_ID, new Uint8Array([1]), { type: "audio/mp4" });
+  expect(res.status).toBe(201);
+});
+
+test("POST /api/notes/voice rejects an empty transcript and writes nothing", async () => {
+  const res = await postVoice(CLASS_ID, new Uint8Array([1]), { ai: fakeAi("   ") });
+  expect(res.status).toBe(400);
+  expect(await res.json()).toEqual({ error: "nothing was heard" });
+  expect(await (await getNotes(CLASS_ID)).json()).toEqual([]);
+});
+
+test("POST /api/notes/voice rejects an over-long transcript and writes nothing", async () => {
+  const res = await postVoice(CLASS_ID, new Uint8Array([1]), { ai: fakeAi("x".repeat(50_001)) });
+  expect(res.status).toBe(400);
+  expect(await res.json()).toEqual({ error: "transcript is too long" });
+  expect(await (await getNotes(CLASS_ID)).json()).toEqual([]);
+});
+
+test("POST /api/notes/voice rejects an empty body without calling Whisper", async () => {
+  const ai = fakeAi("x");
+  const res = await postVoice(CLASS_ID, new Uint8Array(0), { ai });
+  expect(res.status).toBe(400);
+  expect(await res.json()).toEqual({ error: "nothing was heard" });
+  expect(ai.run).not.toHaveBeenCalled();
+});
+
+test("POST /api/notes/voice rejects a non-audio content type", async () => {
+  const res = await postVoice(CLASS_ID, "hello", { type: "text/plain" });
+  expect(res.status).toBe(400);
+  expect(await res.json()).toEqual({ error: "unsupported audio type" });
+});
+
+test("POST /api/notes/voice rejects an oversized recording", async () => {
+  const ai = fakeAi("x");
+  const tooBig = new Uint8Array(10 * 1024 * 1024 + 1);
+  const res = await postVoice(CLASS_ID, tooBig, { ai });
+  expect(res.status).toBe(413);
+  expect(await res.json()).toEqual({ error: "recording is too large" });
+  expect(ai.run).not.toHaveBeenCalled();
+
+  // A lying content-length is caught before the body is read.
+  const declared = await postVoice(CLASS_ID, new Uint8Array([1]), { ai, headers: { "content-length": "99999999" } });
+  expect(declared.status).toBe(413);
+});
+
+test("POST /api/notes/voice returns 404 for an unknown class without calling Whisper", async () => {
+  const ai = fakeAi("x");
+  const res = await postVoice(UNKNOWN_CLASS_ID, new Uint8Array([1]), { ai });
+  expect(res.status).toBe(404);
+  expect(ai.run).not.toHaveBeenCalled();
+});
+
+test("POST /api/notes/voice returns 502 when Whisper fails and writes nothing", async () => {
+  const res = await postVoice(CLASS_ID, new Uint8Array([1]), { ai: fakeAi(new Error("model unavailable")) });
+  expect(res.status).toBe(502);
+  expect(await res.json()).toEqual({ error: "transcription failed" });
+  expect(await (await getNotes(CLASS_ID)).json()).toEqual([]);
 });

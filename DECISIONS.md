@@ -31,3 +31,18 @@ The scaffold was run with `--no-git` so the first commit is written by a person 
 
 ## 2026-10-22 — Demo data is a SQL file under scripts/, run by wrangler
 `scripts/seed-dev.sql` holds one synthetic class and eight invented students with fixed ids and `INSERT OR IGNORE`, so `npm run db:seed:local` is safe to rerun and the route tests can load the same file. It lives outside `drizzle/` because wrangler treats every `.sql` in the migrations directory as a migration. We passed on a TypeScript seed script (needs a runner and a way to reach D1 from Node for the same result) and on a `/api/dev/seed` route (ships seeding logic in the Worker and needs guarding against production).
+
+## 2026-10-22 — Whisper on Workers AI for voice-note transcription
+The Anthropic API does not accept audio, so transcription needs a second model. Cloudflare's hosted Whisper (`@cf/openai/whisper-large-v3-turbo`) is reached through an `AI` binding on the Worker: no new package, no second vendor account, a free daily allowance and roughly a tenth of a cent per audio minute after that. We passed on the browser's Web Speech API (Chrome-only, routes audio through Google, stops on pauses, poor with names) and on the OpenAI Whisper API (same model but another key and vendor). The trade is that `npm run dev` reaches the real Cloudflare account for transcription, so the machine must have run `npx wrangler login` once.
+
+## 2026-10-22 — Voice notes keep the transcript only; the audio is discarded
+The recording is sent to Whisper and never written anywhere. That removes an R2 bucket, a size-and-ownership check on stored keys, and cleanup of abandoned uploads, and it means no audio of a teacher talking about students sits in storage. `notes.audio_key` stays in the schema, null for now, so storing audio later is a feature change rather than a migration.
+
+## 2026-10-22 — A voice note is saved as soon as transcription finishes
+No review-and-edit step before the note is written. Speed for the teacher wins; flagging a shaky transcript and correcting names and tags is planned as its own feature. Recording stops itself at five minutes and the page says so, so a long brain dump becomes several short notes, each one a separate Whisper call and a small unit for tagging.
+
+## 2026-10-22 — Note bodies cap at 50,000 characters, text and voice alike
+One server-side limit for both kinds. It is a backstop against runaway input, not a product constraint: nothing a teacher types comes close, and a five-minute clip transcribes to roughly 5,000 characters. D1 stores rows that size without trouble. The real cost of a huge note is the synthesis prompt it later joins, which stays small at single-teacher scale. Voice notes used to have no transcript limit at all; a 10 MB audio file uploaded straight to the API could have produced a 30,000-character note.
+
+## 2026-10-22 — Route tests fake the AI binding
+`getPlatformProxy` runs with `remoteBindings: false` and each voice test passes `{ ...env, AI: fake }`, where the fake returns a canned transcript or throws. The tests prove the route (type and size checks, empty-transcript rejection, what reaches Whisper, what is written) without network, cost, or a real model, which they could not prove anyway.
