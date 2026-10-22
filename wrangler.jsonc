@@ -1,0 +1,27 @@
+/**
+ * Wrangler config: what gets deployed and which Cloudflare resources the Worker can reach.
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "throughline",
+	"main": "worker/index.ts",
+	"compatibility_date": "2026-10-19",
+	"assets": {
+		"not_found_handling": "single-page-application"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"upload_source_maps": true,
+	// Bindings: resources exposed to the Worker as properties on `env`.
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "throughline-db",
+			"database_id": "f78d1f7f-d4e1-428b-953b-3cfaebcbb7b3",
+			"migrations_dir": "drizzle"
+		}
+	]
+	// Phase 2: "ai": { "binding": "AI" } for Whisper, "r2_buckets" for uploads.
+}
