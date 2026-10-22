@@ -5,7 +5,6 @@ import { defineConfig } from "vitest/config";
 // getPlatformProxy instead (see worker/routes/notes.test.ts).
 export default defineConfig({
   test: {
-    include: ["worker/**/*.test.ts"],
     hookTimeout: 30_000, // Miniflare takes a few seconds to start
   },
 });

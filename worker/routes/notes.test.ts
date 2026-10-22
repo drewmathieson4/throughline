@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, expect, test } from "vitest";
-import { getPlatformProxy } from "wrangler";
+import { getPlatformProxy, unstable_splitSqlQuery as splitSql } from "wrangler";
 import { drizzle } from "drizzle-orm/d1";
 import { migrate } from "drizzle-orm/d1/migrator";
 import app from "../index";
@@ -12,24 +12,22 @@ const CLASS_ID = "11111111-1111-4111-8111-111111111111";
 const UNKNOWN_CLASS_ID = "99999999-9999-4999-8999-999999999999";
 
 let env: Env;
-let dispose: () => Promise<void>;
+let dispose = async () => {};
 
 beforeAll(async () => {
   const proxy = await getPlatformProxy<Env>({ persist: false });
   env = proxy.env;
   dispose = proxy.dispose;
   await migrate(drizzle(env.DB), { migrationsFolder: "drizzle" });
-  // exec() runs one statement per line and rejects comment-only lines.
-  await env.DB.exec(seed.split("\n").filter((line) => !line.startsWith("--")).join("\n"));
+  // Same splitter `wrangler d1 execute --file` uses, so the seed file has one loader contract.
+  await env.DB.batch(splitSql(seed).map((s) => env.DB.prepare(s)));
 });
 
 beforeEach(async () => {
   await env.DB.prepare("DELETE FROM notes").run();
 });
 
-afterAll(async () => {
-  await dispose();
-});
+afterAll(() => dispose());
 
 function getNotes(classId: string) {
   return app.request(`/api/notes?classId=${classId}`, {}, env);
@@ -84,8 +82,16 @@ test("POST /api/notes rejects an empty body with a message", async () => {
   expect(await res.json()).toEqual({ error: "body is required" });
 });
 
+test("POST /api/notes rejects a notedAt more than a day in the future", async () => {
+  const res = await postNote({ classId: CLASS_ID, body: "x", notedAt: "9999-12-31T00:00:00Z" });
+  expect(res.status).toBe(400);
+  expect(await res.json()).toEqual({ error: "notedAt is in the future" });
+});
+
 test("POST /api/notes rejects malformed JSON", async () => {
-  expect((await postNote("{not json")).status).toBe(400);
+  const res = await postNote("{not json");
+  expect(res.status).toBe(400);
+  expect(await res.json()).toEqual({ error: "Malformed JSON in request body" });
 });
 
 test("POST /api/notes returns 404 for an unknown class", async () => {

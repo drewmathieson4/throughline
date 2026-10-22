@@ -69,22 +69,19 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
     (async () => {
       try {
         const [first] = await api<ClassRow[]>("/api/classes");
-        if (!first) throw new Error("No class found. Run `npm run db:seed:local`.");
-        const rows = await api<Note[]>(`/api/notes?classId=${first.id}`);
-        if (cancelled) return;
+        if (!first) {
+          throw new Error(import.meta.env.DEV ? "No class found. Run `npm run db:seed:local`." : "No class set up yet.");
+        }
+        // Set the class first so the form still renders if the notes request fails.
         setCls(first);
-        setNotes(rows);
+        setNotes(await api<Note[]>(`/api/notes?classId=${first.id}`));
       } catch (e) {
-        if (!cancelled) setError(messageOf(e));
+        setError(messageOf(e));
       }
     })();
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   return (
