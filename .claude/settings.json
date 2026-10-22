@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run typecheck)",
+      "Bash(npm run lint)",
+      "Bash(npm run test)",
+      "Bash(npm run build)",
+      "Bash(npm run db:generate)",
+      "Bash(npm run db:migrate:local)",
+      "Bash(npx vitest *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git branch *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *.ts|*.tsx) out=$(npm run -s typecheck 2>&1) || { printf '%s\\n' \"$out\" >&2; exit 2; } ;; esac",
+            "timeout": 60,
+            "statusMessage": "Typechecking..."
+          }
+        ]
+      }
+    ]
+  }
+}
