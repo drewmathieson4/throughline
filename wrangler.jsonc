@@ -22,6 +22,10 @@
 			"database_id": "f78d1f7f-d4e1-428b-953b-3cfaebcbb7b3",
 			"migrations_dir": "drizzle"
 		}
-	]
-	// Phase 2: "ai": { "binding": "AI" } for Whisper, "r2_buckets" for uploads.
+	],
+	// Workers AI: runs Whisper for voice-note transcription. Reaches the real Cloudflare
+	// account even in local dev, so `npx wrangler login` must have been run once.
+	"ai": {
+		"binding": "AI"
+	}
 }

@@ -1,11 +1,13 @@
-// Notes: what the teacher captured, plus which students each note is about.
-// This feature handles kind="text"; voice arrives later and plugs into the same table.
+// Notes: what the teacher captured, plus which students each note is about. Text notes
+// arrive as JSON; voice notes arrive as raw audio, are transcribed, and are stored as the
+// transcript (the audio is discarded). Both kinds are tagged the same way.
 //
 // Tagging runs inside the create request (one Haiku call, roughly 1 to 3 s) so the response
 // already carries the suggestions. A failed call never loses the note: it is saved first and
 // comes back with `tagging: "failed"`; POST /:noteId/retag tries again.
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { bodyLimit } from "hono/body-limit";
 import Anthropic from "@anthropic-ai/sdk";
 import { and, desc, eq, type SQL } from "drizzle-orm";
 import { z } from "zod";
@@ -16,10 +18,18 @@ import type { AppEnv, Db } from "../db/client";
 import { requireClass, requireClassmate, requireNote, selectRoster } from "../db/queries";
 import { validate } from "../validate";
 import { quoteLocator, tagNote, union, type TagResult } from "../tagging";
+import { transcribe } from "../transcribe";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-const listQuery = z.object({ classId: z.uuid() });
+// Shared by text and voice notes. A backstop, not a product limit: a five-minute clip
+// transcribes to roughly 5,000 characters. See DECISIONS.md.
+const MAX_BODY_CHARS = 50_000;
+
+// Well above what 5 minutes of 32 kbps speech produces (~1.2 MB), under Workers AI's input cap.
+const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+
+const classQuery = z.object({ classId: z.uuid() });
 const noteParam = z.object({ noteId: z.uuid() });
 const noteStudentParam = z.object({ noteId: z.uuid(), studentId: z.uuid() });
 const mentionParam = z.object({ noteId: z.uuid(), mentionId: z.uuid() });
@@ -27,8 +37,7 @@ const quotes = z.array(z.string().trim().min(1).max(2000)).max(50);
 
 const createNote = z.object({
   classId: z.uuid(),
-  // 20k characters fits a ten-minute spoken debrief once voice notes arrive as transcripts.
-  body: z.string().trim().min(1, "body is required").max(20_000, "body is too long"),
+  body: z.string().trim().min(1, "body is required").max(MAX_BODY_CHARS, "body is too long"),
   // When the observation happened; defaults to now. Re-serialized so every stored
   // value has the same shape and ORDER BY noted_at sorts chronologically. Bounded so a
   // typo like 9999-… cannot sit at the top of the list for the rest of the term.
@@ -46,6 +55,16 @@ const tagKey = (noteId: string, studentId: string) =>
   and(eq(schema.noteStudents.noteId, noteId), eq(schema.noteStudents.studentId, studentId));
 const mentionKey = (noteId: string, mentionId: string) =>
   and(eq(schema.noteMentions.id, mentionId), eq(schema.noteMentions.noteId, noteId));
+
+// Single write path for every note kind, so rows always get the same id/timestamp shape.
+function insertNote(db: Db, values: { classId: string; kind: schema.NoteKind; body: string; notedAt?: string }) {
+  const now = new Date().toISOString();
+  return db
+    .insert(schema.notes)
+    .values({ id: crypto.randomUUID(), ...values, notedAt: values.notedAt ?? now, createdAt: now })
+    .returning()
+    .get();
+}
 
 // Quotes the teacher supplies must be in the note too, same rule as the AI's.
 function verifyQuotes(body: string, input: string[] | undefined): string[] {
@@ -162,7 +181,7 @@ async function runTagging(db: Db, apiKey: string | undefined, note: Note): Promi
 const notes = new Hono<AppEnv>();
 
 // GET /api/notes?classId=… → newest first, each with its students and open mentions
-notes.get("/", validate("query", listQuery), async (c) => {
+notes.get("/", validate("query", classQuery), async (c) => {
   const { classId } = c.req.valid("query");
   await requireClass(c.var.db, classId);
   const inClass = eq(schema.notes.classId, classId);
@@ -179,12 +198,47 @@ notes.get("/", validate("query", listQuery), async (c) => {
 notes.post("/", validate("json", createNote), async (c) => {
   const { classId, body, notedAt } = c.req.valid("json");
   await requireClass(c.var.db, classId);
-  const now = new Date().toISOString();
-  const note = await c.var.db
-    .insert(schema.notes)
-    .values({ id: crypto.randomUUID(), classId, kind: "text", body, notedAt: notedAt ?? now, createdAt: now })
-    .returning()
-    .get();
+  const note = await insertNote(c.var.db, { classId, kind: "text", body, notedAt });
+  return c.json(await runTagging(c.var.db, c.env.ANTHROPIC_API_KEY, note), 201);
+});
+
+// Rejects on a declared content-length over the cap, otherwise stops reading the body as
+// soon as it passes the cap, so an oversized upload is never fully buffered.
+const audioLimit = bodyLimit({
+  maxSize: MAX_AUDIO_BYTES,
+  onError: () => {
+    throw new HTTPException(413, { message: "recording is too large" });
+  },
+});
+
+// POST /api/notes/voice?classId=… with a raw audio body → transcribes, stores a voice note,
+// and tags it, all in one request; 201 with the same shape as a text note. notedAt is the
+// save time: a clip is at most five minutes long, so the gap from when the teacher started
+// talking is not worth a browser-supplied timestamp.
+notes.post("/voice", validate("query", classQuery), audioLimit, async (c) => {
+  const { classId } = c.req.valid("query");
+
+  // The audio is never stored or served back, so any audio/* type is fine to hand to
+  // Whisper; the check only turns a wrong upload into a clear error.
+  const mediaType = (c.req.header("content-type") ?? "").trim().toLowerCase();
+  if (!mediaType.startsWith("audio/")) throw new HTTPException(400, { message: "unsupported audio type" });
+
+  await requireClass(c.var.db, classId);
+  const audio = await c.req.arrayBuffer();
+  if (audio.byteLength === 0) throw new HTTPException(400, { message: "nothing was heard" });
+
+  let text: string;
+  try {
+    text = await transcribe(c.env.AI, audio);
+  } catch (err) {
+    console.error("transcription failed", err);
+    throw new HTTPException(502, { message: "transcription failed" });
+  }
+  if (!text) throw new HTTPException(400, { message: "nothing was heard" });
+  // Only reachable by uploading a long audio file; the browser stops at five minutes.
+  if (text.length > MAX_BODY_CHARS) throw new HTTPException(400, { message: "transcript is too long" });
+
+  const note = await insertNote(c.var.db, { classId, kind: "voice", body: text });
   return c.json(await runTagging(c.var.db, c.env.ANTHROPIC_API_KEY, note), 201);
 });
 

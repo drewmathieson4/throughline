@@ -48,3 +48,4 @@ Data model shape worth knowing before touching routes: a `note` belongs to a cla
 - Demo data is synthetic only. Student notes are FERPA-covered; never seed, test with, or commit real student data. Keep secrets in `.dev.vars` (gitignored).
 - Model roles are fixed in `DECISIONS.md`: Opus 5.5 for synthesis and report drafts, Haiku 5.5 for tagging notes to students.
 - The Worker has no long-running background jobs; design features to complete within a request.
+- Voice-note transcription uses the Workers AI binding, which reaches the real Cloudflare account even in `npm run dev`; run `npx wrangler login` once per machine. Route tests fake the binding and never call it.

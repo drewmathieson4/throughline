@@ -28,7 +28,9 @@ export async function quietErrors<T>(fn: () => T | Promise<T>): Promise<T> {
 }
 
 export async function testEnv(): Promise<{ env: Env; dispose: () => Promise<void> }> {
-  const proxy = await getPlatformProxy<Env>({ persist: false });
+  // remoteBindings: false keeps the AI binding from dialing Cloudflare; voice tests swap it for
+  // a fake anyway, so Whisper is never called and the suite runs offline.
+  const proxy = await getPlatformProxy<Env>({ persist: false, remoteBindings: false });
   await migrate(drizzle(proxy.env.DB), { migrationsFolder: "drizzle" });
   // Same splitter `wrangler d1 execute --file` uses, so the seed file has one loader contract.
   await proxy.env.DB.batch(splitSql(seed).map((s) => proxy.env.DB.prepare(s)));
