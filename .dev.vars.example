@@ -1,0 +1,4 @@
+# Copy to .dev.vars (gitignored) and fill in. Wrangler loads it for `npm run dev` and the
+# route tests; `node --env-file=.dev.vars` loads it for scripts/eval. Production uses
+# `npx wrangler secret put ANTHROPIC_API_KEY`.
+ANTHROPIC_API_KEY=

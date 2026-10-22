@@ -2,7 +2,13 @@
 // Drizzle reads this file to (a) type every query and (b) generate SQL migrations.
 // Conventions: text ids (UUIDs minted in the Worker), ISO-8601 strings for dates,
 // integer 0/1 for booleans (SQLite has no boolean type).
+import { sql } from "drizzle-orm";
 import { sqliteTable, text, integer, real, primaryKey, index } from "drizzle-orm/sqlite-core";
+
+// JSON array of strings stored as text. SQLite has no array type; at this scale a JSON
+// column beats a join table, and Drizzle parses/serializes it for us (mode: "json").
+const stringList = (name: string) =>
+  text(name, { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`);
 
 export const classes = sqliteTable("classes", {
   id: text("id").primaryKey(),
@@ -19,6 +25,8 @@ export const students = sqliteTable(
     classId: text("class_id").notNull().references(() => classes.id, { onDelete: "cascade" }),
     firstName: text("first_name").notNull(),
     lastName: text("last_name").notNull(),
+    // Other names the teacher uses for this student ("Juni" for Juniper). The tagger sees them.
+    aliases: stringList("aliases"),
     // Reserved for the Phase 3 privacy layer: the name the model sees instead of the real one.
     pseudonym: text("pseudonym"),
     createdAt: text("created_at").notNull(),
@@ -45,15 +53,34 @@ export const notes = sqliteTable(
   (t) => [index("notes_class_idx").on(t.classId), index("notes_noted_at_idx").on(t.notedAt)],
 );
 
-// One note can be about several students. confirmed=1 once the teacher has approved the tag.
+// One note can be about several students. confirmed=1 once the teacher has approved the tag
+// (or added it themselves). quotes are the verbatim spans of the note body about this student,
+// verified to exist in the body before they are stored; they are the evidence synthesis cites.
 export const noteStudents = sqliteTable(
   "note_students",
   {
     noteId: text("note_id").notNull().references(() => notes.id, { onDelete: "cascade" }),
     studentId: text("student_id").notNull().references(() => students.id, { onDelete: "cascade" }),
     confirmed: integer("confirmed").notNull().default(0),
+    quotes: stringList("quotes"),
   },
   (t) => [primaryKey({ columns: [t.noteId, t.studentId] }), index("note_students_student_idx").on(t.studentId)],
+);
+
+// A name the tagger saw but could not pin to one student ("Alex" when two Alexes are enrolled).
+// Only open mentions live here: assigning one creates a note_students row and deletes it;
+// dismissing deletes it. candidate_ids are the students the tagger thought plausible (may be empty).
+export const noteMentions = sqliteTable(
+  "note_mentions",
+  {
+    id: text("id").primaryKey(),
+    noteId: text("note_id").notNull().references(() => notes.id, { onDelete: "cascade" }),
+    mentionText: text("mention_text").notNull(),
+    quotes: stringList("quotes"),
+    candidateIds: stringList("candidate_ids"),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("note_mentions_note_idx").on(t.noteId)],
 );
 
 export const gradeEntries = sqliteTable(
@@ -102,4 +129,7 @@ export const settings = sqliteTable("settings", {
 
 // Row types as the API returns them; the frontend imports these (type-only) too.
 export type ClassRow = typeof classes.$inferSelect;
+export type Student = typeof students.$inferSelect;
 export type Note = typeof notes.$inferSelect;
+export type NoteStudent = typeof noteStudents.$inferSelect;
+export type NoteMention = typeof noteMentions.$inferSelect;

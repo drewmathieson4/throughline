@@ -1,0 +1,14 @@
+[
+  { "id": "e-avery", "firstName": "Avery", "lastName": "Quill", "aliases": [] },
+  { "id": "e-rowan", "firstName": "Rowan", "lastName": "Pell", "aliases": ["Ro"] },
+  { "id": "e-ronan", "firstName": "Ronan", "lastName": "Pike", "aliases": [] },
+  { "id": "e-sable", "firstName": "Sable", "lastName": "Thorncroft", "aliases": [] },
+  { "id": "e-juniper", "firstName": "Juniper", "lastName": "Vale", "aliases": ["Juni"] },
+  { "id": "e-marlowe", "firstName": "Marlowe", "lastName": "Finchley", "aliases": ["Marlo"] },
+  { "id": "e-ember", "firstName": "Ember", "lastName": "Castellane", "aliases": ["Em"] },
+  { "id": "e-linden", "firstName": "Linden", "lastName": "Oakhurst-Reyes", "aliases": [] },
+  { "id": "e-wren", "firstName": "Wren", "lastName": "Ashby", "aliases": [] },
+  { "id": "e-alex-marsh", "firstName": "Alex", "lastName": "Marsh", "aliases": [] },
+  { "id": "e-alex-ruiz", "firstName": "Alex", "lastName": "Ruiz", "aliases": [] },
+  { "id": "e-theo", "firstName": "Theo", "lastName": "Brightwater", "aliases": ["Teddy"] }
+]

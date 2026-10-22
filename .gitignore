@@ -33,4 +33,5 @@ dist-ssr
 # secrets and private material
 .dev.vars
 .dev.vars.*
+!.dev.vars.example
 private/
