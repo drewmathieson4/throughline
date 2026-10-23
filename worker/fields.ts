@@ -7,7 +7,7 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 // Collapse runs of whitespace and drop control (Cc) and format (Cf) characters a pasted
 // file may carry: Excel's UTF-8 BOM, zero-width spaces, direction marks. Left in, they
 // look right on screen but break sorting and dedup against the same name typed by hand.
-const cleanName = (s: string) =>
+export const cleanName = (s: string) =>
   s
     .replace(/[\p{Cc}\p{Cf}]/gu, " ")
     .replace(/\s+/g, " ")

@@ -23,6 +23,7 @@
     "@anthropic-ai/sdk": "^0.136.0",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13",
+    "papaparse": "^5.7.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "zod": "^4.6.7"
@@ -31,6 +32,7 @@
     "@cloudflare/vite-plugin": "^1.64.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^24.19.2",
+    "@types/papaparse": "^5.5.2",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",

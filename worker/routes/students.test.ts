@@ -1,7 +1,14 @@
-import { expect, test } from "vitest";
+import { beforeEach, expect, test, vi } from "vitest";
+import app from "../index";
 import type { Student } from "../db/schema";
-import type { RosterStudent, StudentDetail } from "../api-types";
-import { NOTE_ID, SEED_CLASS_ID, SEED_STUDENT_IDS, UNKNOWN_ID, jsonInit, setupTestDb } from "../test-db";
+import type { ClassRow } from "../db/schema";
+import type { RosterImportResult, RosterStudent, StudentDetail } from "../api-types";
+import { suggestMapping } from "../roster-model";
+import { CLASS_B_ID, NOTE_ID, SEED_CLASS_ID, SEED_STUDENT_IDS, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb } from "../test-db";
+
+// The model fallback for column mapping is mocked: no network, and each test says what it answers.
+vi.mock(import("../roster-model"), async (importOriginal) => ({ ...(await importOriginal()), suggestMapping: vi.fn() }));
+const suggestMock = vi.mocked(suggestMapping);
 
 const db = setupTestDb();
 
@@ -107,4 +114,167 @@ test("PATCH /api/students/:id rejects empty patches, bad dates, and unknown ids"
   expect(await typo.json()).toEqual({ error: "leftAt is in the future" });
   expect((await patch(SEED_STUDENT_IDS[0], { firstName: "" })).status).toBe(400);
   expect((await patch(UNKNOWN_ID, { firstName: "X" })).status).toBe(404);
+});
+
+// ---- POST /api/students/import ----------------------------------------------------------
+
+const keyed = (): Env => ({ ...db.env, ANTHROPIC_API_KEY: "test-key" });
+const importRoster = (body: unknown, env?: Env) => app.request("/api/students/import", jsonInit("POST", body), env ?? db.env);
+const importJson = async (grid: string[][], env?: Env, classId = SEED_CLASS_ID) => (await importRoster({ classId, grid }, env)).json() as Promise<RosterImportResult>;
+const names = (rows: { firstName: string; lastName: string }[]) => rows.map((r) => `${r.firstName} ${r.lastName}`);
+// The one class a file without sections lands in.
+const only = (out: RosterImportResult) => {
+  expect(out.classes).toHaveLength(1);
+  return out.classes[0]!;
+};
+const headered = [
+  ["First Name", "Last Name", "Goes by"],
+  ["Tamsin", "Brook", "Tam"], // new
+  ["Avery", "QUILL", ""], // seeded already; all caps gets re-cased
+  ["Sable", "Thorncroft", "Sable"], // seeded; preferred equal to first is no alias
+  ["Mira", "Holloway", ""], // new
+];
+
+beforeEach(() => suggestMock.mockReset());
+
+test("import: reads the header, adds the new students with aliases, skips the enrolled; a rerun adds nobody", async () => {
+  const out = await importJson(headered);
+  expect(out.source).toBe("header");
+  const cls = only(out);
+  expect(cls).toMatchObject({ id: SEED_CLASS_ID, name: "Period 3 Humanities", created: false });
+  expect(names(cls.added)).toEqual(["Tamsin Brook", "Mira Holloway"]);
+  expect(names(cls.existing)).toEqual(["Avery Quill", "Sable Thorncroft"]);
+  expect(out.skipped).toEqual([]);
+  const rows = await rosterJson();
+  expect(rows).toHaveLength(11);
+  expect(rows.find((r) => r.lastName === "Brook")).toMatchObject({ firstName: "Tamsin", aliases: ["Tam"], classId: SEED_CLASS_ID, leftAt: null });
+  expect(rows.find((r) => r.lastName === "Holloway")?.aliases).toEqual([]);
+
+  const again = only(await importJson(headered));
+  expect(again.added).toEqual([]);
+  expect(again.existing).toHaveLength(4);
+  expect(await rosterJson()).toHaveLength(11);
+});
+
+test("import: a student who left still counts as enrolled", async () => {
+  await patch(SEED_STUDENT_IDS[0], { leftAt: "2026-10-15" });
+  const cls = only(await importJson([["Name"], ["Avery Quill"]]));
+  expect(cls.added).toEqual([]);
+  expect(names(cls.existing)).toEqual(["Avery Quill"]);
+});
+
+test("import: more rows than one insert statement can hold all land", async () => {
+  const grid = [["First", "Last"], ...Array.from({ length: 40 }, (_, i) => ["Tamsin", `Brook${"e".repeat(i)}`])];
+  expect(only(await importJson(grid)).added).toHaveLength(40);
+  expect(await rosterJson()).toHaveLength(49);
+});
+
+test("import: a lone Last, First column needs no header and no model", async () => {
+  const out = await importJson([["Brook, Tamsin James"], ["Quill, Avery"], ["Holloway"]]);
+  expect(out.source).toBe("content");
+  const cls = only(out);
+  expect(names(cls.added)).toEqual(["Tamsin Brook"]);
+  expect(names(cls.existing)).toEqual(["Avery Quill"]);
+  expect(out.skipped).toEqual([{ line: 3, cells: ["Holloway"], reason: "only one name" }]);
+  expect(suggestMock).not.toHaveBeenCalled();
+});
+
+// A generator-style export: metadata rows, then the table with a Section column, then a
+// summary. Every name is invented.
+const sectioned = [
+  ["Tool", "Classroom Roster Generator"],
+  ["Explanation", "Generated 4 roster rows across 2 sections, using each section's own student list."],
+  [""],
+  ["Metrics", ""],
+  ["Students", "4"],
+  ["Sections", "2"],
+  ["First roll", "1"],
+  [""],
+  ["Output rows", ""],
+  ["Section", "Roll", "Name", "Student ID", "Gender", "Notes"],
+  ["Grade 7 - A", "1", "Tamsin Brook", "STU-0001", "", "Attendance / support notes"],
+  ["Grade 7 - A", "2", "Mira Holloway", "STU-0002", "", ""],
+  ["Grade 7 - B", "1", "Avery Quill", "STU-0001", "", ""],
+  ["Grade 7 - B", "2", "Fenwick Dale", "STU-0002", "", ""],
+  [""],
+  ["Roster diff", ""],
+  ["Added", "Tamsin Brook; Fenwick Dale"],
+  ["Generated by a roster tool", ""],
+];
+
+test("import: finds the table inside a metadata-laden export and creates a class per section", async () => {
+  const out = await importJson(sectioned);
+  expect(out.source).toBe("header");
+  expect(out.classes.map((k) => [k.name, k.created, names(k.added), names(k.existing)])).toEqual([
+    ["Grade 7 - A", true, ["Tamsin Brook", "Mira Holloway"], []],
+    ["Grade 7 - B", true, ["Avery Quill", "Fenwick Dale"], []],
+  ]);
+  expect(out.skipped).toEqual([]);
+  const classes = await db.json<ClassRow[]>("/api/classes");
+  expect(classes.map((k) => k.name).sort()).toEqual(["B Block Humanities", "Grade 7 - A", "Grade 7 - B", "Period 3 Humanities"]);
+  const a = classes.find((k) => k.name === "Grade 7 - A")!;
+  expect(names(await db.json<RosterStudent[]>(rosterUrl(a.id)))).toEqual(["Tamsin Brook", "Mira Holloway"]);
+  expect(await rosterJson()).toHaveLength(9); // the class on screen is untouched
+
+  // Same file again: the classes are matched by name, nobody is added.
+  const again = await importJson(sectioned);
+  expect(again.classes.map((k) => [k.name, k.created, k.added.length, k.existing.length])).toEqual([
+    ["Grade 7 - A", false, 0, 2],
+    ["Grade 7 - B", false, 0, 2],
+  ]);
+  expect(await db.json<ClassRow[]>("/api/classes")).toHaveLength(4);
+});
+
+test("import: a section column naming one class goes to the class on screen, and matches an existing class by name ignoring case", async () => {
+  const one = await importJson([["Section", "Name"], ["Grade 7 - A", "Tamsin Brook"]]);
+  expect(only(one)).toMatchObject({ id: SEED_CLASS_ID, created: false });
+  // "7a" and "7A" are one class, not two, so this is still the class on screen.
+  const cased = await importJson([["Section", "Name"], ["7A", "Orla Penhallow"], ["7a", "Jem Castellan"]]);
+  expect(only(cased)).toMatchObject({ id: SEED_CLASS_ID, created: false });
+  expect(names(only(cased).added)).toEqual(["Orla Penhallow", "Jem Castellan"]);
+  const two = await importJson([["Class", "Name"], ["b block humanities", "Mira Holloway"], ["Period 3 Humanities", "Fenwick Dale"]]);
+  expect(two.classes.map((k) => [k.id, k.created, names(k.added)])).toEqual([
+    [CLASS_B_ID, false, ["Mira Holloway"]],
+    [SEED_CLASS_ID, false, ["Fenwick Dale"]],
+  ]);
+});
+
+const ambiguous = [
+  ["Brook", "Tamsin"],
+  ["Quill", "Avery"],
+];
+
+test("import: when the rules give up and there is no key, nothing is added", async () => {
+  const out = await importJson(ambiguous);
+  expect(out).toEqual({ source: "none", classes: [], skipped: [] });
+  expect(suggestMock).not.toHaveBeenCalled();
+  expect(await rosterJson()).toHaveLength(9);
+});
+
+test("import: with a key the model is asked, and its mapping is used", async () => {
+  suggestMock.mockResolvedValueOnce({ hasHeader: false, roles: ["last", "first"] });
+  const out = await importJson(ambiguous, keyed());
+  expect(out.source).toBe("model");
+  const cls = only(out);
+  expect(names(cls.added)).toEqual(["Tamsin Brook"]);
+  expect(names(cls.existing)).toEqual(["Avery Quill"]);
+  expect(suggestMock.mock.calls[0]![0].sample).toEqual(ambiguous);
+  expect(await rosterJson()).toHaveLength(10);
+});
+
+test("import: a model failure, or a model answer without a name column, adds nothing", async () => {
+  suggestMock.mockRejectedValueOnce(new Error("rate limited"));
+  expect(await quietErrors(() => importJson(ambiguous, keyed()))).toMatchObject({ source: "none", classes: [] });
+  suggestMock.mockResolvedValueOnce({ hasHeader: false, roles: ["ignore", "preferred"] });
+  expect(await importJson(ambiguous, keyed())).toMatchObject({ source: "none", classes: [] });
+  expect(await rosterJson()).toHaveLength(9);
+});
+
+test("import: rejects a bad request shape and an unknown class", async () => {
+  const tooMany = Array.from({ length: 601 }, () => ["a", "b"]);
+  expect((await importRoster({ classId: SEED_CLASS_ID, grid: tooMany })).status).toBe(400);
+  expect((await importRoster({ classId: SEED_CLASS_ID, grid: [] })).status).toBe(400);
+  expect((await importRoster({ classId: SEED_CLASS_ID, grid: [[1]] })).status).toBe(400);
+  expect((await importRoster({ classId: SEED_CLASS_ID })).status).toBe(400);
+  expect((await importRoster({ classId: UNKNOWN_ID, grid: [["a"]] })).status).toBe(404);
 });

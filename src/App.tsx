@@ -290,8 +290,9 @@ function App() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const loadClasses = () => api<ClassRow[]>("/api/classes").then(setClasses).catch((e) => setError(messageOf(e)));
   useEffect(() => {
-    api<ClassRow[]>("/api/classes").then(setClasses).catch((e) => setError(messageOf(e)));
+    loadClasses();
   }, []);
 
   // classId is a preference (the teacher's pick, or the remembered one); the shown class is
@@ -356,7 +357,7 @@ function App() {
             ))}
           </nav>
           {view === "notes" && <NotesView classes={classes} />}
-          {view === "students" && <StudentsPage key={cls.id} classId={cls.id} />}
+          {view === "students" && <StudentsPage key={cls.id} classId={cls.id} onClassesChanged={loadClasses} />}
         </>
       )}
     </main>

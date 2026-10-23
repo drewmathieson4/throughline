@@ -3,6 +3,7 @@ import type { Student } from "../../worker/db/schema";
 import type { RosterStudent, StudentDetail as StudentDetailResponse } from "../../worker/api-types";
 import { api, jsonInit, messageOf } from "../api";
 import NoteItem from "../NoteItem";
+import ImportRoster from "./ImportRoster";
 import { button, errorText, fieldLabel, input, subtleButton } from "../ui";
 import { useAction } from "../useAction";
 
@@ -140,7 +141,8 @@ function StudentDetail({ id, onBack }: { id: string; onBack: () => void }) {
   );
 }
 
-export default function StudentsPage({ classId }: { classId: string }) {
+// onClassesChanged: an import can create classes, which the picker in App needs to know about.
+export default function StudentsPage({ classId, onClassesChanged }: { classId: string; onClassesChanged: () => void }) {
   // The full roster, departed students included; the checkbox filters it here so toggling
   // costs no request.
   const [students, setStudents] = useState<RosterStudent[]>([]);
@@ -221,6 +223,13 @@ export default function StudentsPage({ classId }: { classId: string }) {
         </tbody>
       </table>
       <AddStudentForm classId={classId} onAdded={refresh} />
+      <ImportRoster
+        classId={classId}
+        onImported={(result) => {
+          refresh();
+          if (result.classes.some((k) => k.created)) onClassesChanged();
+        }}
+      />
     </section>
   );
 }
