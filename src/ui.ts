@@ -7,3 +7,5 @@ export const errorText = "text-sm text-red-600";
 
 export const dateTimeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 export const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+
+export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;

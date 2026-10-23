@@ -1,12 +1,11 @@
 import { useState } from "react";
 import type { ImportedClass, RosterImportResult } from "../../worker/api-types";
 import { api, jsonInit } from "../api";
-import { button, errorText, input, subtleButton } from "../ui";
+import { button, errorText, input, plural, subtleButton } from "../ui";
 import { useAction } from "../useAction";
 import { csvToGrid } from "./csv";
 
 const MAX_LINES = 600;
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 // Pick a roster file, or paste names, and they are imported on the spot: no preview, no
 // column form. The Worker finds the students; the summary says what it did, and anything it

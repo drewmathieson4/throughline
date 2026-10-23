@@ -5,7 +5,7 @@ import type { NoteWithTags, RosterStudent, TaggedNoteResponse } from "../worker/
 import { api, jsonInit, messageOf } from "./api";
 import NoteItem from "./NoteItem";
 import StudentsPage from "./students/StudentsPage";
-import { button, errorText, fieldLabel, input, subtleButton } from "./ui";
+import { button, errorText, fieldLabel, input, plural, subtleButton } from "./ui";
 import { useAction } from "./useAction";
 import { useRecorder } from "./useRecorder";
 
@@ -177,30 +177,76 @@ function Tags({ note, people, classNames }: { note: NoteWithTags; people: Map<st
   );
 }
 
+// Tagged, or a candidate for a name the tagger could not settle ("Alex" with two Alexes).
+const about = (n: NoteWithTags, studentId: string) =>
+  n.students.some((s) => s.studentId === studentId) || n.mentions.some((m) => m.candidateIds.includes(studentId));
+
 // Every note, whatever its class: capture is class-less, and the class picker above only
-// drives the Students view. Each note shows its class, or "unassigned".
+// drives the Students view. Each note shows its class, or "unassigned". The filters work on
+// the loaded list; the server's ?classId is deliberately unused, since a student filter has
+// no server equivalent and the count should update without a round trip.
 function NotesView({ classes }: { classes: ClassRow[] }) {
   const [notes, setNotes] = useState<NoteWithTags[]>([]);
-  const [people, setPeople] = useState<Map<string, Person>>(new Map());
+  const [roster, setRoster] = useState<RosterStudent[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [classFilter, setClassFilter] = useState("");
+  const [studentFilter, setStudentFilter] = useState("");
 
   useEffect(() => {
     // Notes and the rosters load independently, so the list renders even if names do not.
     api<NoteWithTags[]>("/api/notes").then(setNotes).catch((e) => setError(messageOf(e)));
     Promise.all(classes.map((c) => api<RosterStudent[]>(`/api/students?classId=${c.id}`)))
-      .then((rosters) => setPeople(new Map(rosters.flat().map((s) => [s.id, { name: `${s.firstName} ${s.lastName}`, classId: s.classId }]))))
+      .then((rosters) => setRoster(rosters.flat()))
       .catch((e) => setError(messageOf(e)));
   }, [classes]);
 
   const classNames = new Map(classes.map((c) => [c.id, c.name]));
+  const people = new Map<string, Person>(roster.map((s) => [s.id, { name: `${s.firstName} ${s.lastName}`, classId: s.classId }]));
+  const option = (s: RosterStudent) => (
+    <option key={s.id} value={s.id}>
+      {s.lastName}, {s.firstName}
+    </option>
+  );
+
+  // Picking a class the chosen student is not in drops the student filter, not the notes.
+  function pickClass(id: string) {
+    setClassFilter(id);
+    if (id && studentFilter && people.get(studentFilter)?.classId !== id) setStudentFilter("");
+  }
+
+  const shown = notes.filter((n) => (!classFilter || n.classId === classFilter) && (!studentFilter || about(n, studentFilter)));
+  const studentName = people.get(studentFilter)?.name;
+  const empty = notes.length === 0 ? "No notes yet." : studentName ? `No notes about ${studentName} yet.` : `No notes in ${classNames.get(classFilter)} yet.`;
 
   return (
     <>
       <NoteForm onCreated={(note) => setNotes((prev) => [note, ...prev])} />
       {error && <p className={`mt-4 ${errorText}`}>{error}</p>}
 
-      <ul className="mt-6 divide-y divide-gray-200">
-        {notes.map((n) => (
+      <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
+        <select aria-label="Filter by class" className={input} value={classFilter} onChange={(e) => pickClass(e.target.value)}>
+          <option value="">All classes</option>
+          {classes.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <select aria-label="Filter by student" className={input} value={studentFilter} onChange={(e) => setStudentFilter(e.target.value)}>
+          <option value="">All students</option>
+          {classes
+            .filter((c) => !classFilter || c.id === classFilter)
+            .map((c) => (
+              <optgroup key={c.id} label={c.name}>
+                {roster.filter((s) => s.classId === c.id).map(option)}
+              </optgroup>
+            ))}
+        </select>
+        <span className="text-gray-500">{plural(shown.length, "note")}</span>
+      </div>
+
+      <ul className="mt-2 divide-y divide-gray-200">
+        {shown.map((n) => (
           <NoteItem
             key={n.id}
             note={n}
@@ -213,7 +259,7 @@ function NotesView({ classes }: { classes: ClassRow[] }) {
             <Tags note={n} people={people} classNames={classNames} />
           </NoteItem>
         ))}
-        {notes.length === 0 && <li className="py-3 text-sm text-gray-500">No notes yet.</li>}
+        {shown.length === 0 && <li className="py-3 text-sm text-gray-500">{empty}</li>}
       </ul>
     </>
   );
