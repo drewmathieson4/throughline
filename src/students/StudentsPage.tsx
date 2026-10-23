@@ -3,6 +3,8 @@ import type { Student } from "../../worker/db/schema";
 import type { RosterStudent, StudentDetail as StudentDetailResponse } from "../../worker/api-types";
 import { api, jsonInit, messageOf } from "../api";
 import NoteItem from "../NoteItem";
+import Grades from "./Grades";
+import ImportGrades from "./ImportGrades";
 import ImportRoster from "./ImportRoster";
 import { button, dateFormat, errorText, fieldLabel, input, subtleButton } from "../ui";
 import { useAction } from "../useAction";
@@ -105,7 +107,7 @@ function StudentDetail({ id, onBack }: { id: string; onBack: () => void }) {
     );
   }
 
-  const { student, notes } = data;
+  const { student, notes, grades } = data;
   return (
     <section className="mt-4">
       {back}
@@ -148,6 +150,8 @@ function StudentDetail({ id, onBack }: { id: string; onBack: () => void }) {
         </div>
       )}
       {error && <p className={`mt-2 ${errorText}`}>{error}</p>}
+
+      {grades && <Grades grades={grades} />}
 
       <h3 className="mt-6 text-sm font-medium text-gray-600">Notes tagged to {student.firstName}</h3>
       <ul className="mt-2 divide-y divide-gray-200">
@@ -253,6 +257,7 @@ export default function StudentsPage({ classId, onClassesChanged }: { classId: s
           if (result.classes.some((k) => k.created)) onClassesChanged();
         }}
       />
+      <ImportGrades classId={classId} />
     </section>
   );
 }

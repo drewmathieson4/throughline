@@ -66,6 +66,15 @@ export function setupTestDb() {
     insertNote: (id: string, classId: string | null, notedAt: string) =>
       prepare("INSERT INTO notes (id, class_id, kind, body, noted_at, created_at) VALUES (?, ?, 'text', ?, ?, ?)", id, classId, `note ${id.slice(-2)}`, notedAt, notedAt),
     tagNote: (noteId: string, studentId: string) => prepare("INSERT INTO note_students (note_id, student_id) VALUES (?, ?)", noteId, studentId),
+    // A course material whose summary states grading weights (or none, for a unit plan).
+    insertMaterial: (id: string, classId: string, grading: { category: string; weight: number }[], createdAt = "2026-10-01T00:00:00.000Z") =>
+      prepare(
+        "INSERT INTO class_materials (id, class_id, name, text, summary, created_at) VALUES (?, ?, 'syllabus.md', 'text', ?, ?)",
+        id,
+        classId,
+        JSON.stringify({ description: "", goals: [], grading, units: [], policies: [] }),
+        createdAt,
+      ),
     // An open mention ("Alex") that could be any of the given students.
     mentionNote: (id: string, noteId: string, candidateIds: string[]) =>
       prepare(

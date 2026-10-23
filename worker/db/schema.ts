@@ -3,7 +3,7 @@
 // Conventions: text ids (UUIDs minted in the Worker), ISO-8601 strings for dates,
 // integer 0/1 for booleans (SQLite has no boolean type).
 import { sql } from "drizzle-orm";
-import { sqliteTable, text, integer, real, primaryKey, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, primaryKey, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // JSON array of strings stored as text. SQLite has no array type; at this scale a JSON
 // column beats a join table, and Drizzle parses/serializes it for us (mode: "json").
@@ -118,6 +118,9 @@ export const classMaterials = sqliteTable(
   (t) => [index("class_materials_class_idx").on(t.classId)],
 );
 
+// One score per student per assignment, imported from the teacher's grade book. The
+// (student, assignment) pair is unique so a re-upload updates rather than duplicates.
+// position is the assignment's order in the file: the timeline when there are no due dates.
 export const gradeEntries = sqliteTable(
   "grade_entries",
   {
@@ -127,9 +130,10 @@ export const gradeEntries = sqliteTable(
     category: text("category"),
     score: real("score"), // null = missing work
     maxScore: real("max_score").notNull(),
-    dueDate: text("due_date").notNull(),
+    dueDate: text("due_date"), // YYYY-MM-DD; wide exports rarely carry one
+    position: integer("position").notNull(),
   },
-  (t) => [index("grade_entries_student_idx").on(t.studentId)],
+  (t) => [index("grade_entries_student_idx").on(t.studentId), uniqueIndex("grade_entries_student_assignment_idx").on(t.studentId, t.assignment)],
 );
 
 // One row per synthesis run. input_hash lets us skip a rerun when nothing changed.
@@ -169,3 +173,4 @@ export type Note = typeof notes.$inferSelect;
 export type NoteStudent = typeof noteStudents.$inferSelect;
 export type NoteMention = typeof noteMentions.$inferSelect;
 export type ClassMaterial = typeof classMaterials.$inferSelect;
+export type GradeEntry = typeof gradeEntries.$inferSelect;

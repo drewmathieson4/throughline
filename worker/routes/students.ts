@@ -2,13 +2,15 @@
 // deleting, so notes tagged to the student keep their evidence.
 import { Hono } from "hono";
 import Anthropic from "@anthropic-ai/sdk";
-import { desc, eq, getTableColumns, sql } from "drizzle-orm";
+import { asc, desc, eq, getTableColumns, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "../db/schema";
 import type { AppEnv } from "../db/client";
 import type { ImportedClass, RosterImportResult, RosterStudent, StudentDetail } from "../api-types";
 import { notFound, requireClass, selectClasses, selectRoster } from "../db/helpers";
 import { classIdQuery, dateField, idParam, nameField, notInFuture } from "../fields";
+import { summarise } from "../grades";
+import { gradingWeights, selectMaterialSummaries } from "../materials";
 import { applyMapping, detectTable, hasNameColumn, planImport, type Grid, type ParsedRow, type Table } from "../roster";
 import { suggestMapping } from "../roster-model";
 import { validate } from "../validate";
@@ -168,23 +170,32 @@ students.post("/", validate("json", createStudent), async (c) => {
   return c.json(row, 201);
 });
 
-// GET /api/students/:id → { student, notes } where notes are the ones tagged to this
-// student, newest first.
+// GET /api/students/:id → { student, notes, grades }: the notes tagged to this student,
+// newest first, and their grade summary (null until a grade book names them), weighted by
+// the class's newest material that states grading weights.
 students.get("/:id", validate("param", idParam), async (c) => {
   const { id } = c.req.valid("param");
+  const db = c.var.db;
   const n = schema.notes;
-  // Both queries only need the id, so they go to D1 in one batch.
-  const [[student], notes] = await c.var.db.batch([
-    c.var.db.select().from(schema.students).where(eq(schema.students.id, id)),
-    c.var.db
+  const g = schema.gradeEntries;
+  const s = schema.students;
+  // Every query only needs the id (the class comes in through subqueries), so one batch.
+  const classOf = db.select({ classId: s.classId }).from(s).where(eq(s.id, id));
+  const classmates = db.select({ id: s.id }).from(s).where(inArray(s.classId, classOf));
+  const [[student], notes, grades, classGrades, materials] = await db.batch([
+    db.select().from(s).where(eq(s.id, id)),
+    db
       .select(getTableColumns(n))
       .from(schema.noteStudents)
       .innerJoin(n, eq(n.id, schema.noteStudents.noteId))
       .where(eq(schema.noteStudents.studentId, id))
       .orderBy(desc(n.notedAt), desc(n.createdAt)),
+    db.select().from(g).where(eq(g.studentId, id)).orderBy(asc(g.position)),
+    db.select().from(g).where(inArray(g.studentId, classmates)),
+    selectMaterialSummaries(db, classOf),
   ]);
   if (!student) throw notFound("student");
-  return c.json({ student, notes } satisfies StudentDetail);
+  return c.json({ student, notes, grades: summarise(grades, classGrades, gradingWeights(materials) ?? []) } satisfies StudentDetail);
 });
 
 // PATCH /api/students/:id { firstName?, lastName?, leftAt? } → the updated row

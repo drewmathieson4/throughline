@@ -58,10 +58,10 @@ export const hasNameColumn = (roles: (ColumnRole | null)[]) => roles.some(isName
 
 // What a column looks like from its cells: a whole name in one of two orders, a bare word
 // (one half of a name, order unknown), or something to ignore (ids, emails, dates, blanks).
-type ColumnKind = "full_last_first" | "full_first_last" | "part" | "ignore";
+export type ColumnKind = "full_last_first" | "full_first_last" | "part" | "ignore";
 const nameLike = /^[\p{L}\p{M}'’.\-\s,]+$/u;
 
-function classifyColumn(cells: string[]): ColumnKind {
+export function classifyColumn(cells: string[]): ColumnKind {
   const filled = cells.map((c) => c.trim()).filter(Boolean);
   const majority = (test: (c: string) => boolean) => filled.filter(test).length * 2 > filled.length;
   if (filled.length === 0 || !majority((c) => nameLike.test(c))) return "ignore";
@@ -225,7 +225,8 @@ export function applyMapping(grid: Grid, table: Table): { rows: ParsedRow[]; ski
 
 // ---- Matching against the class -------------------------------------------------------
 
-const nameKey = (s: { firstName: string; lastName: string }) => `${cleanName(s.firstName)}\u0000${cleanName(s.lastName)}`.toLocaleLowerCase();
+// Shared with the grade book import, which matches its rows to the roster the same way.
+export const nameKey = (s: { firstName: string; lastName: string }) => `${cleanName(s.firstName)}\u0000${cleanName(s.lastName)}`.toLocaleLowerCase();
 
 // Who is new, who is already enrolled (students who have left included: the teacher can
 // reactivate them), and lines that repeat an earlier line.
