@@ -163,3 +163,15 @@ Plus Jakarta Sans comes from `@fontsource-variable/plus-jakarta-sans` and is bun
 
 ## 2026-10-23 — Only Reports has a class switcher
 Notes are not filed by class (tagging works out who they are about), and Classes picks a class by tapping its card, so the class dropdown that sat above every tab is gone. Reports is the one screen that works on one class at a time; its class pills remember the last pick, and `/reports` returns to it.
+
+## 2026-10-23 — The phone opens on Record; the feed is /notes/feed
+On a phone, `/notes` is a full-screen Record button and the feed is one tap away at `/notes/feed`; on a laptop `/notes` is the feed under a capture card. A teacher reaches for the phone mid-lesson to say one thing, so capture comes first and reading second. Both URLs are one route (`/notes/*`) rendered by one component, so a recording started on the feed's mic button carries on when the screen switches to Record, and the phone's back button returns from the feed. Phone or laptop is decided in JS (`useIsLaptop`, the same `md` breakpoint as the shell), because the two do different things rather than only look different: the laptop records in a dialog, which must not open over the phone's Record screen. We passed on a separate route per view (switching would remount the screen and drop a recording) and on a CSS-only switch.
+
+## 2026-10-23 — Notes load once, above the routes
+`NotesProvider` in the shell holds the notes and the rosters, so the "Needs you" badge on the Notes tab and the Notes screen read the same list and drop together when a name is settled. It reloads whenever the teacher enters or leaves Notes, which picks up notes made elsewhere (a recorded answer on a report). We passed on a separate count endpoint (an API change for one number) and on a data-fetching library (not needed at this size).
+
+## 2026-10-23 — Recording shows the real mic level
+The bars under the timer come from a Web Audio analyser on the same mic stream the recorder uses, with no new package. They stay flat when the mic hears nothing, so a muted or wrong mic shows before the teacher talks for two minutes into it. We passed on a decorative animation, which would move just as happily over silence.
+
+## 2026-10-23 — Tags can be removed and added by hand on every note
+Each tag chip has an × and each note has a "+ Tag" that opens a searchable student picker (the note's own class first), using the routes that already existed. Manual editing is the fallback whenever the tagger is wrong, so taking a tag off has to come with a way to put the right one on. It also covers a note whose tagging failed. The chip's name opens the student. We passed on a "…" menu per chip, which would cost an extra tap for both actions.

@@ -15,8 +15,12 @@ export type Recorder = {
   supported: boolean;
   recording: boolean;
   elapsedMs: number;
+  /** The live mic while recording, for a level meter; null otherwise. */
+  stream: MediaStream | null;
   start: () => Promise<void>;
   stop: () => void;
+  /** Stops without handing anything to onStop: the teacher's Discard. */
+  cancel: () => void;
 };
 
 /** hitLimit is true when the time limit ended the recording rather than the teacher. */
@@ -25,9 +29,12 @@ export type Recording = { audio: Blob; hitLimit: boolean };
 export function useRecorder({ maxMs, onStop }: { maxMs: number; onStop: (rec: Recording) => void }): Recorder {
   const [recording, setRecording] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   // Set while start() awaits the permission prompt, so a second click cannot open a second mic.
   const startingRef = useRef(false);
+  // Set by cancel() so the stop that follows throws the audio away.
+  const discardRef = useRef(false);
   // Latest onStop without re-creating start/stop every render.
   const onStopRef = useRef(onStop);
   useEffect(() => {
@@ -41,19 +48,24 @@ export function useRecorder({ maxMs, onStop }: { maxMs: number; onStop: (rec: Re
     if (rec && rec.state !== "inactive") rec.stop();
   }, []);
 
+  const cancel = useCallback(() => {
+    discardRef.current = true;
+    stop();
+  }, [stop]);
+
   const start = useCallback(async () => {
     if (recorderRef.current || startingRef.current) return;
     startingRef.current = true;
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).finally(() => {
+    const mic = await navigator.mediaDevices.getUserMedia({ audio: true }).finally(() => {
       startingRef.current = false;
     });
     // Releasing the tracks turns off the browser's "mic in use" indicator.
-    const release = () => stream.getTracks().forEach((t) => t.stop());
+    const release = () => mic.getTracks().forEach((t) => t.stop());
 
     let rec: MediaRecorder;
     try {
       const mimeType = MIME_TYPES.find((t) => MediaRecorder.isTypeSupported(t));
-      rec = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: BITRATE });
+      rec = new MediaRecorder(mic, { mimeType, audioBitsPerSecond: BITRATE });
     } catch (err) {
       release();
       throw err;
@@ -73,19 +85,24 @@ export function useRecorder({ maxMs, onStop }: { maxMs: number; onStop: (rec: Re
       release();
       recorderRef.current = null;
       setRecording(false);
+      setStream(null);
       setElapsedMs(0);
       const elapsed = Date.now() - startedAt;
-      if (elapsed < MIN_MS) return;
+      const discarded = discardRef.current;
+      discardRef.current = false;
+      if (discarded || elapsed < MIN_MS) return;
       onStopRef.current({ audio: new Blob(chunks, { type: rec.mimeType }), hitLimit: elapsed >= maxMs });
     };
 
     recorderRef.current = rec;
+    discardRef.current = false;
     setRecording(true);
+    setStream(mic);
     rec.start();
   }, [maxMs]);
 
   // Leaving the page mid-recording must not leave the mic open.
   useEffect(() => stop, [stop]);
 
-  return { supported, recording, elapsedMs, start, stop };
+  return { supported, recording, elapsedMs, stream, start, stop, cancel };
 }

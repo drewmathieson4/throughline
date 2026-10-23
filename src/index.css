@@ -39,6 +39,12 @@
   --color-coral: var(--coral);
   --color-coral-foreground: var(--coral-foreground);
   --color-coral-dot: var(--coral-dot);
+  --color-sky: var(--sky);
+  --color-sky-foreground: var(--sky-foreground);
+  --color-sunny-soft: var(--sunny-soft);
+  --color-sunny-line: var(--sunny-line);
+  --color-sunny-ink: var(--sunny-ink);
+  --color-field: var(--field);
   --color-recording: var(--recording);
 
   --radius-sm: calc(var(--radius) * 0.6);
@@ -52,11 +58,39 @@
   --shadow-card: 0 1px 2px rgb(17 24 39 / 0.04), 0 8px 24px rgb(17 24 39 / 0.04);
   --shadow-pop: 0 16px 40px rgb(17 24 39 / 0.14);
   --shadow-toast: 0 12px 32px rgb(17 24 39 / 0.25);
+  --shadow-lift: 0 20px 50px rgb(17 24 39 / 0.3);
+
+  /* The record screen's slow rings, and the stop button's pulse. */
+  --animate-ring: ring-out 2.6s ease-out infinite;
+  --animate-ring-fast: ring-out 1.2s ease-out infinite;
+  --animate-pulse-stop: pulse-stop 1.6s infinite;
+  @keyframes ring-out {
+    0% {
+      transform: scale(1);
+      opacity: 0.4;
+    }
+    100% {
+      transform: scale(1.45);
+      opacity: 0;
+    }
+  }
+  @keyframes pulse-stop {
+    0% {
+      box-shadow: 0 0 0 0 rgb(240 96 77 / 0.45);
+    }
+    70% {
+      box-shadow: 0 0 0 30px rgb(240 96 77 / 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgb(240 96 77 / 0);
+    }
+  }
 }
 
 /* White surfaces, cool greys, one cobalt. Status colours: mint is good or recent, sunny is
    unsure or getting stale, coral is missing or quiet. Each has a soft fill, a readable ink
-   for text on that fill, and a stronger dot. */
+   for text on that fill, and a stronger dot. Sky marks a note from a document; the paler
+   sunny pair is the "Who is…?" banner, so it reads as a question rather than a warning. */
 :root {
   --background: #ffffff;
   --foreground: #14161c;
@@ -85,6 +119,12 @@
   --coral: #ffe4df;
   --coral-foreground: #a3321f;
   --coral-dot: #f0604d;
+  --sky: #dceeff;
+  --sky-foreground: #1f5f9e;
+  --sunny-soft: #fff6d6;
+  --sunny-line: #f2d27a;
+  --sunny-ink: #5c3d00;
+  --field: #f8f9fb;
   --recording: #d92d20;
   --radius: 0.75rem;
 }

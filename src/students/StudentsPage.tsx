@@ -155,7 +155,7 @@ export function StudentDetail({ id, back }: { id: string; back: ReactNode }) {
       {grades && <Grades grades={grades} />}
 
       <h3 className="mt-6 text-sm font-medium text-gray-600">Notes tagged to {student.firstName}</h3>
-      <ul className="mt-2 divide-y divide-gray-200">
+      <ul className="mt-2 flex flex-col gap-3">
         {notes.map((n) => (
           <NoteItem key={n.id} note={n} />
         ))}

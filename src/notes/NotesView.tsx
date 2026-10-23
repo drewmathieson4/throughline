@@ -1,248 +1,212 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState } from "react";
+import { useMatch, useNavigate } from "react-router";
+import { AlertCircle, ChevronDown, Mic } from "lucide-react";
 // Type-only imports: nothing from the Worker ends up in the browser bundle.
 import type { ClassRow } from "../../worker/db/schema";
-import type { DocumentImportResult, NoteWithTags, RosterStudent, TaggedNoteResponse } from "../../worker/api-types";
-import { DOCUMENT_TYPES, api, fileInit, jsonInit, messageOf } from "../api";
-import FilePicker from "../FilePicker";
+import type { NoteWithTags } from "../../worker/api-types";
 import NoteItem from "../NoteItem";
-import Tags, { type Person } from "./Tags";
-import { errorText, input, mmss, plural } from "../ui";
-import { useRecorder } from "../useRecorder";
-import { PageTitle } from "@/components/page";
+import { errorText } from "../ui";
+import { BackLink, PageTitle } from "@/components/page";
 import { Button } from "@/components/ui/button";
+import { colourFor } from "@/lib/avatar";
+import { useIsLaptop } from "@/lib/useIsLaptop";
+import { cn } from "@/lib/utils";
+import CaptureCard from "./CaptureCard";
+import { groupByDay } from "./days";
+import { useNotes } from "./notesStore";
+import RecordHome from "./RecordHome";
+import SavedSheet from "./SavedSheet";
+import StudentPicker from "./StudentPicker";
+import Tags from "./Tags";
+import { useCapture, type SavedNote } from "./useCapture";
 
-const MAX_RECORDING_MS = 5 * 60 * 1000;
 const todayLabel = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" });
 
-// A note needs no class: the teacher writes or records, and tagging works out the rest. An
-// uploaded document (an old progress report) becomes one note per student it is about.
-function NoteForm({ onCreated, onReplaced }: { onCreated: (note: NoteWithTags) => void; onReplaced: (replacedIds: string[], notes: NoteWithTags[]) => void }) {
-  const [draft, setDraft] = useState("");
-  // Which kind of save is in flight; they never overlap. Several actions that must know
-  // which one is running, so this form does not use useAction.
-  const [pending, setPending] = useState<"text" | "voice" | "document" | null>(null);
-  // Shown once a recording that stopped at the time limit has actually been saved.
-  const [hitLimit, setHitLimit] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  // What the last save did; `warn` for a save that went only partly right.
-  const [message, setMessage] = useState<{ text: string; warn?: boolean } | null>(null);
-
-  // Runs one save and hands what it made to the list. False means it failed and the error
-  // is on screen.
-  async function run(kind: NonNullable<typeof pending>, fn: () => Promise<void>) {
-    setPending(kind);
-    setError(null);
-    setMessage(null);
-    try {
-      await fn();
-      return true;
-    } catch (e) {
-      setError(messageOf(e));
-      return false;
-    } finally {
-      setPending(null);
-    }
-  }
-
-  // Posts one note.
-  const save = (kind: "text" | "voice", url: string, init: RequestInit) =>
-    run(kind, async () => {
-      const note = await api<TaggedNoteResponse>(url, init);
-      onCreated(note);
-      if (note.tagging === "failed") setMessage({ text: "Saved, but tagging did not run. Students can be added later.", warn: true });
-    });
-
-  // Uploads a document; the notes it was cut into join the list at once.
-  const upload = (file: File) =>
-    run("document", async () => {
-      const query = new URLSearchParams({ name: file.name });
-      // The file's own date is the fallback for notes from a document that states none.
-      if (file.lastModified > 0 && file.lastModified <= Date.now()) query.set("modified", new Date(file.lastModified).toISOString());
-      const result = await api<DocumentImportResult>(`/api/notes/document?${query}`, fileInit(file));
-      onReplaced(result.replaced, result.notes);
-      const unsure = result.notes.filter((n) => n.mentions.length > 0).length;
-      const made =
-        result.notes.length === 0
-          ? `No students from your roster were named in ${result.name}.`
-          : `Made ${plural(result.notes.length, "note")} from ${result.name}${unsure > 0 ? `, ${plural(unsure, "name")} unsure` : ""}.`;
-      setMessage({ text: result.replaced.length > 0 ? `${made} Replaced ${plural(result.replaced.length, "note")} made from it earlier.` : made });
-    });
-
-  // A voice note is saved the moment transcription finishes; there is no review step.
-  const recorder = useRecorder({
-    maxMs: MAX_RECORDING_MS,
-    onStop: async ({ audio, hitLimit: limited }) => {
-      const saved = await save("voice", "/api/notes/voice", { method: "POST", headers: { "content-type": audio.type }, body: audio });
-      if (saved) setHitLimit(limited);
-    },
-  });
-
-  async function record() {
-    setError(null);
-    setHitLimit(false);
-    try {
-      await recorder.start();
-    } catch (e) {
-      // Usually "Permission denied": the browser blocked the mic.
-      setError(`Could not start recording: ${messageOf(e)}`);
-    }
-  }
-
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    const saved = await save("text", "/api/notes", jsonInit("POST", { body: draft }));
-    if (saved) setDraft("");
-  }
-
-  const busy = pending !== null;
-  const nearLimit = MAX_RECORDING_MS - recorder.elapsedMs <= 30_000;
-
-  return (
-    <form onSubmit={submit} className="mt-6 flex flex-col gap-2">
-      <label htmlFor="note" className="text-sm font-medium">
-        New note
-      </label>
-      {hitLimit && (
-        <p role="status" className="rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900">
-          Reached the {mmss(MAX_RECORDING_MS)} limit; this part was saved. Press Record to continue.
-        </p>
-      )}
-      <textarea
-        id="note"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        rows={3}
-        placeholder="What did you notice today?"
-        className={input}
-      />
-      <div className="flex flex-wrap justify-end gap-2">
-        <FilePicker accept={DOCUMENT_TYPES} disabled={busy || recorder.recording} onFile={upload}>
-          {pending === "document" ? "Reading and tagging…" : "Upload a document"}
-        </FilePicker>
-        {recorder.supported && (
-          <Button type="button" onClick={recorder.recording ? recorder.stop : record} disabled={busy} variant="outline" size="sm">
-            {pending === "voice" ? (
-              "Transcribing and tagging…"
-            ) : recorder.recording ? (
-              <>
-                Stop{" "}
-                <span className={nearLimit ? "text-amber-600" : undefined}>
-                  ({mmss(recorder.elapsedMs)} / {mmss(MAX_RECORDING_MS)})
-                </span>
-              </>
-            ) : (
-              "Record"
-            )}
-          </Button>
-        )}
-        <Button type="submit" disabled={busy || recorder.recording || !draft.trim()}>
-          {pending === "text" ? "Saving and tagging…" : "Add note"}
-        </Button>
-      </div>
-      {error && <p className={errorText}>{error}</p>}
-      {message && (
-        <p role="status" className={message.warn ? "text-sm text-amber-700" : "text-sm text-gray-600"}>
-          {message.text}
-        </p>
-      )}
-    </form>
-  );
-}
+const chip = "inline-flex min-h-9 flex-none items-center gap-1.5 rounded-full border px-3.5 text-[13.5px] font-semibold";
+const chipOn = "border-primary bg-primary text-primary-foreground";
+const chipOff = "border-input bg-background text-secondary-foreground hover:bg-muted";
 
 // Tagged, or a candidate for a name the tagger could not settle ("Alex" with two Alexes).
 const about = (n: NoteWithTags, studentId: string) =>
   n.students.some((s) => s.studentId === studentId) || n.mentions.some((m) => m.candidateIds.includes(studentId));
 
-// Every note, whatever its class: capture is class-less. Each note shows its class, or "unassigned". The filters work on
-// the loaded list; the server's ?classId is deliberately unused, since a student filter has
-// no server equivalent and the count should update without a round trip.
+// Every note, whatever its class: capture is class-less. On a phone, /notes is the Record
+// screen and the feed is /notes/feed; on a laptop both show the feed under a capture card.
+// One component serves both URLs (the route is /notes/*), so a recording carries on when the
+// phone moves between them. The filters work on the loaded list; the server's ?classId is
+// deliberately unused, since a student filter has no server equivalent.
 export default function NotesView({ classes }: { classes: ClassRow[] }) {
-  const [notes, setNotes] = useState<NoteWithTags[]>([]);
-  const [roster, setRoster] = useState<RosterStudent[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const isLaptop = useIsLaptop();
+  const onFeed = useMatch("/notes/feed") !== null;
+  const home = !isLaptop && !onFeed;
+  const navigate = useNavigate();
+  const { notes, error, people, needsCount } = useNotes();
+  const [needsOnly, setNeedsOnly] = useState(false);
   const [classFilter, setClassFilter] = useState("");
   const [studentFilter, setStudentFilter] = useState("");
+  const [picking, setPicking] = useState(false);
+  // The phone's Saved sheet, and the note to fade in on the feed.
+  const [saved, setSaved] = useState<SavedNote | null>(null);
+  const [freshId, setFreshId] = useState<string | null>(null);
   // Fixed at mount: a heading that changed on a re-render past midnight would be no help.
   const [today] = useState(() => todayLabel.format(new Date()));
 
-  useEffect(() => {
-    // Notes and the rosters load independently, so the list renders even if names do not.
-    api<NoteWithTags[]>("/api/notes").then(setNotes).catch((e) => setError(messageOf(e)));
-    Promise.all(classes.map((c) => api<RosterStudent[]>(`/api/students?classId=${c.id}`)))
-      .then((rosters) => setRoster(rosters.flat()))
-      .catch((e) => setError(messageOf(e)));
-  }, [classes]);
+  const capture = useCapture({
+    onSaved: (s) => {
+      setFreshId(s.note.id);
+      if (!home) return false;
+      setSaved(s);
+      return true;
+    },
+  });
 
-  const classNames = new Map(classes.map((c) => [c.id, c.name]));
-  const people = new Map<string, Person>(roster.map((s) => [s.id, { name: `${s.firstName} ${s.lastName}`, classId: s.classId }]));
-  const option = (s: RosterStudent) => (
-    <option key={s.id} value={s.id}>
-      {s.lastName}, {s.firstName}
-    </option>
-  );
-
-  // Picking a class the chosen student is not in drops the student filter, not the notes.
-  function pickClass(id: string) {
-    setClassFilter(id);
-    if (id && studentFilter && people.get(studentFilter)?.classId !== id) setStudentFilter("");
+  if (home) {
+    return (
+      <>
+        <RecordHome
+          capture={capture}
+          notes={notes ?? []}
+          needsCount={needsCount}
+          onOpenNeeds={() => {
+            setNeedsOnly(true);
+            navigate("/notes/feed");
+          }}
+        />
+        <SavedSheet
+          saved={saved}
+          onClose={() => setSaved(null)}
+          onRecordAnother={
+            capture.recorder.supported
+              ? () => {
+                  setSaved(null);
+                  void capture.record();
+                }
+              : undefined
+          }
+        />
+      </>
+    );
   }
 
-  const shown = notes.filter((n) => (!classFilter || n.classId === classFilter) && (!studentFilter || about(n, studentFilter)));
+  const all = notes ?? [];
+  const needs = needsOnly && needsCount > 0;
+  const shown = all.filter((n) => (!needs || n.mentions.length > 0) && (!classFilter || n.classId === classFilter) && (!studentFilter || about(n, studentFilter)));
   const studentName = people.get(studentFilter)?.name;
-  const empty = notes.length === 0 ? "No notes yet." : studentName ? `No notes about ${studentName} yet.` : `No notes in ${classNames.get(classFilter)} yet.`;
+  const anyFilter = needs || classFilter || studentFilter;
+  const clearFilters = () => {
+    setNeedsOnly(false);
+    setClassFilter("");
+    setStudentFilter("");
+  };
+  // Picking a class the chosen student is not in drops the student filter, not the notes.
+  const pickClass = (id: string) => {
+    const next = classFilter === id ? "" : id;
+    setClassFilter(next);
+    if (next && studentFilter && people.get(studentFilter)?.classId !== next) setStudentFilter("");
+  };
+  const filterable = [...people.entries()]
+    .filter(([, p]) => !p.left && (!classFilter || p.classId === classFilter))
+    .sort(([, a], [, b]) => a.name.localeCompare(b.name))
+    .map(([id, p]) => ({ id, name: p.name, className: classes.find((c) => c.id === p.classId)?.name ?? "" }));
 
   return (
-    <>
+    <section>
+      {!isLaptop && (
+        <div className="mb-1.5">
+          <BackLink to="/notes">Record</BackLink>
+        </div>
+      )}
       <PageTitle eyebrow={today}>Notes</PageTitle>
-      <NoteForm
-        onCreated={(note) => setNotes((prev) => [note, ...prev])}
-        onReplaced={(gone, made) => setNotes((prev) => [...made, ...prev.filter((n) => !gone.includes(n.id))])}
-      />
+      {isLaptop && <CaptureCard capture={capture} />}
       {error && <p className={`mt-4 ${errorText}`}>{error}</p>}
 
-      <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
-        <select aria-label="Filter by class" className={input} value={classFilter} onChange={(e) => pickClass(e.target.value)}>
-          <option value="">All classes</option>
-          {classes.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <select aria-label="Filter by student" className={input} value={studentFilter} onChange={(e) => setStudentFilter(e.target.value)}>
-          <option value="">All students</option>
-          {classes
-            .filter((c) => !classFilter || c.id === classFilter)
-            .map((c) => (
-              <optgroup key={c.id} label={c.name}>
-                {roster.filter((s) => s.classId === c.id).map(option)}
-              </optgroup>
-            ))}
-        </select>
-        <span className="text-gray-500">{plural(shown.length, "note")}</span>
+      <div className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 py-0.5 [scrollbar-width:none] md:mx-0 md:mt-[22px] md:flex-wrap md:px-0">
+        {needsCount > 0 && (
+          <button
+            type="button"
+            aria-pressed={needs}
+            onClick={() => setNeedsOnly(!needs)}
+            className={cn(chip, "font-bold", needs ? "border-sunny-dot bg-sunny-dot text-sunny-ink" : "border-sunny-line/60 bg-sunny-soft text-sunny-ink")}
+          >
+            <AlertCircle className="size-4" aria-hidden />
+            Needs you · {needsCount}
+          </button>
+        )}
+        <button type="button" aria-pressed={!anyFilter} onClick={clearFilters} className={cn(chip, !anyFilter ? chipOn : chipOff)}>
+          All notes
+        </button>
+        {classes.map((c) => (
+          <button key={c.id} type="button" aria-pressed={classFilter === c.id} onClick={() => pickClass(c.id)} className={cn(chip, classFilter === c.id ? chipOn : chipOff)}>
+            {c.name}
+          </button>
+        ))}
+        <button type="button" aria-haspopup="dialog" onClick={() => setPicking(true)} className={cn(chip, "pr-3", studentFilter ? chipOn : chipOff)}>
+          {studentName ?? "Any student"}
+          <ChevronDown className="size-4" aria-hidden />
+        </button>
       </div>
 
-      <ul className="mt-2 divide-y divide-gray-200">
-        {shown.map((n) => (
-          <NoteItem
-            key={n.id}
-            note={n}
-            badge={
-              <span className={n.classId ? "rounded bg-gray-100 px-1.5 py-0.5 text-gray-700" : "text-gray-400"}>
-                {n.classId ? (classNames.get(n.classId) ?? "class") : "unassigned"}
-              </span>
-            }
-          >
-            <Tags
-              note={n}
-              people={people}
-              classNames={classNames}
-              onChange={(updated) => setNotes((prev) => prev.map((x) => (x.id === updated.id ? updated : x)))}
-            />
-          </NoteItem>
-        ))}
-        {shown.length === 0 && <li className="py-3 text-sm text-gray-500">{empty}</li>}
-      </ul>
-    </>
+      {notes === null && !error && <p className="mt-6 text-sm text-muted-foreground">Loading…</p>}
+      {groupByDay(shown).map((g) => (
+        <div key={g.key}>
+          <h2 className="mt-[26px] mb-2.5 text-[13px] font-bold tracking-[0.02em] text-muted-foreground">{g.label}</h2>
+          <ul className="flex flex-col gap-3">
+            {g.notes.map((n) => (
+              <NoteItem
+                key={n.id}
+                note={n}
+                timeOnly
+                fresh={n.id === freshId}
+                badge={
+                  n.classId && (
+                    <span className="truncate rounded-full px-2.5 py-[3px] text-xs font-bold" style={{ background: colourFor(n.classId).bg, color: colourFor(n.classId).fg }}>
+                      {classes.find((c) => c.id === n.classId)?.name ?? "Class"}
+                    </span>
+                  )
+                }
+              >
+                <Tags note={n} />
+              </NoteItem>
+            ))}
+          </ul>
+        </div>
+      ))}
+      {notes !== null && shown.length === 0 && (
+        <div className="mt-7 rounded-[22px] border-2 border-dashed border-input px-5 py-9 text-center">
+          <p className="text-[15px] font-bold text-secondary-foreground">
+            {all.length === 0 ? "No notes yet" : studentName ? `No notes about ${studentName} here yet` : "Nothing matches these filters"}
+          </p>
+          {anyFilter && (
+            <Button type="button" variant="soft" onClick={clearFilters} className="mt-3">
+              Show all notes
+            </Button>
+          )}
+        </div>
+      )}
+
+      {!isLaptop && capture.recorder.supported && (
+        <button
+          type="button"
+          aria-label="Record a voice note"
+          onClick={() => {
+            navigate("/notes");
+            void capture.record();
+          }}
+          className="fixed right-[18px] bottom-[calc(78px+max(20px,env(safe-area-inset-bottom)))] z-30 inline-flex size-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-pop"
+        >
+          <Mic className="size-7" aria-hidden />
+        </button>
+      )}
+
+      <StudentPicker
+        open={picking}
+        onOpenChange={setPicking}
+        title="Filter by student"
+        students={filterable}
+        selected={studentFilter || undefined}
+        allowAny
+        onPick={(id) => setStudentFilter(id ?? "")}
+      />
+    </section>
   );
 }

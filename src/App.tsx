@@ -6,6 +6,8 @@ import type { ClassRow } from "../worker/db/schema";
 import { api, messageOf } from "./api";
 import ClassesPage from "./classes/ClassesPage";
 import ClassView, { StudentView } from "./classes/ClassView";
+import { NotesProvider } from "./notes/NotesProvider";
+import { useNotes } from "./notes/notesStore";
 import NotesView from "./notes/NotesView";
 import ReportsPage from "./reports/ReportsPage";
 import { errorText } from "./ui";
@@ -20,6 +22,15 @@ const tabs: { to: string; label: string; icon: LucideIcon }[] = [
 ];
 
 const DEMO_NOTICE = "Demo with synthetic students. No real student data.";
+// A stable empty list while classes load, so the notes store does not refetch rosters twice.
+const NO_CLASSES: ClassRow[] = [];
+
+// The count of notes with a name to settle, on the Notes tab wherever the teacher is.
+function useNeedsBadge(to: string) {
+  const { needsCount } = useNotes();
+  return to === "/notes" && needsCount > 0 ? needsCount : 0;
+}
+const needsLabel = (n: number) => `, ${n} ${n === 1 ? "needs" : "need"} you`;
 
 const STORED_CLASS_KEY = "throughline.classId";
 // Storage can be blocked (private mode, embedded pages); remembering the class is a nicety, not a need.
@@ -56,39 +67,64 @@ function SideNav() {
   return (
     <nav aria-label="Main" className="sticky top-0 hidden h-svh w-62 flex-none flex-col gap-1 border-r border-border px-4 pt-7 pb-5 md:flex">
       <Wordmark />
-      {tabs.map(({ to, label, icon: Icon }) => (
-        <NavLink
-          key={to}
-          to={to}
-          className={({ isActive }) =>
-            cn("flex min-h-[46px] items-center gap-3 rounded-[14px] px-3 text-[15px]", isActive ? "bg-accent font-bold text-accent-foreground" : "font-semibold text-secondary-foreground hover:bg-muted")
-          }
-        >
-          <Icon className="size-5" aria-hidden />
-          {label}
-        </NavLink>
+      {tabs.map((tab) => (
+        <SideTab key={tab.to} {...tab} />
       ))}
       <p className="mt-auto rounded-[14px] bg-muted px-3.5 py-3 text-[12.5px] leading-normal text-muted-foreground">{DEMO_NOTICE}</p>
     </nav>
   );
 }
 
+function SideTab({ to, label, icon: Icon }: (typeof tabs)[number]) {
+  const badge = useNeedsBadge(to);
+  return (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        cn("flex min-h-[46px] items-center gap-3 rounded-[14px] px-3 text-[15px]", isActive ? "bg-accent font-bold text-accent-foreground" : "font-semibold text-secondary-foreground hover:bg-muted")
+      }
+    >
+      <Icon className="size-5" aria-hidden />
+      {label}
+      {badge > 0 && (
+        <span className="ml-auto inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-sunny-line px-[7px] text-xs font-bold text-sunny-ink">
+          <span aria-hidden>{badge}</span>
+          <span className="sr-only">{needsLabel(badge)}</span>
+        </span>
+      )}
+    </NavLink>
+  );
+}
+
 function TabBar() {
   return (
     <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-30 flex justify-around border-t border-border bg-background px-2 pt-1.5 pb-[max(20px,env(safe-area-inset-bottom))] md:hidden">
-      {tabs.map(({ to, label, icon: Icon }) => (
-        <NavLink key={to} to={to} className={({ isActive }) => cn("flex min-h-[52px] flex-1 flex-col items-center gap-[3px] pt-1 text-xs", isActive ? "font-extrabold text-accent-foreground" : "font-semibold text-muted-foreground")}>
-          {({ isActive }) => (
-            <>
-              <span className={cn("inline-flex h-8 w-15 items-center justify-center rounded-full", isActive && "bg-accent")}>
-                <Icon className="size-5" aria-hidden />
-              </span>
-              {label}
-            </>
-          )}
-        </NavLink>
+      {tabs.map((tab) => (
+        <BottomTab key={tab.to} {...tab} />
       ))}
     </nav>
+  );
+}
+
+function BottomTab({ to, label, icon: Icon }: (typeof tabs)[number]) {
+  const badge = useNeedsBadge(to);
+  return (
+    <NavLink to={to} className={({ isActive }) => cn("relative flex min-h-[52px] flex-1 flex-col items-center gap-[3px] pt-1 text-xs", isActive ? "font-extrabold text-accent-foreground" : "font-semibold text-muted-foreground")}>
+      {({ isActive }) => (
+        <>
+          <span className={cn("inline-flex h-8 w-15 items-center justify-center rounded-full", isActive && "bg-accent")}>
+            <Icon className="size-5" aria-hidden />
+          </span>
+          {label}
+          {badge > 0 && (
+            <span className="absolute top-0 left-[calc(50%+14px)] inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-background bg-sunny-dot px-[5px] text-[11px] font-extrabold text-sunny-ink">
+              <span aria-hidden>{badge}</span>
+              <span className="sr-only">{needsLabel(badge)}</span>
+            </span>
+          )}
+        </>
+      )}
+    </NavLink>
   );
 }
 
@@ -141,53 +177,63 @@ function App() {
     if (shownReportsId) storeClass(shownReportsId);
   }, [shownReportsId]);
   const unknownReportsUrl = !!urlReportsId && !!classes && !classes.some((c) => c.id === urlReportsId);
+  // The phone's Record screen fills the width and height itself (on a laptop /notes is the feed).
+  const recordHome = useMatch("/notes") !== null;
 
   return (
-    <div className="min-h-svh md:flex">
-      <SideNav />
-      <main className="min-w-0 flex-1 pb-24 md:pb-0">
-        <div className={cn("mx-auto px-4 pt-[18px] pb-7 md:px-12 md:pt-10 md:pb-[72px]", onReports ? "max-w-[1160px]" : "max-w-[780px]")}>
-          {error && <p className={`mb-4 ${errorText}`}>{error}</p>}
-          {classes === null ? (
-            !error && <p className="text-sm text-muted-foreground">Loading…</p>
-          ) : (
-            <Routes>
-              <Route path="/" element={<Navigate to="/notes" replace />} />
-              <Route path="/notes" element={<NotesView classes={classes} />} />
-              <Route path="/classes" element={<ClassesPage classes={classes} onCreated={(c) => setClasses((prev) => [...(prev ?? []), c])} />} />
-              <Route path="/classes/:classId" element={<ClassView classes={classes} onClassesChanged={loadClasses} />} />
-              <Route path="/classes/:classId/students/:studentId" element={<StudentView classes={classes} />} />
-              {/* The Reports page itself renders below, outside the routes, so it stays mounted. */}
-              <Route path="/reports" element={reportsCls && <Navigate to={`/reports/${reportsCls.id}`} replace />} />
-              <Route path="/reports/:classId" element={unknownReportsUrl && <Navigate to="/reports" replace />} />
-              <Route path="*" element={<Navigate to="/notes" replace />} />
-            </Routes>
-          )}
+    <NotesProvider classes={classes ?? NO_CLASSES}>
+      <div className="min-h-svh md:flex">
+        <SideNav />
+        <main className={cn("min-w-0 flex-1 md:pb-0", !recordHome && "pb-24")}>
+          <div
+            className={cn(
+              "mx-auto px-4 pt-[18px] pb-7 md:px-12 md:pt-10 md:pb-[72px]",
+              onReports ? "max-w-[1160px]" : "max-w-[780px]",
+              recordHome && "max-md:max-w-none max-md:p-0",
+            )}
+          >
+            {error && <p className={`mb-4 ${errorText}`}>{error}</p>}
+            {classes === null ? (
+              !error && <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : (
+              <Routes>
+                <Route path="/" element={<Navigate to="/notes" replace />} />
+                <Route path="/notes/*" element={<NotesView classes={classes} />} />
+                <Route path="/classes" element={<ClassesPage classes={classes} onCreated={(c) => setClasses((prev) => [...(prev ?? []), c])} />} />
+                <Route path="/classes/:classId" element={<ClassView classes={classes} onClassesChanged={loadClasses} />} />
+                <Route path="/classes/:classId/students/:studentId" element={<StudentView classes={classes} />} />
+                {/* The Reports page itself renders below, outside the routes, so it stays mounted. */}
+                <Route path="/reports" element={reportsCls && <Navigate to={`/reports/${reportsCls.id}`} replace />} />
+                <Route path="/reports/:classId" element={unknownReportsUrl && <Navigate to="/reports" replace />} />
+                <Route path="*" element={<Navigate to="/notes" replace />} />
+              </Routes>
+            )}
 
-          {reportsCls && classes && (
-            <div hidden={!onReports}>
-              <ReportsHeader classes={classes} current={reportsCls.id} />
-              <ReportsPage key={reportsCls.id} cls={reportsCls} active={onReports} />
-            </div>
-          )}
-          {onReports && classes?.length === 0 && (
-            <section>
-              <PageTitle>Reports</PageTitle>
-              <p className="mt-2 text-[15px] text-muted-foreground">
-                Reports are made per class.{" "}
-                <Link to="/classes" className="font-bold text-accent-foreground hover:underline">
-                  Create a class
-                </Link>{" "}
-                to start.
-              </p>
-            </section>
-          )}
+            {reportsCls && classes && (
+              <div hidden={!onReports}>
+                <ReportsHeader classes={classes} current={reportsCls.id} />
+                <ReportsPage key={reportsCls.id} cls={reportsCls} active={onReports} />
+              </div>
+            )}
+            {onReports && classes?.length === 0 && (
+              <section>
+                <PageTitle>Reports</PageTitle>
+                <p className="mt-2 text-[15px] text-muted-foreground">
+                  Reports are made per class.{" "}
+                  <Link to="/classes" className="font-bold text-accent-foreground hover:underline">
+                    Create a class
+                  </Link>{" "}
+                  to start.
+                </p>
+              </section>
+            )}
 
-          <p className="mt-10 text-center text-xs text-muted-foreground md:hidden">{DEMO_NOTICE}</p>
-        </div>
-      </main>
-      <TabBar />
-    </div>
+            {!recordHome && <p className="mt-10 text-center text-xs text-muted-foreground md:hidden">{DEMO_NOTICE}</p>}
+          </div>
+        </main>
+        <TabBar />
+      </div>
+    </NotesProvider>
   );
 }
 

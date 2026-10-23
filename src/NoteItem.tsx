@@ -1,25 +1,31 @@
 import type { ReactNode } from "react";
-import type { Note, NoteKind } from "../worker/db/schema";
-import { dateFormat, dateTimeFormat } from "./ui";
+import type { Note } from "../worker/db/schema";
+import { cn } from "@/lib/utils";
+import { kinds, noteWhen } from "./noteKinds";
 
-// Kinds that get a pill after the time; a plain text note gets none.
-const pills: Partial<Record<NoteKind, string>> = { voice: "voice", progress_report: "report" };
-
-// One note in a list. `badge` adds one more pill (the notes page uses it for the class);
-// `children` render under the body (the notes page puts the student tags there). A note cut
-// from a document has a day, not a time.
-export default function NoteItem({ note, badge, children }: { note: Note; badge?: ReactNode; children?: ReactNode }) {
-  const when = new Date(note.notedAt);
-  const pill = pills[note.kind];
+// One note as a card. `badge` sits at the right of the header (the notes page puts the class
+// there); `children` render under the body (the notes page puts the student tags there).
+// `fresh` fades in a note saved a moment ago.
+export default function NoteItem({ note, badge, timeOnly, fresh, children }: { note: Note; badge?: ReactNode; timeOnly?: boolean; fresh?: boolean; children?: ReactNode }) {
+  const { label, icon: Icon, tile } = kinds[note.kind];
   return (
-    <li className="py-3">
-      <div className="flex items-center gap-2 text-xs text-gray-500">
-        <time dateTime={note.notedAt}>{note.kind === "progress_report" ? dateFormat.format(when) : dateTimeFormat.format(when)}</time>
-        {pill && <span className="rounded bg-gray-100 px-1.5 py-0.5 text-gray-700">{pill}</span>}
-        {note.sourceName && <span className="min-w-0 truncate">from {note.sourceName}</span>}
+    <li className={cn("rounded-[20px] border bg-card px-4 pt-4 pb-3.5 shadow-xs", fresh && "animate-in duration-500 fade-in slide-in-from-bottom-2")}>
+      <div className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
+        <span className={cn("inline-flex size-7 flex-none items-center justify-center rounded-[9px]", tile)}>
+          <Icon className="size-4" aria-hidden />
+        </span>
+        <span className="font-bold text-secondary-foreground">{label}</span>
+        <span aria-hidden>·</span>
+        <time dateTime={note.notedAt}>{noteWhen(note, timeOnly)}</time>
+        <span className="flex-1" />
         {badge}
       </div>
-      <p className="mt-1 whitespace-pre-wrap">{note.body}</p>
+      {note.sourceName && (
+        <p className="mt-2.5 truncate text-[12.5px] text-muted-foreground">
+          From <span className="font-semibold text-secondary-foreground">{note.sourceName}</span>
+        </p>
+      )}
+      <p className="mt-2.5 text-[15px] leading-[1.55] whitespace-pre-wrap">{note.body}</p>
       {children}
     </li>
   );
