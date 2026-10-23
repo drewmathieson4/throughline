@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { ClassRow } from "../db/schema";
-import { CLASS_B_ID, SEED_CLASS_ID, jsonInit, setupTestDb } from "../test-db";
+import { CLASS_B_ID, CLASS_C_ID, SEED_CLASS_ID, jsonInit, setupTestDb } from "../test-db";
 
 const db = setupTestDb();
 
@@ -13,7 +13,7 @@ test("POST /api/classes creates a class and GET lists it after the seed", async 
   expect(created).toMatchObject({ name: "Period 5", termStart: "2026-09-01", termEnd: null });
 
   const all = await db.json<ClassRow[]>("/api/classes");
-  expect(all.map((c) => c.id)).toEqual([SEED_CLASS_ID, CLASS_B_ID, created.id]);
+  expect(all.map((c) => c.id)).toEqual([SEED_CLASS_ID, CLASS_B_ID, CLASS_C_ID, created.id]);
 
   // Tab, bell, Excel's BOM and a zero-width space: all cleaned out of a pasted name.
   const messy = await db.json<ClassRow>("/api/classes", jsonInit("POST", { name: "﻿Period\t3\u0007​" }));

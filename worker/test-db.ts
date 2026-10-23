@@ -8,10 +8,15 @@ import { migrate } from "drizzle-orm/d1/migrator";
 import app from "./index";
 import seed from "../scripts/seed-dev.sql?raw";
 
-export const SEED_CLASS_ID = "11111111-1111-4111-8111-111111111111"; // Period 3 Humanities, 9 students
-export const CLASS_B_ID = "11111111-1111-4111-8111-111111112222"; // B Block Humanities, 3 students
-export const SEED_STUDENT_IDS = Array.from({ length: 8 }, (_, i) => `22222222-2222-4222-8222-2222222222${String(i + 1).padStart(2, "0")}`);
-// Seeded students by first name (see scripts/seed-dev.sql). Alex Ruiz, Nola, Cassius are in B Block.
+// The seeded roster (scripts/seed-dev.sql): three classes, 20 students. Tests that count rows
+// derive from these so a roster change is a one-line edit here.
+export const SEED_CLASS_ID = "11111111-1111-4111-8111-111111111111"; // Period 3 Humanities
+export const CLASS_B_ID = "11111111-1111-4111-8111-111111112222"; // B Block Humanities
+export const CLASS_C_ID = "11111111-1111-4111-8111-111111113333"; // Period 5 Humanities
+export const SEED_CLASS_NAMES = ["B Block Humanities", "Period 3 Humanities", "Period 5 Humanities"]; // sorted
+export const PERIOD_3_COUNT = 7;
+export const SEED_STUDENT_COUNT = 20;
+// Seeded students by first name; the class of each is in the seed file.
 export const STUDENT = {
   avery: "22222222-2222-4222-8222-222222222201",
   rowan: "22222222-2222-4222-8222-222222222202",

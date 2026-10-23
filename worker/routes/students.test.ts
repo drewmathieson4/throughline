@@ -4,7 +4,7 @@ import type { Student } from "../db/schema";
 import type { ClassRow } from "../db/schema";
 import type { RosterImportResult, RosterStudent, StudentDetail } from "../api-types";
 import { suggestMapping } from "../roster-model";
-import { CLASS_B_ID, NOTE_ID, SEED_CLASS_ID, SEED_STUDENT_IDS, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb } from "../test-db";
+import { CLASS_B_ID, NOTE_ID, PERIOD_3_COUNT, SEED_CLASS_ID, SEED_CLASS_NAMES, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb } from "../test-db";
 
 // The model fallback for column mapping is mocked: no network, and each test says what it answers.
 vi.mock(import("../roster-model"), async (importOriginal) => ({ ...(await importOriginal()), suggestMapping: vi.fn() }));
@@ -25,31 +25,31 @@ test("GET /api/students lists the roster by last name, counting confirmed and pe
     db.insertNote(NOTE_ID(1), SEED_CLASS_ID, "2026-10-01T00:00:00.000Z"),
     db.insertNote(NOTE_ID(2), SEED_CLASS_ID, "2026-10-02T00:00:00.000Z"),
     db.insertNote(NOTE_ID(3), SEED_CLASS_ID, "2026-10-03T00:00:00.000Z"),
-    db.tagNote(NOTE_ID(1), SEED_STUDENT_IDS[0], 1),
-    db.tagNote(NOTE_ID(2), SEED_STUDENT_IDS[0], 0),
-    db.tagNote(NOTE_ID(3), SEED_STUDENT_IDS[0], 0),
+    db.tagNote(NOTE_ID(1), STUDENT.avery, 1),
+    db.tagNote(NOTE_ID(2), STUDENT.avery, 0),
+    db.tagNote(NOTE_ID(3), STUDENT.avery, 0),
   ]);
   const res = await roster(SEED_CLASS_ID);
   expect(res.status).toBe(200);
   const rows = (await res.json()) as RosterStudent[];
-  expect(rows).toHaveLength(9);
+  expect(rows).toHaveLength(PERIOD_3_COUNT);
   expect(rows.map((r) => r.lastName)).toEqual([...rows.map((r) => r.lastName)].sort());
-  expect(rows.find((r) => r.id === SEED_STUDENT_IDS[0])).toMatchObject({ noteCount: 1, pendingCount: 2 });
-  expect(rows.filter((r) => r.noteCount === 0 && r.pendingCount === 0)).toHaveLength(8);
+  expect(rows.find((r) => r.id === STUDENT.avery)).toMatchObject({ noteCount: 1, pendingCount: 2 });
+  expect(rows.filter((r) => r.noteCount === 0 && r.pendingCount === 0)).toHaveLength(PERIOD_3_COUNT - 1);
 });
 
 test("GET /api/students sorts by last name ignoring case and accents", async () => {
   await post({ classId: SEED_CLASS_ID, firstName: "ana", lastName: "de la cruz" });
   await post({ classId: SEED_CLASS_ID, firstName: "Luis", lastName: "Álvarez" });
   const rows = await rosterJson();
-  expect(rows.map((r) => r.lastName).slice(0, 4)).toEqual(["Álvarez", "Ashby", "Castellane", "de la cruz"]);
+  expect(rows.map((r) => r.lastName).slice(0, 4)).toEqual(["Álvarez", "Castellane", "de la cruz", "Finchley"]);
 });
 
 test("GET /api/students keeps students who left, with leftAt set", async () => {
-  await patch(SEED_STUDENT_IDS[0], { leftAt: "2026-10-15" });
+  await patch(STUDENT.avery, { leftAt: "2026-10-15" });
   const rows = await rosterJson();
-  expect(rows).toHaveLength(9);
-  expect(rows.find((r) => r.id === SEED_STUDENT_IDS[0])?.leftAt).toBe("2026-10-15");
+  expect(rows).toHaveLength(PERIOD_3_COUNT);
+  expect(rows.find((r) => r.id === STUDENT.avery)?.leftAt).toBe("2026-10-15");
 });
 
 test("GET /api/students 404s for an unknown class and 400s without a uuid", async () => {
@@ -78,14 +78,14 @@ test("GET /api/students/:id returns the student and the notes tagged to them, ne
     db.insertNote(older, SEED_CLASS_ID, "2026-10-01T00:00:00.000Z"),
     db.insertNote(newer, SEED_CLASS_ID, "2026-10-05T00:00:00.000Z"),
     db.insertNote(other, SEED_CLASS_ID, "2026-10-06T00:00:00.000Z"),
-    db.tagNote(older, SEED_STUDENT_IDS[0], 1),
-    db.tagNote(newer, SEED_STUDENT_IDS[0], 0),
-    db.tagNote(other, SEED_STUDENT_IDS[1], 1),
+    db.tagNote(older, STUDENT.avery, 1),
+    db.tagNote(newer, STUDENT.avery, 0),
+    db.tagNote(other, STUDENT.rowan, 1),
   ]);
-  const res = await get(SEED_STUDENT_IDS[0]);
+  const res = await get(STUDENT.avery);
   expect(res.status).toBe(200);
   const body = (await res.json()) as StudentDetail;
-  expect(body.student.id).toBe(SEED_STUDENT_IDS[0]);
+  expect(body.student.id).toBe(STUDENT.avery);
   expect(body.notes.map((n) => [n.id, n.confirmed])).toEqual([[newer, 0], [older, 1]]);
 });
 
@@ -95,7 +95,7 @@ test("GET /api/students/:id 404s for an unknown id", async () => {
 });
 
 test("PATCH /api/students/:id renames, marks as left, and reactivates", async () => {
-  const id = SEED_STUDENT_IDS[0];
+  const id = STUDENT.avery;
   let row = await patchJson(id, { lastName: " Quill-Smith " });
   expect(row).toMatchObject({ firstName: "Avery", lastName: "Quill-Smith" });
 
@@ -107,12 +107,12 @@ test("PATCH /api/students/:id renames, marks as left, and reactivates", async ()
 });
 
 test("PATCH /api/students/:id rejects empty patches, bad dates, and unknown ids", async () => {
-  expect((await patch(SEED_STUDENT_IDS[0], {})).status).toBe(400);
-  expect((await patch(SEED_STUDENT_IDS[0], { leftAt: "soon" })).status).toBe(400);
-  const typo = await patch(SEED_STUDENT_IDS[0], { leftAt: "2062-10-22" });
+  expect((await patch(STUDENT.avery, {})).status).toBe(400);
+  expect((await patch(STUDENT.avery, { leftAt: "soon" })).status).toBe(400);
+  const typo = await patch(STUDENT.avery, { leftAt: "2062-10-22" });
   expect(typo.status).toBe(400);
   expect(await typo.json()).toEqual({ error: "leftAt is in the future" });
-  expect((await patch(SEED_STUDENT_IDS[0], { firstName: "" })).status).toBe(400);
+  expect((await patch(STUDENT.avery, { firstName: "" })).status).toBe(400);
   expect((await patch(UNKNOWN_ID, { firstName: "X" })).status).toBe(404);
 });
 
@@ -146,18 +146,18 @@ test("import: reads the header, adds the new students with aliases, skips the en
   expect(names(cls.existing)).toEqual(["Avery Quill", "Sable Thorncroft"]);
   expect(out.skipped).toEqual([]);
   const rows = await rosterJson();
-  expect(rows).toHaveLength(11);
+  expect(rows).toHaveLength(PERIOD_3_COUNT + 2);
   expect(rows.find((r) => r.lastName === "Brook")).toMatchObject({ firstName: "Tamsin", aliases: ["Tam"], classId: SEED_CLASS_ID, leftAt: null });
   expect(rows.find((r) => r.lastName === "Holloway")?.aliases).toEqual([]);
 
   const again = only(await importJson(headered));
   expect(again.added).toEqual([]);
   expect(again.existing).toHaveLength(4);
-  expect(await rosterJson()).toHaveLength(11);
+  expect(await rosterJson()).toHaveLength(PERIOD_3_COUNT + 2);
 });
 
 test("import: a student who left still counts as enrolled", async () => {
-  await patch(SEED_STUDENT_IDS[0], { leftAt: "2026-10-15" });
+  await patch(STUDENT.avery, { leftAt: "2026-10-15" });
   const cls = only(await importJson([["Name"], ["Avery Quill"]]));
   expect(cls.added).toEqual([]);
   expect(names(cls.existing)).toEqual(["Avery Quill"]);
@@ -166,7 +166,7 @@ test("import: a student who left still counts as enrolled", async () => {
 test("import: more rows than one insert statement can hold all land", async () => {
   const grid = [["First", "Last"], ...Array.from({ length: 40 }, (_, i) => ["Tamsin", `Brook${"e".repeat(i)}`])];
   expect(only(await importJson(grid)).added).toHaveLength(40);
-  expect(await rosterJson()).toHaveLength(49);
+  expect(await rosterJson()).toHaveLength(PERIOD_3_COUNT + 40);
 });
 
 test("import: a lone Last, First column needs no header and no model", async () => {
@@ -211,10 +211,10 @@ test("import: finds the table inside a metadata-laden export and creates a class
   ]);
   expect(out.skipped).toEqual([]);
   const classes = await db.json<ClassRow[]>("/api/classes");
-  expect(classes.map((k) => k.name).sort()).toEqual(["B Block Humanities", "Grade 7 - A", "Grade 7 - B", "Period 3 Humanities"]);
+  expect(classes.map((k) => k.name).sort()).toEqual([...SEED_CLASS_NAMES, "Grade 7 - A", "Grade 7 - B"].sort());
   const a = classes.find((k) => k.name === "Grade 7 - A")!;
   expect(names(await db.json<RosterStudent[]>(rosterUrl(a.id)))).toEqual(["Tamsin Brook", "Mira Holloway"]);
-  expect(await rosterJson()).toHaveLength(9); // the class on screen is untouched
+  expect(await rosterJson()).toHaveLength(PERIOD_3_COUNT); // the class on screen is untouched
 
   // Same file again: the classes are matched by name, nobody is added.
   const again = await importJson(sectioned);
@@ -222,7 +222,7 @@ test("import: finds the table inside a metadata-laden export and creates a class
     ["Grade 7 - A", false, 0, 2],
     ["Grade 7 - B", false, 0, 2],
   ]);
-  expect(await db.json<ClassRow[]>("/api/classes")).toHaveLength(4);
+  expect(await db.json<ClassRow[]>("/api/classes")).toHaveLength(SEED_CLASS_NAMES.length + 2);
 });
 
 test("import: a section column naming one class goes to the class on screen, and matches an existing class by name ignoring case", async () => {
@@ -248,7 +248,7 @@ test("import: when the rules give up and there is no key, nothing is added", asy
   const out = await importJson(ambiguous);
   expect(out).toEqual({ source: "none", classes: [], skipped: [] });
   expect(suggestMock).not.toHaveBeenCalled();
-  expect(await rosterJson()).toHaveLength(9);
+  expect(await rosterJson()).toHaveLength(PERIOD_3_COUNT);
 });
 
 test("import: with a key the model is asked, and its mapping is used", async () => {
@@ -259,7 +259,7 @@ test("import: with a key the model is asked, and its mapping is used", async () 
   expect(names(cls.added)).toEqual(["Tamsin Brook"]);
   expect(names(cls.existing)).toEqual(["Avery Quill"]);
   expect(suggestMock.mock.calls[0]![0].sample).toEqual(ambiguous);
-  expect(await rosterJson()).toHaveLength(10);
+  expect(await rosterJson()).toHaveLength(PERIOD_3_COUNT + 1);
 });
 
 test("import: a model failure, or a model answer without a name column, adds nothing", async () => {
@@ -267,7 +267,7 @@ test("import: a model failure, or a model answer without a name column, adds not
   expect(await quietErrors(() => importJson(ambiguous, keyed()))).toMatchObject({ source: "none", classes: [] });
   suggestMock.mockResolvedValueOnce({ hasHeader: false, roles: ["ignore", "preferred"] });
   expect(await importJson(ambiguous, keyed())).toMatchObject({ source: "none", classes: [] });
-  expect(await rosterJson()).toHaveLength(9);
+  expect(await rosterJson()).toHaveLength(PERIOD_3_COUNT);
 });
 
 test("import: rejects a bad request shape and an unknown class", async () => {

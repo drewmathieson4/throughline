@@ -1,6 +1,6 @@
 import { expect, test, vi } from "vitest";
 import app from "../index";
-import { CLASS_B_ID, SEED_CLASS_ID as CLASS_ID, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb } from "../test-db";
+import { CLASS_B_ID, SEED_CLASS_ID as CLASS_ID, SEED_CLASS_NAMES, SEED_STUDENT_COUNT, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb } from "../test-db";
 import { tagNote, type TagResult } from "../tagging";
 import type { NoteWithTags, TaggedNoteResponse as Created } from "../api-types";
 
@@ -185,10 +185,10 @@ test("POST /api/notes stores suggestions as unconfirmed with quotes, open mentio
   // The tagger saw every student in every class, aliases included, and the class list.
   const call = tagNoteMock.mock.calls[0]![0];
   expect(call.body).toBe(BODY);
-  expect(call.roster).toHaveLength(12);
+  expect(call.roster).toHaveLength(SEED_STUDENT_COUNT);
   expect(call.roster.find((s) => s.id === STUDENT.juniper)).toMatchObject({ classId: CLASS_ID, aliases: ["Juni"] });
   expect(call.roster.find((s) => s.id === STUDENT.alexRuiz)?.classId).toBe(CLASS_B_ID);
-  expect(call.classes.map((c) => c.name).sort()).toEqual(["B Block Humanities", "Period 3 Humanities"]);
+  expect(call.classes.map((c) => c.name).sort()).toEqual(SEED_CLASS_NAMES);
 
   const [listed] = await listOf(CLASS_ID);
   expect(listed).toMatchObject({ classId: CLASS_ID, students: created.students, mentions: created.mentions });
