@@ -17,7 +17,10 @@
     "db:migrate:remote": "wrangler d1 migrations apply throughline-db --remote",
     "db:seed:local": "wrangler d1 execute throughline-db --local --file=scripts/seed-dev.sql",
     "eval:tagging": "node --env-file=.dev.vars scripts/eval/run.ts",
-    "eval:generate": "node --env-file=.dev.vars scripts/eval/generate-cases.ts"
+    "eval:generate": "node --env-file=.dev.vars scripts/eval/generate-cases.ts",
+    "demo:generate": "node --env-file=.dev.vars scripts/demo/generate-notes.ts",
+    "demo:reset": "wrangler d1 execute throughline-db --local --command \"DELETE FROM notes\"",
+    "demo:load": "npm run demo:reset && node scripts/demo/load.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.136.0",

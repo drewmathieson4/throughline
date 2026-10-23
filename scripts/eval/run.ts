@@ -12,8 +12,8 @@
 import { parseArgs } from "node:util";
 import { writeFileSync } from "node:fs";
 import Anthropic from "@anthropic-ai/sdk";
-import { classLabels, collapse, tagNote, rosterLabels, type Effort, type TagResult } from "../../worker/tagging.ts";
-import { loadCases, loadRoster, messageOf, pool, type Case } from "./shared.ts";
+import { classLabels, collapse, tagNote, type Effort, type TagResult } from "../../worker/tagging.ts";
+import { candidateKey, labelMaps, loadCases, loadRoster, messageOf, pool, type Case } from "./shared.ts";
 
 const BAR = 0.9;
 const CONCURRENCY = 5;
@@ -32,9 +32,8 @@ const effort = args.effort as Effort;
 if (!["low", "medium", "high"].includes(effort)) throw new Error(`--effort must be low, medium, or high`);
 
 const { students: roster, classes } = loadRoster();
-const idByLabel = new Map([...rosterLabels(roster).entries()].map(([label, s]) => [label, s.id]));
+const { idByLabel, labelById } = labelMaps(roster);
 const classByLabel = classLabels(classes);
-const labelById = new Map([...idByLabel.entries()].map(([label, id]) => [id, label]));
 let cases = loadCases();
 if (args.category) cases = cases.filter((c) => c.category === args.category);
 if (args.limit) cases = cases.slice(0, Number(args.limit));
@@ -116,8 +115,6 @@ function score(c: Case, result: TagResult, ms: number): Scored {
   }
   const tagFP = [...got.keys()].filter((id) => !expected.has(id)).length;
 
-  // A mention is identified by who it could be, not by how the name was spelled.
-  const candidateKey = (ids: string[]) => [...new Set(ids)].sort().join("+");
   const expMen = new Set(
     c.expected.mentions.map((m) => {
       const ids = m.candidates.map((label) => idByLabel.get(label));

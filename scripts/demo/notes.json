@@ -1,0 +1,2884 @@
+[
+  {
+    "id": "bbh-01",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-01T17:40:00.000Z",
+    "note": "First day with B Block. Ran the name-tent activity and the 'artifact from home' share. Good energy overall, a few already finishing each other's sentences.",
+    "expected": {
+      "students": [],
+      "mentions": [],
+      "classMentioned": "B Block Humanities"
+    },
+    "rationale": "The note describes only the whole class, which it names, so no students are tagged."
+  },
+  {
+    "id": "p3h-01",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-01T17:45:00.000Z",
+    "note": "First day with Period 3. Good energy, loads of hands up for the 'what makes a civilisation' brainstorm. Need a seating plan before Thursday.",
+    "expected": {
+      "students": [],
+      "mentions": [],
+      "classMentioned": "Period 3 Humanities"
+    },
+    "rationale": "The note is about the whole class and names Period 3, with no student mentioned."
+  },
+  {
+    "id": "p5h-01",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-01T21:50:00.000Z",
+    "note": "First day with P5. Chatty bunch, but they actually listened through the whole syllabus walk-through. Seating chart needs a rethink by Thursday.",
+    "expected": {
+      "students": [],
+      "mentions": [],
+      "classMentioned": "Period 5 Humanities"
+    },
+    "rationale": "The note is only about the class as a whole, and 'P5' names Period 5 Humanities."
+  },
+  {
+    "id": "p3h-02",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-01T22:25:00.000Z",
+    "note": "Juniper Vale is new — moved here over summer. Very quiet, barely spoke in the brainstorm. Sable is the obvious buddy, she's patient with everyone. Seat them together.",
+    "expected": {
+      "students": [
+        {
+          "label": "Juniper Vale",
+          "quotes": [
+            "Juniper Vale is new — moved here over summer.",
+            "Very quiet, barely spoke in the brainstorm.",
+            "Seat them together."
+          ]
+        },
+        {
+          "label": "Sable Thorncroft",
+          "quotes": [
+            "Sable is the obvious buddy, she's patient with everyone.",
+            "Seat them together."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Juniper is named in full and Sable matches only Sable Thorncroft; the seating plan applies to both."
+  },
+  {
+    "id": "p3h-03",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-02T18:02:00.000Z",
+    "note": "Rowan talked through the entire map intro. Moved him twice. Not rude, just constant. Ro if you're reading this over my shoulder, no.",
+    "expected": {
+      "students": [
+        {
+          "label": "Rowan Pell",
+          "quotes": [
+            "Rowan talked through the entire map intro.",
+            "Moved him twice.",
+            "Not rude, just constant.",
+            "Ro if you're reading this over my shoulder, no."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Rowan is an exact first-name match and Ro is his listed alias."
+  },
+  {
+    "id": "bbh-02",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-02T18:05:00.000Z",
+    "note": "Alex Ruiz is new to the school this year, transferred in from out of state. Barely spoke during the artifact share but wrote a really thoughtful paragraph about his grandfather's compass. Check in with him privately tomorrow.",
+    "expected": {
+      "students": [
+        {
+          "label": "Alex Ruiz",
+          "quotes": [
+            "Alex Ruiz is new to the school this year, transferred in from out of state.",
+            "Barely spoke during the artifact share but wrote a really thoughtful paragraph about his grandfather's compass.",
+            "Check in with him privately tomorrow."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The full name Alex Ruiz identifies a single roster student."
+  },
+  {
+    "id": "p5h-02",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-02T22:10:00.000Z",
+    "note": "Linden Oakhurst is new to the school this year — sat by the window and didn't say a word all period. Pairing him with Kit for the map activity tomorrow; she's patient with everyone.",
+    "expected": {
+      "students": [
+        {
+          "label": "Linden Oakhurst",
+          "quotes": [
+            "Linden Oakhurst is new to the school this year — sat by the window and didn't say a word all period.",
+            "Pairing him with Kit for the map activity tomorrow"
+          ]
+        },
+        {
+          "label": "Kit Abernathy",
+          "quotes": [
+            "Pairing him with Kit for the map activity tomorrow; she's patient with everyone."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Linden is named in full and the pairing plan is about both him and Kit; no class is named."
+  },
+  {
+    "id": "bbh-03",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-02T22:20:00.000Z",
+    "note": "Theo talks a mile a minute in discussion — great instincts about why rivers mattered for early settlements — but his exit ticket was two lines with no punctuation. The gap between his talking and his writing is going to be our project this term.",
+    "expected": {
+      "students": [
+        {
+          "label": "Theo Brightwater",
+          "quotes": [
+            "Theo talks a mile a minute in discussion — great instincts about why rivers mattered for early settlements — but his exit ticket was two lines with no punctuation.",
+            "The gap between his talking and his writing is going to be our project this term."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Theo matches only Theo Brightwater, and the whole note is about him."
+  },
+  {
+    "id": "p3h-04",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-03T17:50:00.000Z",
+    "note": "Em's paragraph on why rivers mattered was the best thing I read today. Clear claim, two pieces of evidence, didn't need prompting. Ask if she'd share it as a model.",
+    "expected": {
+      "students": [
+        {
+          "label": "Ember Castellane",
+          "quotes": [
+            "Em's paragraph on why rivers mattered was the best thing I read today.",
+            "Clear claim, two pieces of evidence, didn't need prompting.",
+            "Ask if she'd share it as a model."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Em is Ember Castellane's listed alias, and the whole note is about her paragraph."
+  },
+  {
+    "id": "bbh-04",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-03T18:00:00.000Z",
+    "note": "Ronan Pike spent most of map work narrating a fake nature documentary to his table. Funny, honestly, but nobody at that table finished labeling the Tigris and Euphrates. Moving him up front tomorrow.",
+    "expected": {
+      "students": [
+        {
+          "label": "Ronan Pike",
+          "quotes": [
+            "Ronan Pike spent most of map work narrating a fake nature documentary to his table.",
+            "Funny, honestly, but nobody at that table finished labeling the Tigris and Euphrates.",
+            "Moving him up front tomorrow."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The full name Ronan Pike is given, and every sentence concerns his behaviour."
+  },
+  {
+    "id": "bbh-05",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-03T18:02:00.000Z",
+    "note": "Imogen finished the Fertile Crescent map in twenty minutes and asked for the extension sheet. Nola finished too and quietly helped the kid next to her without being asked.",
+    "expected": {
+      "students": [
+        {
+          "label": "Imogen Hale",
+          "quotes": [
+            "Imogen finished the Fertile Crescent map in twenty minutes and asked for the extension sheet."
+          ]
+        },
+        {
+          "label": "Nola Fairweather",
+          "quotes": [
+            "Nola finished too and quietly helped the kid next to her without being asked."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Imogen and Nola each match one roster student, each in their own sentence; the unnamed kid gets no entry."
+  },
+  {
+    "id": "p5h-03",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-03T20:55:00.000Z",
+    "note": "Hazel answered every single question in the Mesopotamia warm-up before anyone else got a hand up. Love the energy. Need to find a way to make room for the others.",
+    "expected": {
+      "students": [
+        {
+          "label": "Hazel Moreno-Vance",
+          "quotes": [
+            "Hazel answered every single question in the Mesopotamia warm-up before anyone else got a hand up.",
+            "Love the energy. Need to find a way to make room for the others."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Only one roster student is named Hazel, and the whole note is about her."
+  },
+  {
+    "id": "p3h-05",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-03T22:40:00.000Z",
+    "note": "Marlowe — no summer reading reflection, no notebook, no pencil. Said it's 'somewhere'. Lending him a pencil until further notice.",
+    "expected": {
+      "students": [
+        {
+          "label": "Marlowe Finchley",
+          "quotes": [
+            "Marlowe — no summer reading reflection, no notebook, no pencil.",
+            "Said it's 'somewhere'.",
+            "Lending him a pencil until further notice."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Marlowe matches only Marlowe Finchley."
+  },
+  {
+    "id": "p5h-04",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-03T22:40:00.000Z",
+    "note": "okay so felix stroud phone out twice during the map quiz um took it the second time he was fine about it and soren didn't finish the map quiz at all left like half the rivers blank check if that's a time thing or a doesn't know it thing",
+    "expected": {
+      "students": [
+        {
+          "label": "Felix Stroud",
+          "quotes": [
+            "felix stroud phone out twice during the map quiz um took it the second time he was fine about it"
+          ]
+        },
+        {
+          "label": "Soren Achterberg",
+          "quotes": [
+            "soren didn't finish the map quiz at all left like half the rivers blank check if that's a time thing or a doesn't know it thing"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "This transcript has a separate passage about each of Felix and Soren."
+  },
+  {
+    "id": "p3h-06",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-04T17:38:00.000Z",
+    "note": "ok so quick one alex was really into the ziggurat video today asked like four questions about how they moved the bricks um follow up with that book from the library",
+    "expected": {
+      "students": [],
+      "mentions": [
+        {
+          "nameAsWritten": "alex",
+          "candidates": [
+            "Alex Marsh",
+            "Alex Ruiz"
+          ]
+        }
+      ],
+      "classMentioned": null
+    },
+    "rationale": "The name alex fits both Alex Marsh and Alex Ruiz, and nothing in the note says which class is meant."
+  },
+  {
+    "id": "p5h-05",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-04T21:20:00.000Z",
+    "note": "Bea asked three times whether the river map would be graded on neatness. Told her no. She redrew it anyway at lunch.",
+    "expected": {
+      "students": [
+        {
+          "label": "Beatrix Okonkwo",
+          "quotes": [
+            "Bea asked three times whether the river map would be graded on neatness. Told her no. She redrew it anyway at lunch."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "'Bea' is Beatrix Okonkwo's listed alias."
+  },
+  {
+    "id": "bbh-06",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-04T21:45:00.000Z",
+    "note": "okay reminder to self um cassius vay turned in the map and then asked if he could take it home to redo the labels because his handwriting was messy it was fine it was totally fine told him it stays in the bin",
+    "expected": {
+      "students": [
+        {
+          "label": "Cassius Vey",
+          "quotes": [
+            "cassius vay turned in the map and then asked if he could take it home to redo the labels because his handwriting was messy it was fine it was totally fine told him it stays in the bin"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "In this transcript, 'cassius vay' is a misheard spelling of Cassius Vey."
+  },
+  {
+    "id": "p3h-07",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-08T17:44:00.000Z",
+    "note": "Seating plan in. Avery Quill asked to not be at the front. Fine for now but she can't hide all term — presentation unit is in October.",
+    "expected": {
+      "students": [
+        {
+          "label": "Avery Quill",
+          "quotes": [
+            "Avery Quill asked to not be at the front.",
+            "Fine for now but she can't hide all term — presentation unit is in October."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Avery Quill is named in full; the seating plan sentence is about the class."
+  },
+  {
+    "id": "p3h-08",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-08T17:47:00.000Z",
+    "note": "Rowan much better in new seat. Ember next to him seems to help, she just ignores him until he gives up. Alex Marsh finished the map labels early and helped the table.",
+    "expected": {
+      "students": [
+        {
+          "label": "Rowan Pell",
+          "quotes": [
+            "Rowan much better in new seat.",
+            "Ember next to him seems to help, she just ignores him until he gives up."
+          ]
+        },
+        {
+          "label": "Ember Castellane",
+          "quotes": [
+            "Ember next to him seems to help, she just ignores him until he gives up."
+          ]
+        },
+        {
+          "label": "Alex Marsh",
+          "quotes": [
+            "Alex Marsh finished the map labels early and helped the table."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Rowan and Ember are unique first names, the Ember sentence is about both of them, and the full name settles Alex Marsh."
+  },
+  {
+    "id": "bbh-07",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-08T17:50:00.000Z",
+    "note": "Print Alex a copy of the campus map and mark the humanities wing — he said he still gets turned around between buildings.",
+    "expected": {
+      "students": [],
+      "mentions": [
+        {
+          "nameAsWritten": "Alex",
+          "candidates": [
+            "Alex Marsh",
+            "Alex Ruiz"
+          ]
+        }
+      ],
+      "classMentioned": null
+    },
+    "rationale": "Two roster students are named Alex, and nothing in the note settles which one is meant."
+  },
+  {
+    "id": "p5h-06",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-08T21:05:00.000Z",
+    "note": "Wren Ashby's cuneiform tablet was gorgeous — she pressed it into clay with a chopstick at home and brought it in wrapped in a tea towel. On the display shelf now.",
+    "expected": {
+      "students": [
+        {
+          "label": "Wren Ashby",
+          "quotes": [
+            "Wren Ashby's cuneiform tablet was gorgeous — she pressed it into clay with a chopstick at home and brought it in wrapped in a tea towel. On the display shelf now."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Wren is named in full and the whole note is about her work."
+  },
+  {
+    "id": "bbh-08",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-08T22:30:00.000Z",
+    "note": "Hammurabi discussion. Ronan was much better at the front, actually took notes. Teddy volunteered to read the law about the builder whose house collapses and did voices for it. Cassius asked whether 'an eye for an eye' was fair if the eyes belonged to people of different classes — great question, it's on the board for tomorrow.",
+    "expected": {
+      "students": [
+        {
+          "label": "Ronan Pike",
+          "quotes": [
+            "Ronan was much better at the front, actually took notes."
+          ]
+        },
+        {
+          "label": "Theo Brightwater",
+          "quotes": [
+            "Teddy volunteered to read the law about the builder whose house collapses and did voices for it."
+          ]
+        },
+        {
+          "label": "Cassius Vey",
+          "quotes": [
+            "Cassius asked whether 'an eye for an eye' was fair if the eyes belonged to people of different classes — great question, it's on the board for tomorrow."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Ronan, Teddy (Theo's alias), and Cassius each get their own sentence; 'different classes' refers to social classes, not a class name."
+  },
+  {
+    "id": "p5h-07",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-08T22:30:00.000Z",
+    "note": "Kit + Soren on the Tigris/Euphrates annotation. Kit did most of the talking but kept asking Soren what he thought, which I appreciated. Soren's written labels are really thin though, two or three words each.",
+    "expected": {
+      "students": [
+        {
+          "label": "Kit Abernathy",
+          "quotes": [
+            "Kit + Soren on the Tigris/Euphrates annotation.",
+            "Kit did most of the talking but kept asking Soren what he thought, which I appreciated."
+          ]
+        },
+        {
+          "label": "Soren Achterberg",
+          "quotes": [
+            "Kit + Soren on the Tigris/Euphrates annotation.",
+            "Soren's written labels are really thin though, two or three words each."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The pairing is about both students, followed by one passage on each."
+  },
+  {
+    "id": "bbh-09",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-09T18:10:00.000Z",
+    "note": "Half the class still hasn't brought back the signed syllabus. Second reminder going in Friday's newsletter.",
+    "expected": {
+      "students": [],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The note refers only to an unnamed group within an unnamed class."
+  },
+  {
+    "id": "p3h-09",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-09T19:15:00.000Z",
+    "note": "Marlo's mum emailed — he's been doing homework but leaving it in the car. Suggested a folder that lives in his bag. She's on board.",
+    "expected": {
+      "students": [
+        {
+          "label": "Marlowe Finchley",
+          "quotes": [
+            "Marlo's mum emailed — he's been doing homework but leaving it in the car.",
+            "Suggested a folder that lives in his bag.",
+            "She's on board."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Marlo is Marlowe Finchley's alias, and contact from his mum counts as being about him."
+  },
+  {
+    "id": "p5h-08",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-09T20:40:00.000Z",
+    "note": "Alex stopped in at lunch asking for the Hammurabi packet early. Hazel was already here arguing with me about whether 'an eye for an eye' is actually fair. Good sign for the debate.",
+    "expected": {
+      "students": [
+        {
+          "label": "Hazel Moreno-Vance",
+          "quotes": [
+            "Hazel was already here arguing with me about whether 'an eye for an eye' is actually fair."
+          ]
+        }
+      ],
+      "mentions": [
+        {
+          "nameAsWritten": "Alex",
+          "candidates": [
+            "Alex Marsh",
+            "Alex Ruiz"
+          ]
+        }
+      ],
+      "classMentioned": null
+    },
+    "rationale": "Hazel is unambiguous, but 'Alex' fits both Alex Marsh and Alex Ruiz and nothing in the note settles which."
+  },
+  {
+    "id": "bbh-10",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-09T23:05:00.000Z",
+    "note": "Imogen's mom emailed asking for the full reading list so they can get ahead on weekends. Sent her the unit calendar.",
+    "expected": {
+      "students": [
+        {
+          "label": "Imogen Hale",
+          "quotes": [
+            "Imogen's mom emailed asking for the full reading list so they can get ahead on weekends.",
+            "Sent her the unit calendar."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Contact with Imogen's family counts as being about Imogen Hale."
+  },
+  {
+    "id": "bbh-11",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-10T18:00:00.000Z",
+    "note": "Nola asked if she could join the lunchtime debate club Kit Abernathy started. Told her absolutely — Kit's been begging for members who actually prep.",
+    "expected": {
+      "students": [
+        {
+          "label": "Nola Fairweather",
+          "quotes": [
+            "Nola asked if she could join the lunchtime debate club Kit Abernathy started.",
+            "Told her absolutely"
+          ]
+        },
+        {
+          "label": "Kit Abernathy",
+          "quotes": [
+            "Nola asked if she could join the lunchtime debate club Kit Abernathy started.",
+            "Kit's been begging for members who actually prep."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Nola is in B Block and Kit Abernathy is a named Period 5 student; both are on the roster, and no class is named."
+  },
+  {
+    "id": "p5h-09",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-10T21:30:00.000Z",
+    "note": "Linden spoke today!! Only to ask if he could use colored pencils on the ziggurat diagram, but still. His shading is really careful.",
+    "expected": {
+      "students": [
+        {
+          "label": "Linden Oakhurst",
+          "quotes": [
+            "Linden spoke today!! Only to ask if he could use colored pencils on the ziggurat diagram, but still. His shading is really careful."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The whole note is about Linden."
+  },
+  {
+    "id": "p3h-10",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-10T22:30:00.000Z",
+    "note": "Juni drew a gorgeous Fertile Crescent map, colour-coded the rivers without being told. Didn't want it on the wall though. Sable sat with her at lunch apparently, so that's something.",
+    "expected": {
+      "students": [
+        {
+          "label": "Juniper Vale",
+          "quotes": [
+            "Juni drew a gorgeous Fertile Crescent map, colour-coded the rivers without being told.",
+            "Didn't want it on the wall though.",
+            "Sable sat with her at lunch apparently, so that's something."
+          ]
+        },
+        {
+          "label": "Sable Thorncroft",
+          "quotes": [
+            "Sable sat with her at lunch apparently, so that's something."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Juni is Juniper Vale's alias, and the lunch sentence is about both Sable and Juniper."
+  },
+  {
+    "id": "p5h-10",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-10T22:45:00.000Z",
+    "note": "Half the room hadn't done the Hammurabi reading. Switched to reading it aloud in groups. Re-teach primary vs secondary sources Monday — lots of confusion on the exit tickets.",
+    "expected": {
+      "students": [],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The note covers an unnamed group and the whole class, and it names no class."
+  },
+  {
+    "id": "p3h-11",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-11T17:52:00.000Z",
+    "note": "Quiz 1 (geography of Mesopotamia) back. Class average decent, most people mixed up the Tigris and Euphrates. Reteach with the 'Tigris is tight to the east' thing Monday.",
+    "expected": {
+      "students": [],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The note is only about the class as a whole and names neither a student nor a class."
+  },
+  {
+    "id": "p3h-12",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-11T17:55:00.000Z",
+    "note": "Quiz 1 — Sable full marks, again quietly. Marlowe 4/20, left the back page blank, said he didn't see it.",
+    "expected": {
+      "students": [
+        {
+          "label": "Sable Thorncroft",
+          "quotes": [
+            "Sable full marks, again quietly."
+          ]
+        },
+        {
+          "label": "Marlowe Finchley",
+          "quotes": [
+            "Marlowe 4/20, left the back page blank, said he didn't see it."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Two unique first names, each with its own separate quiz result."
+  },
+  {
+    "id": "p5h-11",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-11T21:10:00.000Z",
+    "note": "Felix Stroud — third time this week out of his seat during independent work. Moved him to the front table. He grumbled but finished the worksheet.",
+    "expected": {
+      "students": [
+        {
+          "label": "Felix Stroud",
+          "quotes": [
+            "Felix Stroud — third time this week out of his seat during independent work. Moved him to the front table. He grumbled but finished the worksheet."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Felix is named in full and the whole note is about him."
+  },
+  {
+    "id": "bbh-12",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-11T21:30:00.000Z",
+    "note": "Sat with Theo during work time and had him say his Hammurabi argument out loud while I typed it. Then turned the laptop around: that's a paragraph. He looked genuinely surprised. Going to try a talk-then-write routine with him.",
+    "expected": {
+      "students": [
+        {
+          "label": "Theo Brightwater",
+          "quotes": [
+            "Sat with Theo during work time and had him say his Hammurabi argument out loud while I typed it.",
+            "Then turned the laptop around: that's a paragraph.",
+            "He looked genuinely surprised.",
+            "Going to try a talk-then-write routine with him."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Theo uniquely matches Theo Brightwater, and the whole note is about working with him."
+  },
+  {
+    "id": "bbh-13",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-14T17:45:00.000Z",
+    "note": "ronin had a rough one today kept getting up to sharpen a pencil that was already sharp like four times um gave him the yellow card. if it keeps up i'll call home",
+    "expected": {
+      "students": [
+        {
+          "label": "Ronan Pike",
+          "quotes": [
+            "ronin had a rough one today kept getting up to sharpen a pencil that was already sharp like four times um gave him the yellow card.",
+            "if it keeps up i'll call home"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "In this transcript, 'ronin' is a misheard Ronan and sounds much closer to Ronan Pike than to any other roster name."
+  },
+  {
+    "id": "p3h-13",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-14T18:00:00.000Z",
+    "note": "note to self rowan pel was great in the um hammurabi intro argued the eye for an eye thing really well and actually listened and ember held her own too had the page numbers ready the whole time so maybe debate is rowans thing",
+    "expected": {
+      "students": [
+        {
+          "label": "Rowan Pell",
+          "quotes": [
+            "rowan pel was great in the um hammurabi intro argued the eye for an eye thing really well and actually listened",
+            "so maybe debate is rowans thing"
+          ]
+        },
+        {
+          "label": "Ember Castellane",
+          "quotes": [
+            "ember held her own too had the page numbers ready the whole time"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "This is a speech transcript: rowan pel is a close spelling of Rowan Pell, and ember matches only Ember Castellane."
+  },
+  {
+    "id": "bbh-14",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-14T18:20:00.000Z",
+    "note": "Cassius Vey still hasn't turned in his code-of-laws assignment. Says it's 'almost done' and he's on version three. Set a hard deadline of Wednesday. Done beats perfect.",
+    "expected": {
+      "students": [
+        {
+          "label": "Cassius Vey",
+          "quotes": [
+            "Cassius Vey still hasn't turned in his code-of-laws assignment.",
+            "Says it's 'almost done' and he's on version three.",
+            "Set a hard deadline of Wednesday."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The full name Cassius Vey is given, and the note is about his late assignment."
+  },
+  {
+    "id": "p5h-12",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-14T20:50:00.000Z",
+    "note": "debate prep groups today hazel took over her group immediately which fine but nobody else got to pick a side um wren was really quiet didn't have her law card filled in and kit's group was the most organized she made a little agenda on a sticky note",
+    "expected": {
+      "students": [
+        {
+          "label": "Hazel Moreno-Vance",
+          "quotes": [
+            "hazel took over her group immediately which fine but nobody else got to pick a side"
+          ]
+        },
+        {
+          "label": "Wren Ashby",
+          "quotes": [
+            "wren was really quiet didn't have her law card filled in"
+          ]
+        },
+        {
+          "label": "Kit Abernathy",
+          "quotes": [
+            "kit's group was the most organized she made a little agenda on a sticky note"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "This transcript has three separate passages, one each for Hazel, Wren and Kit."
+  },
+  {
+    "id": "p3h-14",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-14T22:35:00.000Z",
+    "note": "Called home re: Avery — just a check-in, she'd seemed flat. Dad says she's worried about the presentation unit already. Told him we'll build up to it with small stuff.",
+    "expected": {
+      "students": [
+        {
+          "label": "Avery Quill",
+          "quotes": [
+            "Called home re: Avery — just a check-in, she'd seemed flat.",
+            "Dad says she's worried about the presentation unit already.",
+            "Told him we'll build up to it with small stuff."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "A call home about Avery is family contact about her, and Avery matches only Avery Quill."
+  },
+  {
+    "id": "p3h-15",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-15T17:41:00.000Z",
+    "note": "Marlowe had the folder! And the homework was in it! Half done but IN IT. Gave him a sticker which he pretended to hate.",
+    "expected": {
+      "students": [
+        {
+          "label": "Marlowe Finchley",
+          "quotes": [
+            "Marlowe had the folder!",
+            "And the homework was in it!",
+            "Half done but IN IT.",
+            "Gave him a sticker which he pretended to hate."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The whole note is about Marlowe Finchley's folder and homework."
+  },
+  {
+    "id": "bbh-15",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-15T18:05:00.000Z",
+    "note": "Mock trial day. Alex Ruiz played the judge and was surprisingly commanding — first time I've heard him project. Imogen was defense counsel but clearly hadn't prepped, which isn't like her; she improvised okay but leaned on last week's notes.",
+    "expected": {
+      "students": [
+        {
+          "label": "Alex Ruiz",
+          "quotes": [
+            "Alex Ruiz played the judge and was surprisingly commanding — first time I've heard him project."
+          ]
+        },
+        {
+          "label": "Imogen Hale",
+          "quotes": [
+            "Imogen was defense counsel but clearly hadn't prepped, which isn't like her; she improvised okay but leaned on last week's notes."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Alex Ruiz is named in full and Imogen matches one student, each in a separate sentence with a different sentiment."
+  },
+  {
+    "id": "p5h-13",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-15T21:40:00.000Z",
+    "note": "Pulled Soren aside for five minutes about the map quiz. He knows it — talked me through every river out loud — he just freezes when he has to write. Try sentence starters for the DBQ.",
+    "expected": {
+      "students": [
+        {
+          "label": "Soren Achterberg",
+          "quotes": [
+            "Pulled Soren aside for five minutes about the map quiz. He knows it — talked me through every river out loud — he just freezes when he has to write. Try sentence starters for the DBQ."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The whole note is about Soren and what he needs."
+  },
+  {
+    "id": "p5h-14",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-15T23:05:00.000Z",
+    "note": "Emailed Felix's dad about the phone and the seat move. Quick, friendly reply; said they'd talk about it at home. Update him again in two weeks.",
+    "expected": {
+      "students": [
+        {
+          "label": "Felix Stroud",
+          "quotes": [
+            "Emailed Felix's dad about the phone and the seat move. Quick, friendly reply; said they'd talk about it at home. Update him again in two weeks."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Contact with Felix's family counts as being about Felix; the dad gets no entry of his own."
+  },
+  {
+    "id": "p3h-16",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-16T20:10:00.000Z",
+    "note": "Ran into Mr. Delacroix (learning support) at copier, he can come into third period Thursdays from next week. Will use him for the source-analysis groups.",
+    "expected": {
+      "students": [],
+      "mentions": [],
+      "classMentioned": "Period 3 Humanities"
+    },
+    "rationale": "Mr. Delacroix is an adult so he gets no entry, and third period names Period 3 as a setting."
+  },
+  {
+    "id": "p5h-15",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-16T21:55:00.000Z",
+    "note": "Bea stayed after class worried her debate notes 'aren't good enough.' They are the most thorough in the room. Told her done beats perfect. Not sure it landed.",
+    "expected": {
+      "students": [
+        {
+          "label": "Beatrix Okonkwo",
+          "quotes": [
+            "Bea stayed after class worried her debate notes 'aren't good enough.' They are the most thorough in the room. Told her done beats perfect. Not sure it landed."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "'Bea' is Beatrix's alias, and the whole note is about her."
+  },
+  {
+    "id": "bbh-16",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-16T22:45:00.000Z",
+    "note": "Cassius handed it in. Version three was excellent. Told him version one probably was too.",
+    "expected": {
+      "students": [
+        {
+          "label": "Cassius Vey",
+          "quotes": [
+            "Cassius handed it in.",
+            "Version three was excellent.",
+            "Told him version one probably was too."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Cassius matches only Cassius Vey."
+  },
+  {
+    "id": "p3h-17",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-16T22:45:00.000Z",
+    "note": "Alex Marsh quieter than usual this week. Headphones in during work time twice. Not a big deal yet, watch it.",
+    "expected": {
+      "students": [
+        {
+          "label": "Alex Marsh",
+          "quotes": [
+            "Alex Marsh quieter than usual this week.",
+            "Headphones in during work time twice.",
+            "Not a big deal yet, watch it."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The full name settles which Alex is meant."
+  },
+  {
+    "id": "bbh-17",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-17T17:30:00.000Z",
+    "note": "Called Ronan's dad about the up-and-down week. Very supportive — said Ronan does better when he has a job to do. Making him timekeeper for the next group project.",
+    "expected": {
+      "students": [
+        {
+          "label": "Ronan Pike",
+          "quotes": [
+            "Called Ronan's dad about the up-and-down week.",
+            "Very supportive — said Ronan does better when he has a job to do.",
+            "Making him timekeeper for the next group project."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "A call with Ronan's father is family contact, so it is about Ronan Pike."
+  },
+  {
+    "id": "p3h-18",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-17T17:48:00.000Z",
+    "note": "Em asked if she could do the extension reading on Sumerian schools. Of course. Juniper asked to borrow it after her — first time she's asked me for anything!",
+    "expected": {
+      "students": [
+        {
+          "label": "Ember Castellane",
+          "quotes": [
+            "Em asked if she could do the extension reading on Sumerian schools.",
+            "Of course."
+          ]
+        },
+        {
+          "label": "Juniper Vale",
+          "quotes": [
+            "Juniper asked to borrow it after her — first time she's asked me for anything!"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Em is Ember's alias and Juniper is a unique first name, and each has her own passage."
+  },
+  {
+    "id": "bbh-18",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-17T20:40:00.000Z",
+    "note": "Alex left a blue water bottle with a fox sticker under the back table. It's in my top drawer.",
+    "expected": {
+      "students": [],
+      "mentions": [
+        {
+          "nameAsWritten": "Alex",
+          "candidates": [
+            "Alex Marsh",
+            "Alex Ruiz"
+          ]
+        }
+      ],
+      "classMentioned": null
+    },
+    "rationale": "'Alex' fits both Alex Marsh and Alex Ruiz, and nothing in the note settles which."
+  },
+  {
+    "id": "p5h-16",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-17T21:15:00.000Z",
+    "note": "Hammurabi debate. Hazel argued for the code so hard she forgot her partner was supposed to speak — Linden had a whole rebuttal written out and never got the floor. Felix, of all people, was the best timekeeper I've ever had; took the stopwatch job dead seriously.",
+    "expected": {
+      "students": [
+        {
+          "label": "Hazel Moreno-Vance",
+          "quotes": [
+            "Hazel argued for the code so hard she forgot her partner was supposed to speak"
+          ]
+        },
+        {
+          "label": "Linden Oakhurst",
+          "quotes": [
+            "Linden had a whole rebuttal written out and never got the floor."
+          ]
+        },
+        {
+          "label": "Felix Stroud",
+          "quotes": [
+            "Felix, of all people, was the best timekeeper I've ever had; took the stopwatch job dead seriously."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Three students are each described in their own clause."
+  },
+  {
+    "id": "p5h-17",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-17T22:50:00.000Z",
+    "note": "Talked to Hazel after the debate about sharing the floor. She was genuinely embarrassed — hadn't noticed at all. Agreed to try 'three before me' in discussions. We'll see.",
+    "expected": {
+      "students": [
+        {
+          "label": "Hazel Moreno-Vance",
+          "quotes": [
+            "Talked to Hazel after the debate about sharing the floor. She was genuinely embarrassed — hadn't noticed at all. Agreed to try 'three before me' in discussions. We'll see."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The whole note is about the conversation with Hazel."
+  },
+  {
+    "id": "bbh-19",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-18T18:00:00.000Z",
+    "note": "B Block crushed the Mesopotamia test, class average 86. Rewarded them with five minutes of the ancient-memes slideshow.",
+    "expected": {
+      "students": [],
+      "mentions": [],
+      "classMentioned": "B Block Humanities"
+    },
+    "rationale": "The note praises the named class as a whole and names no individual student."
+  },
+  {
+    "id": "p3h-19",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-18T18:05:00.000Z",
+    "note": "Teddy Brightwater wandered in looking for his water bottle mid-lesson. Rowan took that as an invitation to do a stand-up routine. Lost five minutes.",
+    "expected": {
+      "students": [
+        {
+          "label": "Theo Brightwater",
+          "quotes": [
+            "Teddy Brightwater wandered in looking for his water bottle mid-lesson."
+          ]
+        },
+        {
+          "label": "Rowan Pell",
+          "quotes": [
+            "Rowan took that as an invitation to do a stand-up routine."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Teddy is Theo Brightwater's alias (another class on the roster), Rowan is Rowan Pell, and no class is named."
+  },
+  {
+    "id": "p5h-18",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-18T21:00:00.000Z",
+    "note": "Nola Fairweather from B Block came by asking to borrow Kit's debate notes for her own Hammurabi unit. Kit said yes before I could even answer. Generous kid.",
+    "expected": {
+      "students": [
+        {
+          "label": "Nola Fairweather",
+          "quotes": [
+            "Nola Fairweather from B Block came by asking to borrow Kit's debate notes for her own Hammurabi unit."
+          ]
+        },
+        {
+          "label": "Kit Abernathy",
+          "quotes": [
+            "Nola Fairweather from B Block came by asking to borrow Kit's debate notes for her own Hammurabi unit.",
+            "Kit said yes before I could even answer. Generous kid."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": "B Block Humanities"
+    },
+    "rationale": "Nola is a B Block student named with her class, and Kit is the subject of the rest of the note."
+  },
+  {
+    "id": "p3h-20",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-21T17:50:00.000Z",
+    "note": "Source analysis groups day 1. Mr. Delacroix took Marlowe's group and said Marlo actually had the best question about who the law protected. Ember's group finished early, she's running ahead.",
+    "expected": {
+      "students": [
+        {
+          "label": "Marlowe Finchley",
+          "quotes": [
+            "Mr. Delacroix took Marlowe's group and said Marlo actually had the best question about who the law protected."
+          ]
+        },
+        {
+          "label": "Ember Castellane",
+          "quotes": [
+            "Ember's group finished early, she's running ahead."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Marlowe and Marlo are the same student, Ember is unique, and Mr. Delacroix is an adult with no entry."
+  },
+  {
+    "id": "bbh-20",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-21T17:55:00.000Z",
+    "note": "Theo's short answer on the unit test: three full sentences, a claim, and actual evidence. Messy, but it's there. Talk-then-write is working.",
+    "expected": {
+      "students": [
+        {
+          "label": "Theo Brightwater",
+          "quotes": [
+            "Theo's short answer on the unit test: three full sentences, a claim, and actual evidence.",
+            "Messy, but it's there.",
+            "Talk-then-write is working."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The possessive Theo's refers to Theo Brightwater."
+  },
+  {
+    "id": "p5h-19",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-21T20:45:00.000Z",
+    "note": "Wren's missing two homework checks now (law card, Sumer vocab). Not like her at all. Check in quietly tomorrow.",
+    "expected": {
+      "students": [
+        {
+          "label": "Wren Ashby",
+          "quotes": [
+            "Wren's missing two homework checks now (law card, Sumer vocab). Not like her at all. Check in quietly tomorrow."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The whole note is about Wren's missing work."
+  },
+  {
+    "id": "bbh-21",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-21T22:10:00.000Z",
+    "note": "Imogen is missing the Greek geography worksheet and hasn't made up last Friday's reading quiz. Two in a row. Flagged in the gradebook; will check in this week.",
+    "expected": {
+      "students": [
+        {
+          "label": "Imogen Hale",
+          "quotes": [
+            "Imogen is missing the Greek geography worksheet and hasn't made up last Friday's reading quiz.",
+            "Two in a row.",
+            "Flagged in the gradebook; will check in this week."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Imogen matches only Imogen Hale."
+  },
+  {
+    "id": "p5h-20",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-21T22:15:00.000Z",
+    "note": "Soren used the sentence starters on the DBQ practice paragraph and wrote EIGHT full sentences. Last week it was two. Made sure to tell him.",
+    "expected": {
+      "students": [
+        {
+          "label": "Soren Achterberg",
+          "quotes": [
+            "Soren used the sentence starters on the DBQ practice paragraph and wrote EIGHT full sentences. Last week it was two. Made sure to tell him."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The whole note is about Soren's progress."
+  },
+  {
+    "id": "p3h-21",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-21T22:30:00.000Z",
+    "note": "um avery read her group's summary out loud today only to the table not the class but still she did it so that's step one i guess",
+    "expected": {
+      "students": [
+        {
+          "label": "Avery Quill",
+          "quotes": [
+            "avery read her group's summary out loud today only to the table not the class but still she did it so that's step one i guess"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "In this transcript avery matches only Avery Quill."
+  },
+  {
+    "id": "p3h-22",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-22T18:00:00.000Z",
+    "note": "Rowan sent out for throwing a rubber at Alex. Came back and apologised without being asked, which is new.",
+    "expected": {
+      "students": [
+        {
+          "label": "Rowan Pell",
+          "quotes": [
+            "Rowan sent out for throwing a rubber at Alex.",
+            "Came back and apologised without being asked, which is new."
+          ]
+        }
+      ],
+      "mentions": [
+        {
+          "nameAsWritten": "Alex",
+          "candidates": [
+            "Alex Marsh",
+            "Alex Ruiz"
+          ]
+        }
+      ],
+      "classMentioned": null
+    },
+    "rationale": "Rowan is unique, but Alex fits two students in different classes and nothing in the note settles which."
+  },
+  {
+    "id": "bbh-22",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-22T18:15:00.000Z",
+    "note": "City-state groups started. Nola is running the Athens group without making a show of it — she just wrote a task list on the whiteboard and everybody followed it. Ronan took timekeeper for Sparta very seriously and even called time on himself once.",
+    "expected": {
+      "students": [
+        {
+          "label": "Nola Fairweather",
+          "quotes": [
+            "Nola is running the Athens group without making a show of it — she just wrote a task list on the whiteboard and everybody followed it."
+          ]
+        },
+        {
+          "label": "Ronan Pike",
+          "quotes": [
+            "Ronan took timekeeper for Sparta very seriously and even called time on himself once."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Nola and Ronan are each named in their own separate sentence."
+  },
+  {
+    "id": "p5h-21",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-22T21:25:00.000Z",
+    "note": "checked in with ren ashby she says she's fine just busy um didn't want to say more so didn't push gave her til friday for the vocab",
+    "expected": {
+      "students": [
+        {
+          "label": "Wren Ashby",
+          "quotes": [
+            "checked in with ren ashby she says she's fine just busy um didn't want to say more so didn't push gave her til friday for the vocab"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "'ren ashby' is a misheard transcription of Wren Ashby."
+  },
+  {
+    "id": "p5h-22",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-22T22:35:00.000Z",
+    "note": "Kit finished her DBQ outline in one period and asked for an extension — gave her the Egyptian vs Mesopotamian law comparison. Bea's outline is beautiful but only covers Document A; she's rewritten the thesis three days running.",
+    "expected": {
+      "students": [
+        {
+          "label": "Kit Abernathy",
+          "quotes": [
+            "Kit finished her DBQ outline in one period and asked for an extension — gave her the Egyptian vs Mesopotamian law comparison."
+          ]
+        },
+        {
+          "label": "Beatrix Okonkwo",
+          "quotes": [
+            "Bea's outline is beautiful but only covers Document A; she's rewritten the thesis three days running."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "There is a separate sentence about each of Kit and Bea."
+  },
+  {
+    "id": "p3h-23",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-23T17:45:00.000Z",
+    "note": "Everyone's timeline drafts due Friday. About a third haven't started. Reminder on the board and on the portal.",
+    "expected": {
+      "students": [],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The note is about the class and an unnamed group only."
+  },
+  {
+    "id": "p5h-23",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-23T21:10:00.000Z",
+    "note": "Period 5 nailed the primary/secondary source sort today. The re-teach worked. DBQ drafts start Thursday.",
+    "expected": {
+      "students": [],
+      "mentions": [],
+      "classMentioned": "Period 5 Humanities"
+    },
+    "rationale": "This is a whole-class note that names Period 5."
+  },
+  {
+    "id": "bbh-23",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-23T21:50:00.000Z",
+    "note": "um cross class thing felix stroud from fifth period and teddy bright water both asked me about the regional history fair need to email ms lindqvist about the entry deadline before friday",
+    "expected": {
+      "students": [
+        {
+          "label": "Felix Stroud",
+          "quotes": [
+            "felix stroud from fifth period and teddy bright water both asked me about the regional history fair"
+          ]
+        },
+        {
+          "label": "Theo Brightwater",
+          "quotes": [
+            "felix stroud from fifth period and teddy bright water both asked me about the regional history fair"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": "Period 5 Humanities"
+    },
+    "rationale": "'fifth period' names Felix Stroud's class, and 'teddy bright water' is Theo's alias plus a split surname; Ms Lindqvist is an adult."
+  },
+  {
+    "id": "p3h-24",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-23T22:50:00.000Z",
+    "note": "Sable helped Juni with the timeline scale — 1 cm = 100 years — explained it better than I did. Juni's drawings on it are lovely.",
+    "expected": {
+      "students": [
+        {
+          "label": "Sable Thorncroft",
+          "quotes": [
+            "Sable helped Juni with the timeline scale — 1 cm = 100 years — explained it better than I did."
+          ]
+        },
+        {
+          "label": "Juniper Vale",
+          "quotes": [
+            "Sable helped Juni with the timeline scale — 1 cm = 100 years — explained it better than I did.",
+            "Juni's drawings on it are lovely."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The help sentence is about both students, and Juni is Juniper's alias."
+  },
+  {
+    "id": "bbh-24",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-24T18:00:00.000Z",
+    "note": "Counselor asked who'd be a good buddy for next week's new transfer. Suggested the B Block Alex — a month ago he was the one getting lost. He said yes right away.",
+    "expected": {
+      "students": [
+        {
+          "label": "Alex Ruiz",
+          "quotes": [
+            "Suggested the B Block Alex — a month ago he was the one getting lost.",
+            "He said yes right away."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": "B Block Humanities"
+    },
+    "rationale": "'the B Block Alex' names the class, which settles the shared first name as Alex Ruiz; the counselor and the unnamed transfer get no entry."
+  },
+  {
+    "id": "p5h-24",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-24T20:40:00.000Z",
+    "note": "Linden asked to make the illustrated timeline for the class wall instead of the written reflection. Said yes if the captions are full sentences. He actually lit up.",
+    "expected": {
+      "students": [
+        {
+          "label": "Linden Oakhurst",
+          "quotes": [
+            "Linden asked to make the illustrated timeline for the class wall instead of the written reflection. Said yes if the captions are full sentences. He actually lit up."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The whole note is about Linden."
+  },
+  {
+    "id": "p5h-25",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-24T22:20:00.000Z",
+    "note": "Small thing, but: Hazel asked her group a question in small-group today and then actually waited for the answer. Noticed it.",
+    "expected": {
+      "students": [
+        {
+          "label": "Hazel Moreno-Vance",
+          "quotes": [
+            "Hazel asked her group a question in small-group today and then actually waited for the answer."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The note is about Hazel's behaviour, and her group is unnamed."
+  },
+  {
+    "id": "bbh-25",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-25T17:40:00.000Z",
+    "note": "Cassius emailed his city-state draft a day early with the subject line 'not perfect, submitting anyway.' Huge. Theo's draft, on the other hand, is one paragraph and a pretty good drawing of a trireme.",
+    "expected": {
+      "students": [
+        {
+          "label": "Cassius Vey",
+          "quotes": [
+            "Cassius emailed his city-state draft a day early with the subject line 'not perfect, submitting anyway.'",
+            "Huge."
+          ]
+        },
+        {
+          "label": "Theo Brightwater",
+          "quotes": [
+            "Theo's draft, on the other hand, is one paragraph and a pretty good drawing of a trireme."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Cassius and Theo are each discussed in separate passages with contrasting sentiments."
+  },
+  {
+    "id": "p3h-25",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-25T17:55:00.000Z",
+    "note": "Timeline drafts in. Missing: Marlowe, Alex Marsh. Marlowe's excuse was creative at least. Alex just shrugged.",
+    "expected": {
+      "students": [
+        {
+          "label": "Marlowe Finchley",
+          "quotes": [
+            "Missing: Marlowe, Alex Marsh.",
+            "Marlowe's excuse was creative at least."
+          ]
+        },
+        {
+          "label": "Alex Marsh",
+          "quotes": [
+            "Missing: Marlowe, Alex Marsh.",
+            "Alex just shrugged."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Both are named in the missing list, and the later Alex refers back to the full name Alex Marsh."
+  },
+  {
+    "id": "p5h-26",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-25T21:35:00.000Z",
+    "note": "Felix turned his DBQ draft in a day early — first assignment on time all term. Soren's draft is short and the conclusion just stops, but the argument is clear and he cited two documents correctly.",
+    "expected": {
+      "students": [
+        {
+          "label": "Felix Stroud",
+          "quotes": [
+            "Felix turned his DBQ draft in a day early — first assignment on time all term."
+          ]
+        },
+        {
+          "label": "Soren Achterberg",
+          "quotes": [
+            "Soren's draft is short and the conclusion just stops, but the argument is clear and he cited two documents correctly."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "There is one sentence each about Felix and Soren."
+  },
+  {
+    "id": "p3h-26",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-25T22:20:00.000Z",
+    "note": "Emailed Alex Marsh's family about the timeline + the headphones thing. Keep it light.",
+    "expected": {
+      "students": [
+        {
+          "label": "Alex Marsh",
+          "quotes": [
+            "Emailed Alex Marsh's family about the timeline + the headphones thing."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Contact with Alex Marsh's family is about him, and the full name settles which Alex."
+  },
+  {
+    "id": "p3h-27",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-28T17:40:00.000Z",
+    "note": "Debate prep for Hammurabi trial. Ro wants to be prosecution lead. Em wants it too. Gave Ro prosecution and Em defence — she was annoyed for about a minute then started planning how to destroy him.",
+    "expected": {
+      "students": [
+        {
+          "label": "Rowan Pell",
+          "quotes": [
+            "Ro wants to be prosecution lead.",
+            "Gave Ro prosecution and Em defence — she was annoyed for about a minute then started planning how to destroy him."
+          ]
+        },
+        {
+          "label": "Ember Castellane",
+          "quotes": [
+            "Em wants it too.",
+            "Gave Ro prosecution and Em defence — she was annoyed for about a minute then started planning how to destroy him."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Ro and Em are the aliases of Rowan Pell and Ember Castellane."
+  },
+  {
+    "id": "bbh-26",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-28T18:10:00.000Z",
+    "note": "Lunch check-in with Imogen. She's overcommitted with orchestra and the fall play and says she just lost track. Plan: missing worksheet by Wednesday, quiz makeup during Friday catch-up.",
+    "expected": {
+      "students": [
+        {
+          "label": "Imogen Hale",
+          "quotes": [
+            "Lunch check-in with Imogen.",
+            "She's overcommitted with orchestra and the fall play and says she just lost track.",
+            "Plan: missing worksheet by Wednesday, quiz makeup during Friday catch-up."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Imogen matches only Imogen Hale, and the whole note is her catch-up plan."
+  },
+  {
+    "id": "p5h-27",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-28T20:55:00.000Z",
+    "note": "Principal Harrow observed the last twenty minutes. Everyone on their best behaviour, which was almost funny. Feedback meeting Wednesday after school.",
+    "expected": {
+      "students": [],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The principal is an adult and the rest is about the whole class, so there are no entries."
+  },
+  {
+    "id": "p5h-28",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-28T22:40:00.000Z",
+    "note": "Bea turned in her DBQ draft with a sticky note on top: 'I know it's not finished.' It's an A- as it stands. Wrote back to tell her exactly that.",
+    "expected": {
+      "students": [
+        {
+          "label": "Beatrix Okonkwo",
+          "quotes": [
+            "Bea turned in her DBQ draft with a sticky note on top: 'I know it's not finished.' It's an A- as it stands. Wrote back to tell her exactly that."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "'Bea' is Beatrix's alias, and the whole note is about her."
+  },
+  {
+    "id": "p3h-28",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-29T19:30:00.000Z",
+    "note": "Marsh's mum replied — he's been staying up gaming, she's going to take the headset at night. Thanked me for flagging it.",
+    "expected": {
+      "students": [
+        {
+          "label": "Alex Marsh",
+          "quotes": [
+            "Marsh's mum replied — he's been staying up gaming, she's going to take the headset at night.",
+            "Thanked me for flagging it."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The surname Marsh fits only Alex Marsh, and a reply from his mum is family contact about him."
+  },
+  {
+    "id": "p5h-29",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-29T21:15:00.000Z",
+    "note": "alex was in the hallway again during p5 and felix kept waving at him through the door window lol had to close the blind",
+    "expected": {
+      "students": [
+        {
+          "label": "Felix Stroud",
+          "quotes": [
+            "felix kept waving at him through the door window lol had to close the blind"
+          ]
+        }
+      ],
+      "mentions": [
+        {
+          "nameAsWritten": "alex",
+          "candidates": [
+            "Alex Marsh",
+            "Alex Ruiz"
+          ]
+        }
+      ],
+      "classMentioned": "Period 5 Humanities"
+    },
+    "rationale": "'p5' names Period 5 as the setting, Felix is clear, and 'alex' fits two students in other classes with nothing to settle which."
+  },
+  {
+    "id": "bbh-27",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-29T22:30:00.000Z",
+    "note": "Mr. Pike from the PTA dropped off the book fair flyers and asked me to send them home Thursday. Stack is on the windowsill.",
+    "expected": {
+      "students": [],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Mr. Pike is acting in his own role as a PTA volunteer, not as Ronan's family, so he is just an adult."
+  },
+  {
+    "id": "p3h-29",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-29T22:40:00.000Z",
+    "note": "marlow handed in the timeline late but it's actually good like he put the dates in the right order and found a picture of the stele um still needs captions tell him tomorrow",
+    "expected": {
+      "students": [
+        {
+          "label": "Marlowe Finchley",
+          "quotes": [
+            "marlow handed in the timeline late but it's actually good like he put the dates in the right order and found a picture of the stele um still needs captions tell him tomorrow"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "In this transcript marlow is a close spelling of Marlowe and fits no other student."
+  },
+  {
+    "id": "p3h-30",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-09-30T17:50:00.000Z",
+    "note": "Avery agreed to be a witness in the trial — two lines only, she wrote them herself. Juniper is the court artist, sketching the whole thing.",
+    "expected": {
+      "students": [
+        {
+          "label": "Avery Quill",
+          "quotes": [
+            "Avery agreed to be a witness in the trial — two lines only, she wrote them herself."
+          ]
+        },
+        {
+          "label": "Juniper Vale",
+          "quotes": [
+            "Juniper is the court artist, sketching the whole thing."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Each student has her own separate sentence, and both first names are unique."
+  },
+  {
+    "id": "bbh-28",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-09-30T18:00:00.000Z",
+    "note": "Nola's Athens outline is the best I've seen in years, clear thesis on direct vs. representative democracy. Asked if I could keep it as an exemplar; she went bright red and said yes.",
+    "expected": {
+      "students": [
+        {
+          "label": "Nola Fairweather",
+          "quotes": [
+            "Nola's Athens outline is the best I've seen in years, clear thesis on direct vs. representative democracy.",
+            "Asked if I could keep it as an exemplar; she went bright red and said yes."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The possessive Nola's refers to Nola Fairweather."
+  },
+  {
+    "id": "p5h-30",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-09-30T21:45:00.000Z",
+    "note": "Soren raised his hand in whole-class discussion for the first time this term — irrigation and city-states, spot on. Hazel started to jump in after him and then stopped herself.",
+    "expected": {
+      "students": [
+        {
+          "label": "Soren Achterberg",
+          "quotes": [
+            "Soren raised his hand in whole-class discussion for the first time this term — irrigation and city-states, spot on."
+          ]
+        },
+        {
+          "label": "Hazel Moreno-Vance",
+          "quotes": [
+            "Hazel started to jump in after him and then stopped herself."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "There is a separate sentence about each of Soren and Hazel."
+  },
+  {
+    "id": "p3h-31",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-10-01T17:46:00.000Z",
+    "note": "Trial run-through. Rowan objected to literally everything, but in role, so I'll allow it. Sable as judge is terrifying, nobody talks over her.",
+    "expected": {
+      "students": [
+        {
+          "label": "Rowan Pell",
+          "quotes": [
+            "Rowan objected to literally everything, but in role, so I'll allow it."
+          ]
+        },
+        {
+          "label": "Sable Thorncroft",
+          "quotes": [
+            "Sable as judge is terrifying, nobody talks over her."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Two unique first names, each in its own clause."
+  },
+  {
+    "id": "bbh-29",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-01T17:50:00.000Z",
+    "note": "okay so teddy did the talk then write thing on his own today didnt even ask me just recorded himself on the chromebook and typed it up so cool make sure to tell his family",
+    "expected": {
+      "students": [
+        {
+          "label": "Theo Brightwater",
+          "quotes": [
+            "teddy did the talk then write thing on his own today didnt even ask me just recorded himself on the chromebook and typed it up so cool make sure to tell his family"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "In this transcript, teddy is Theo Brightwater's listed alias."
+  },
+  {
+    "id": "p5h-31",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-10-01T21:00:00.000Z",
+    "note": "Wren's mum emailed. Wren has been helping at the family bakery after school and homework's been slipping; mum asked if there's a way to catch up. Sent the missing list and offered Tuesday lunch catch-up.",
+    "expected": {
+      "students": [
+        {
+          "label": "Wren Ashby",
+          "quotes": [
+            "Wren's mum emailed. Wren has been helping at the family bakery after school and homework's been slipping; mum asked if there's a way to catch up. Sent the missing list and offered Tuesday lunch catch-up."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Family contact about Wren counts as being about Wren; her mum gets no entry."
+  },
+  {
+    "id": "bbh-30",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-01T21:20:00.000Z",
+    "note": "Alex asked if a Sparta podcast could count as the presentation option. Yes, as long as there's a written script.",
+    "expected": {
+      "students": [],
+      "mentions": [
+        {
+          "nameAsWritten": "Alex",
+          "candidates": [
+            "Alex Marsh",
+            "Alex Ruiz"
+          ]
+        }
+      ],
+      "classMentioned": null
+    },
+    "rationale": "No class is named, so 'Alex' could be either Alex Marsh or Alex Ruiz."
+  },
+  {
+    "id": "p3h-32",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-10-02T17:58:00.000Z",
+    "note": "HAMMURABI TRIAL DAY. Period 3 were brilliant. Em's closing argument got applause. Ro lost graciously (mostly). Avery said her lines! Voice shaking but she did it and sat down grinning.",
+    "expected": {
+      "students": [
+        {
+          "label": "Ember Castellane",
+          "quotes": [
+            "Em's closing argument got applause."
+          ]
+        },
+        {
+          "label": "Rowan Pell",
+          "quotes": [
+            "Ro lost graciously (mostly)."
+          ]
+        },
+        {
+          "label": "Avery Quill",
+          "quotes": [
+            "Avery said her lines!",
+            "Voice shaking but she did it and sat down grinning."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": "Period 3 Humanities"
+    },
+    "rationale": "Period 3 is named as a whole, and Em, Ro and Avery each have their own sentences."
+  },
+  {
+    "id": "bbh-31",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-02T18:30:00.000Z",
+    "note": "Imogen turned in the missing worksheet, two days after the date we agreed on, but it's in. Ronan backslid a bit — two reminders for side conversations during the Solon reading, and he knew it.",
+    "expected": {
+      "students": [
+        {
+          "label": "Imogen Hale",
+          "quotes": [
+            "Imogen turned in the missing worksheet, two days after the date we agreed on, but it's in."
+          ]
+        },
+        {
+          "label": "Ronan Pike",
+          "quotes": [
+            "Ronan backslid a bit — two reminders for side conversations during the Solon reading, and he knew it."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Imogen and Ronan each have their own separate sentence."
+  },
+  {
+    "id": "p5h-32",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-10-02T20:50:00.000Z",
+    "note": "um note for kid abernathy she's been helping like three people at her table during work time which is great but her own museum project proposal is still blank so maybe she's spreading herself thin",
+    "expected": {
+      "students": [
+        {
+          "label": "Kit Abernathy",
+          "quotes": [
+            "kid abernathy she's been helping like three people at her table during work time which is great but her own museum project proposal is still blank so maybe she's spreading herself thin"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "'kid abernathy' is a misheard transcription of Kit Abernathy."
+  },
+  {
+    "id": "p3h-33",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-10-02T22:15:00.000Z",
+    "note": "Dr. Hennessey popped in for the end of the trial and asked for the court sketches for the newsletter. Ask Juni first — she may say no.",
+    "expected": {
+      "students": [
+        {
+          "label": "Juniper Vale",
+          "quotes": [
+            "Ask Juni first — she may say no."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Dr. Hennessey is an adult with no entry, and Juni is Juniper Vale's alias."
+  },
+  {
+    "id": "bbh-32",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-05T17:45:00.000Z",
+    "note": "Fire drill ate the first twenty minutes. Pushing the Pericles reading to tomorrow.",
+    "expected": {
+      "students": [],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "This is a class logistics note with no students or class named."
+  },
+  {
+    "id": "p5h-33",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-10-05T21:20:00.000Z",
+    "note": "Museum project groups set. Linden volunteered to do the artifact sketches before I even asked. Bea and Hazel are partnered — Bea already has a color-coded schedule, Hazel is already fighting it.",
+    "expected": {
+      "students": [
+        {
+          "label": "Linden Oakhurst",
+          "quotes": [
+            "Linden volunteered to do the artifact sketches before I even asked."
+          ]
+        },
+        {
+          "label": "Beatrix Okonkwo",
+          "quotes": [
+            "Bea and Hazel are partnered",
+            "Bea already has a color-coded schedule"
+          ]
+        },
+        {
+          "label": "Hazel Moreno-Vance",
+          "quotes": [
+            "Bea and Hazel are partnered",
+            "Hazel is already fighting it."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Linden, Bea and Hazel each have their own passage, and the pairing clause is shared by Bea and Hazel."
+  },
+  {
+    "id": "bbh-33",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-05T22:00:00.000Z",
+    "note": "Cassius and Wren Ashby from Period 5 are both doing the Oracle of Delphi for the history fair, and each came to ask me if the other was copying. Suggested they compare notes instead. They're meeting at lunch Thursday.",
+    "expected": {
+      "students": [
+        {
+          "label": "Cassius Vey",
+          "quotes": [
+            "Cassius and Wren Ashby from Period 5 are both doing the Oracle of Delphi for the history fair, and each came to ask me if the other was copying.",
+            "They're meeting at lunch Thursday."
+          ]
+        },
+        {
+          "label": "Wren Ashby",
+          "quotes": [
+            "Cassius and Wren Ashby from Period 5 are both doing the Oracle of Delphi for the history fair, and each came to ask me if the other was copying.",
+            "They're meeting at lunch Thursday."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": "Period 5 Humanities"
+    },
+    "rationale": "Cassius (B Block) and Wren Ashby (Period 5, named as her class) are both discussed."
+  },
+  {
+    "id": "p3h-34",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-10-05T22:30:00.000Z",
+    "note": "reminder unit test on the twelfth for third period um study guide goes out wednesday and need to remake the vocab cards someone walked off with half",
+    "expected": {
+      "students": [],
+      "mentions": [],
+      "classMentioned": "Period 3 Humanities"
+    },
+    "rationale": "This whole-class reminder names third period and no student."
+  },
+  {
+    "id": "p3h-35",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-10-06T17:50:00.000Z",
+    "note": "Alex Marsh back to himself — answered the warm-up, no headphones, stayed after to ask about the test. Whatever happened at home with the headset, it worked.",
+    "expected": {
+      "students": [
+        {
+          "label": "Alex Marsh",
+          "quotes": [
+            "Alex Marsh back to himself — answered the warm-up, no headphones, stayed after to ask about the test.",
+            "Whatever happened at home with the headset, it worked."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The full name settles that this is Alex Marsh."
+  },
+  {
+    "id": "bbh-34",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-06T18:05:00.000Z",
+    "note": "Alex Ruiz's Sparta podcast script came in: eight pages, footnoted, with sound cues in the margins. Wants to record it in the library booth Friday.",
+    "expected": {
+      "students": [
+        {
+          "label": "Alex Ruiz",
+          "quotes": [
+            "Alex Ruiz's Sparta podcast script came in: eight pages, footnoted, with sound cues in the margins.",
+            "Wants to record it in the library booth Friday."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The full name Alex Ruiz settles which Alex is meant."
+  },
+  {
+    "id": "p5h-34",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-10-06T22:00:00.000Z",
+    "note": "Wren came to Tuesday lunch catch-up and knocked out the vocab and the law card in forty minutes. Two left. She seemed relieved more than anything.",
+    "expected": {
+      "students": [
+        {
+          "label": "Wren Ashby",
+          "quotes": [
+            "Wren came to Tuesday lunch catch-up and knocked out the vocab and the law card in forty minutes. Two left. She seemed relieved more than anything."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The whole note is about Wren."
+  },
+  {
+    "id": "bbh-35",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-07T17:50:00.000Z",
+    "note": "Imogen didn't turn in the Socratic seminar prep sheet. That's the third missing piece this month. Emailing home tonight.",
+    "expected": {
+      "students": [
+        {
+          "label": "Imogen Hale",
+          "quotes": [
+            "Imogen didn't turn in the Socratic seminar prep sheet.",
+            "That's the third missing piece this month.",
+            "Emailing home tonight."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Imogen matches only Imogen Hale."
+  },
+  {
+    "id": "p3h-36",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-10-07T18:10:00.000Z",
+    "note": "Found Hazel Moreno-Vance's essay in my stack — she's not even in this class. Return it to her today. Marlowe noticed it and handed it over, which, a month ago, would not have happened.",
+    "expected": {
+      "students": [
+        {
+          "label": "Hazel Moreno-Vance",
+          "quotes": [
+            "Found Hazel Moreno-Vance's essay in my stack — she's not even in this class.",
+            "Return it to her today."
+          ]
+        },
+        {
+          "label": "Marlowe Finchley",
+          "quotes": [
+            "Marlowe noticed it and handed it over, which, a month ago, would not have happened."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Hazel Moreno-Vance is a student from another class on the roster, Marlowe is unique, and no class is named."
+  },
+  {
+    "id": "p5h-35",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-10-07T21:30:00.000Z",
+    "note": "Felix off-task again in museum work time — the stopwatch magic has worn off. Made him group 'curator' (keeps everyone on deadline). Worth a shot.",
+    "expected": {
+      "students": [
+        {
+          "label": "Felix Stroud",
+          "quotes": [
+            "Felix off-task again in museum work time — the stopwatch magic has worn off. Made him group 'curator' (keeps everyone on deadline). Worth a shot."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The whole note is about Felix."
+  },
+  {
+    "id": "bbh-36",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-08T18:20:00.000Z",
+    "note": "Socratic seminar on 'Was Athens really a democracy?' Ronan was the standout — he brought up that women and enslaved people couldn't vote and then actually let other people respond instead of steamrolling. Nola built on everyone's points and tied it back to the text twice. Imogen sat outside the circle and barely spoke.",
+    "expected": {
+      "students": [
+        {
+          "label": "Ronan Pike",
+          "quotes": [
+            "Ronan was the standout — he brought up that women and enslaved people couldn't vote and then actually let other people respond instead of steamrolling."
+          ]
+        },
+        {
+          "label": "Nola Fairweather",
+          "quotes": [
+            "Nola built on everyone's points and tied it back to the text twice."
+          ]
+        },
+        {
+          "label": "Imogen Hale",
+          "quotes": [
+            "Imogen sat outside the circle and barely spoke."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Ronan, Nola, and Imogen each get their own separable sentence with a different sentiment."
+  },
+  {
+    "id": "p5h-36",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-10-08T20:45:00.000Z",
+    "note": "Soren's museum placard draft: 140 words, clear, one spelling slip. Compare to the blank rivers on the September map quiz. Huge.",
+    "expected": {
+      "students": [
+        {
+          "label": "Soren Achterberg",
+          "quotes": [
+            "Soren's museum placard draft: 140 words, clear, one spelling slip. Compare to the blank rivers on the September map quiz. Huge."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The whole note is about Soren's writing."
+  },
+  {
+    "id": "p5h-37",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-10-08T22:25:00.000Z",
+    "note": "Ro from third period left her sketchbook in here at lunch; Linden found it and brought it straight to my desk without flipping through it. Thoughtful.",
+    "expected": {
+      "students": [
+        {
+          "label": "Rowan Pell",
+          "quotes": [
+            "Ro from third period left her sketchbook in here at lunch"
+          ]
+        },
+        {
+          "label": "Linden Oakhurst",
+          "quotes": [
+            "Linden found it and brought it straight to my desk without flipping through it. Thoughtful."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": "Period 3 Humanities"
+    },
+    "rationale": "'Ro' is Rowan Pell's alias and 'third period' names Period 3; Linden has his own clause."
+  },
+  {
+    "id": "p3h-37",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-10-08T22:35:00.000Z",
+    "note": "Study session after school — Em ran a review table without being asked. Marlowe came! Stayed the whole 40 min. Rowan came for the snacks and stayed for the quiz.",
+    "expected": {
+      "students": [
+        {
+          "label": "Ember Castellane",
+          "quotes": [
+            "Em ran a review table without being asked."
+          ]
+        },
+        {
+          "label": "Marlowe Finchley",
+          "quotes": [
+            "Marlowe came!",
+            "Stayed the whole 40 min."
+          ]
+        },
+        {
+          "label": "Rowan Pell",
+          "quotes": [
+            "Rowan came for the snacks and stayed for the quiz."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Three students, each in a clearly separate passage."
+  },
+  {
+    "id": "bbh-37",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-08T23:10:00.000Z",
+    "note": "Phone call with Imogen's dad tonight. He's going to sit down with her Sunday evenings to go over the week's calendar. We agreed on a short weekly email check-in through end of term.",
+    "expected": {
+      "students": [
+        {
+          "label": "Imogen Hale",
+          "quotes": [
+            "Phone call with Imogen's dad tonight.",
+            "He's going to sit down with her Sunday evenings to go over the week's calendar.",
+            "We agreed on a short weekly email check-in through end of term."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "A call with Imogen's father is family contact, so it is about Imogen Hale."
+  },
+  {
+    "id": "p3h-38",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-10-09T17:45:00.000Z",
+    "note": "Alex asked whether the test covers the trial stuff. Yes. Clarify for everyone Monday.",
+    "expected": {
+      "students": [],
+      "mentions": [
+        {
+          "nameAsWritten": "Alex",
+          "candidates": [
+            "Alex Marsh",
+            "Alex Ruiz"
+          ]
+        }
+      ],
+      "classMentioned": null
+    },
+    "rationale": "Alex fits two roster students and the note names no class to settle it."
+  },
+  {
+    "id": "p5h-38",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-10-09T21:10:00.000Z",
+    "note": "Checked in with Kit about the blank proposal. She admitted she's been 'helping everyone else first.' Set a hard deadline of Tuesday and asked her to say no to at least one request this week. She laughed but agreed.",
+    "expected": {
+      "students": [
+        {
+          "label": "Kit Abernathy",
+          "quotes": [
+            "Checked in with Kit about the blank proposal. She admitted she's been 'helping everyone else first.' Set a hard deadline of Tuesday and asked her to say no to at least one request this week. She laughed but agreed."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The whole note is about Kit."
+  },
+  {
+    "id": "bbh-38",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-12T18:00:00.000Z",
+    "note": "First DBQ practice. Theo had an intro with a real thesis in the first ten minutes, asked me to check it, then said 'wait, don't — I'll check it against the rubric myself.' Who is this kid.",
+    "expected": {
+      "students": [
+        {
+          "label": "Theo Brightwater",
+          "quotes": [
+            "Theo had an intro with a real thesis in the first ten minutes, asked me to check it, then said 'wait, don't — I'll check it against the rubric myself.'",
+            "Who is this kid."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Theo matches only Theo Brightwater."
+  },
+  {
+    "id": "p3h-39",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-10-12T18:20:00.000Z",
+    "note": "Unit test today. Nola Fairweather sat it with us too (clash with her own block's test day). Quiet room. Sable done first, checked everything twice.",
+    "expected": {
+      "students": [
+        {
+          "label": "Nola Fairweather",
+          "quotes": [
+            "Nola Fairweather sat it with us too (clash with her own block's test day)."
+          ]
+        },
+        {
+          "label": "Sable Thorncroft",
+          "quotes": [
+            "Sable done first, checked everything twice."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Nola Fairweather is a student from another class on the roster, Sable is unique, and \"her own block\" names no specific class."
+  },
+  {
+    "id": "p5h-39",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-10-13T21:05:00.000Z",
+    "note": "Kit's proposal came in a day early and it's the most ambitious in the class — a full Sumerian marketplace model. Hazel cut her partner off twice in planning; reminded her of our deal.",
+    "expected": {
+      "students": [
+        {
+          "label": "Kit Abernathy",
+          "quotes": [
+            "Kit's proposal came in a day early and it's the most ambitious in the class — a full Sumerian marketplace model."
+          ]
+        },
+        {
+          "label": "Hazel Moreno-Vance",
+          "quotes": [
+            "Hazel cut her partner off twice in planning; reminded her of our deal."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "There is one sentence each about Kit and Hazel, and the partner is not named."
+  },
+  {
+    "id": "bbh-39",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-13T21:40:00.000Z",
+    "note": "note for b block uh the group with nola and cassius vey finished their athens model early so theyll present first thursday and also remind ronan pike he still owes me the peer feedback form",
+    "expected": {
+      "students": [
+        {
+          "label": "Nola Fairweather",
+          "quotes": [
+            "the group with nola and cassius vey finished their athens model early so theyll present first thursday"
+          ]
+        },
+        {
+          "label": "Cassius Vey",
+          "quotes": [
+            "the group with nola and cassius vey finished their athens model early so theyll present first thursday"
+          ]
+        },
+        {
+          "label": "Ronan Pike",
+          "quotes": [
+            "remind ronan pike he still owes me the peer feedback form"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": "B Block Humanities"
+    },
+    "rationale": "The transcript names 'b block' as the setting and names Nola, Cassius Vey, and Ronan Pike."
+  },
+  {
+    "id": "bbh-40",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-14T18:10:00.000Z",
+    "note": "Imogen came by before class to show me her planner, every assignment written in for the next two weeks. Seminar sheet came in too, late but complete.",
+    "expected": {
+      "students": [
+        {
+          "label": "Imogen Hale",
+          "quotes": [
+            "Imogen came by before class to show me her planner, every assignment written in for the next two weeks.",
+            "Seminar sheet came in too, late but complete."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Imogen matches only Imogen Hale, and both sentences describe her progress."
+  },
+  {
+    "id": "p5h-40",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-10-14T22:30:00.000Z",
+    "note": "socratic seminar practice round hazel ran the inner circle and honestly she was great kept asking people for evidence didn't talk over anyone um sorin spoke three times and once disagreed with hazel which was awesome",
+    "expected": {
+      "students": [
+        {
+          "label": "Hazel Moreno-Vance",
+          "quotes": [
+            "hazel ran the inner circle and honestly she was great kept asking people for evidence didn't talk over anyone"
+          ]
+        },
+        {
+          "label": "Soren Achterberg",
+          "quotes": [
+            "sorin spoke three times and once disagreed with hazel which was awesome"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "'sorin' is a misheard Soren, and Hazel has her own passage."
+  },
+  {
+    "id": "p3h-40",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-10-14T22:45:00.000Z",
+    "note": "Tests marked. Marlowe 31/40 — from 4/20 on the first quiz! Wrote 'proud of this' on it and meant it. Ember 39/40, lost one on spelling Euphrates, she'll be furious. Rowan 28, good short answers, ran out of time on the essay.",
+    "expected": {
+      "students": [
+        {
+          "label": "Marlowe Finchley",
+          "quotes": [
+            "Marlowe 31/40 — from 4/20 on the first quiz!",
+            "Wrote 'proud of this' on it and meant it."
+          ]
+        },
+        {
+          "label": "Ember Castellane",
+          "quotes": [
+            "Ember 39/40, lost one on spelling Euphrates, she'll be furious."
+          ]
+        },
+        {
+          "label": "Rowan Pell",
+          "quotes": [
+            "Rowan 28, good short answers, ran out of time on the essay."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Each of the three students has a separate score passage."
+  },
+  {
+    "id": "p3h-41",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-10-15T17:40:00.000Z",
+    "note": "Presentations unit starts. Avery asked to go in the first slot 'to get it over with'. Who is this kid? Love it.",
+    "expected": {
+      "students": [
+        {
+          "label": "Avery Quill",
+          "quotes": [
+            "Avery asked to go in the first slot 'to get it over with'.",
+            "Who is this kid?"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Avery matches only Avery Quill."
+  },
+  {
+    "id": "bbh-41",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-15T17:55:00.000Z",
+    "note": "Presentations day one. Alex Ruiz played his Sparta podcast and the class applauded at the end without being prompted. Cassius blanked on one slide and just kept going instead of asking to start over — noticed that, told him after.",
+    "expected": {
+      "students": [
+        {
+          "label": "Alex Ruiz",
+          "quotes": [
+            "Alex Ruiz played his Sparta podcast and the class applauded at the end without being prompted."
+          ]
+        },
+        {
+          "label": "Cassius Vey",
+          "quotes": [
+            "Cassius blanked on one slide and just kept going instead of asking to start over — noticed that, told him after."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Alex Ruiz is named in full and Cassius uniquely, each in a separate sentence."
+  },
+  {
+    "id": "p5h-41",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-10-15T21:00:00.000Z",
+    "note": "Soren asked if he could stay in at lunch to finish his placard — first time he has ever asked for MORE writing time. Kit stayed too and quizzed him on his facts.",
+    "expected": {
+      "students": [
+        {
+          "label": "Soren Achterberg",
+          "quotes": [
+            "Soren asked if he could stay in at lunch to finish his placard — first time he has ever asked for MORE writing time."
+          ]
+        },
+        {
+          "label": "Kit Abernathy",
+          "quotes": [
+            "Kit stayed too and quizzed him on his facts."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "There is a separate sentence about each of Soren and Kit."
+  },
+  {
+    "id": "bbh-42",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-16T18:15:00.000Z",
+    "note": "Juniper Vale's mom emailed asking if Juni could sit in on B Block presentations during her free period. Fine by me. Nola offered to save her a seat up front.",
+    "expected": {
+      "students": [
+        {
+          "label": "Juniper Vale",
+          "quotes": [
+            "Juniper Vale's mom emailed asking if Juni could sit in on B Block presentations during her free period."
+          ]
+        },
+        {
+          "label": "Nola Fairweather",
+          "quotes": [
+            "Nola offered to save her a seat up front."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": "B Block Humanities"
+    },
+    "rationale": "Juniper Vale's family contact is about her, Nola is named separately, and B Block is named as the setting."
+  },
+  {
+    "id": "p5h-42",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-10-16T21:20:00.000Z",
+    "note": "Alex asked if Bea could help with their museum label layout because 'everyone says she's the best at fonts.' Bea was thrilled. Told Alex to clear it with their own teacher first.",
+    "expected": {
+      "students": [
+        {
+          "label": "Beatrix Okonkwo",
+          "quotes": [
+            "Alex asked if Bea could help with their museum label layout because 'everyone says she's the best at fonts.'",
+            "Bea was thrilled."
+          ]
+        }
+      ],
+      "mentions": [
+        {
+          "nameAsWritten": "Alex",
+          "candidates": [
+            "Alex Marsh",
+            "Alex Ruiz"
+          ]
+        }
+      ],
+      "classMentioned": null
+    },
+    "rationale": "Bea is Beatrix, while 'Alex' fits two students in other classes and nothing settles which."
+  },
+  {
+    "id": "p3h-42",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-10-16T22:30:00.000Z",
+    "note": "ok juni pervale presentation on cuneiform she brought clay and everyone made a tablet best hands on thing all term um and ember castle lane said it was better than hers which is high praise from em",
+    "expected": {
+      "students": [
+        {
+          "label": "Juniper Vale",
+          "quotes": [
+            "juni pervale presentation on cuneiform she brought clay and everyone made a tablet best hands on thing all term"
+          ]
+        },
+        {
+          "label": "Ember Castellane",
+          "quotes": [
+            "ember castle lane said it was better than hers which is high praise from em"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "In this transcript juni pervale is a mishearing of Juni Vale and ember castle lane of Ember Castellane."
+  },
+  {
+    "id": "p3h-43",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-10-19T17:50:00.000Z",
+    "note": "Rowan's presentation on Hammurabi's punishments — funny, accurate, kept to time. The debate stuff paid off. Nominating him for the humanities showcase with Em.",
+    "expected": {
+      "students": [
+        {
+          "label": "Rowan Pell",
+          "quotes": [
+            "Rowan's presentation on Hammurabi's punishments — funny, accurate, kept to time.",
+            "The debate stuff paid off.",
+            "Nominating him for the humanities showcase with Em."
+          ]
+        },
+        {
+          "label": "Ember Castellane",
+          "quotes": [
+            "Nominating him for the humanities showcase with Em."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Rowan is the focus of the note, and the nomination sentence also covers Em (Ember)."
+  },
+  {
+    "id": "p5h-43",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-10-19T20:50:00.000Z",
+    "note": "Felix as curator: kept his whole group on schedule, made a checklist on the whiteboard and everything. Wren turned in the last missing assignment — fully caught up.",
+    "expected": {
+      "students": [
+        {
+          "label": "Felix Stroud",
+          "quotes": [
+            "Felix as curator: kept his whole group on schedule, made a checklist on the whiteboard and everything."
+          ]
+        },
+        {
+          "label": "Wren Ashby",
+          "quotes": [
+            "Wren turned in the last missing assignment — fully caught up."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "There is one sentence each about Felix and Wren."
+  },
+  {
+    "id": "bbh-43",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-19T22:25:00.000Z",
+    "note": "Ronan asked to run the DBQ review game. Let him. He ran it better than I do and nobody drifted off task — which, given September, is saying something.",
+    "expected": {
+      "students": [
+        {
+          "label": "Ronan Pike",
+          "quotes": [
+            "Ronan asked to run the DBQ review game.",
+            "Let him.",
+            "He ran it better than I do and nobody drifted off task — which, given September, is saying something."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Ronan exactly matches Ronan Pike, even though Rowan looks similar."
+  },
+  {
+    "id": "p3h-44",
+    "batch": "Period 3 Humanities",
+    "notedAt": "2026-10-20T17:45:00.000Z",
+    "note": "Avery presented. Full class. Didn't look at her cards once after the first slide. Her dad emailed after to say she talked about it all through dinner.",
+    "expected": {
+      "students": [
+        {
+          "label": "Avery Quill",
+          "quotes": [
+            "Avery presented.",
+            "Didn't look at her cards once after the first slide.",
+            "Her dad emailed after to say she talked about it all through dinner."
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "The note is about Avery, including her dad's email, and Full class describes the audience rather than naming a class."
+  },
+  {
+    "id": "p5h-44",
+    "batch": "Period 5 Humanities",
+    "notedAt": "2026-10-20T22:45:00.000Z",
+    "note": "Coach Stroud needs the room Thursday after school for the team meeting. Museum displays go on the back counter Wednesday.",
+    "expected": {
+      "students": [],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "Coach Stroud is an adult acting in his own role rather than as Felix's family, and the rest is a classroom logistics to-do."
+  },
+  {
+    "id": "bbh-44",
+    "batch": "B Block Humanities",
+    "notedAt": "2026-10-21T18:00:00.000Z",
+    "note": "quick one um dbq essays back theo brightwater got a b plus best hes done all term he was so happy and imagine hale turned hers in on time it was solid not her best but on time",
+    "expected": {
+      "students": [
+        {
+          "label": "Theo Brightwater",
+          "quotes": [
+            "theo brightwater got a b plus best hes done all term he was so happy"
+          ]
+        },
+        {
+          "label": "Imogen Hale",
+          "quotes": [
+            "imagine hale turned hers in on time it was solid not her best but on time"
+          ]
+        }
+      ],
+      "mentions": [],
+      "classMentioned": null
+    },
+    "rationale": "In this transcript, 'imagine hale' is a misheard Imogen Hale, and theo brightwater is named directly."
+  }
+]

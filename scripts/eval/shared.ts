@@ -2,7 +2,7 @@
 // Every name here is invented; the eval roster is independent of the dev seed.
 import { readFileSync } from "node:fs";
 import { z } from "zod";
-import type { RosterEntry, TagClass } from "../../worker/tagging.ts";
+import { rosterLabels, type RosterEntry, type TagClass } from "../../worker/tagging.ts";
 
 const here = new URL(".", import.meta.url);
 export const ROSTER_PATH = new URL("roster.json", here);
@@ -28,22 +28,36 @@ export async function pool<T>(items: T[], n: number, fn: (item: T) => Promise<vo
   );
 }
 
+// The answer key for one note. Shared with scripts/demo, whose notes are scored the same way.
+export const Expected = z.object({
+  // label = "First Last" exactly as rosterLabels() builds it
+  students: z.array(z.object({ label: z.string(), quotes: z.array(z.string()) })),
+  mentions: z.array(z.object({ nameAsWritten: z.string(), candidates: z.array(z.string()) })),
+  // The class the note names as a whole, by name; null (the default) when none.
+  classMentioned: z.string().nullable().default(null),
+});
+export type Expected = z.infer<typeof Expected>;
+
 export const Case = z.object({
   id: z.string(),
   category: z.string(),
   note: z.string(),
-  expected: z.object({
-    // label = "First Last" exactly as rosterLabels() builds it
-    students: z.array(z.object({ label: z.string(), quotes: z.array(z.string()) })),
-    mentions: z.array(z.object({ nameAsWritten: z.string(), candidates: z.array(z.string()) })),
-    // The class the note names as a whole, by name; null (the default) when none.
-    classMentioned: z.string().nullable().default(null),
-  }),
+  expected: Expected,
   rationale: z.string(),
 });
 export type Case = z.infer<typeof Case>;
 
 export const loadRoster = (): Roster => Roster.parse(JSON.parse(readFileSync(ROSTER_PATH, "utf8")));
+
+// Both directions of the label ↔ id mapping the tagger works in.
+export function labelMaps(roster: RosterEntry[]) {
+  const idByLabel = new Map([...rosterLabels(roster).entries()].map(([label, s]) => [label, s.id]));
+  const labelById = new Map([...idByLabel.entries()].map(([label, id]) => [id, label]));
+  return { idByLabel, labelById };
+}
+
+// A mention is identified by who it could be, not by how the name was spelled.
+export const candidateKey = (ids: string[]) => [...new Set(ids)].sort().join("+");
 export const loadCases = (): Case[] => z.array(Case).parse(JSON.parse(readFileSync(CASES_PATH, "utf8")));
 
 // Each category is a brief for the generator. The tagging policy itself (what counts, how
