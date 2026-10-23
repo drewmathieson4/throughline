@@ -10,7 +10,7 @@ import * as schema from "../db/schema";
 import type { AppEnv } from "../db/client";
 import type { GradeImportResult } from "../api-types";
 import { requireClass, selectRoster } from "../db/helpers";
-import { categorise, matchStudents, parseGradebook, type MatchedEntry } from "../gradebook";
+import { OTHER, categorise, defaultCategories, matchStudents, parseGradebook, type MatchedEntry } from "../gradebook";
 import { categoriseAssignments } from "../gradebook-model";
 import { gradingWeights, selectMaterialSummaries } from "../materials";
 import { validate } from "../validate";
@@ -28,7 +28,6 @@ const importBody = z.object({
 
 // D1 binds at most 100 parameters per statement; an entry binds eight.
 const UPSERT_CHUNK = 12;
-const OTHER = "other";
 
 // Categories for the entries whose file did not state one: the rules on the title, then
 // Haiku for the titles left (titles only, never scores or names), then "other". A model
@@ -43,7 +42,7 @@ async function fillCategories(entries: MatchedEntry[], syllabus: string[] | null
   let fromModel = new Map<string, string>();
   if (unplaced.size > 0 && apiKey) {
     try {
-      fromModel = await categoriseAssignments({ titles: [...unplaced], categories: syllabus ?? ["homework", "quiz", "test", "project", "classwork"], client: new Anthropic({ apiKey }) });
+      fromModel = await categoriseAssignments({ titles: [...unplaced], categories: syllabus ?? defaultCategories, client: new Anthropic({ apiKey }) });
     } catch (err) {
       console.error("categorising assignments failed", err);
     }

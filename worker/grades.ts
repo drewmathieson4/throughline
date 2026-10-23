@@ -5,6 +5,7 @@
 // is counted, not averaged: a zero would be a guess at the teacher's policy.
 import type { CategorySummary, GradeEntryView, GradeSummary, GradeTrend, Standout } from "./api-types";
 import type { GradeEntry } from "./db/schema";
+import { OTHER } from "./gradebook";
 
 export type Weight = { category: string; weight: number };
 
@@ -12,7 +13,6 @@ const TREND_MIN_ENTRIES = 4;
 const TREND_THRESHOLD = 5; // percentage points between halves
 const STANDOUT_GAP = 10; // percentage points from the student's own mean
 const STANDOUT_MIN_CATEGORY_ENTRIES = 2;
-const OTHER = "other";
 
 const round = (n: number) => Math.round(n * 10) / 10;
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;

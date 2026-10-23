@@ -16,8 +16,8 @@ export const jsonInit = (method: string, body: unknown): RequestInit => ({
 
 // What the document upload routes read. The type-only import means a misspelt or dropped
 // extension fails typecheck without any Worker code reaching the browser bundle.
-const DOCUMENT_EXTENSIONS = ["pdf", "docx", "txt", "md"] as const satisfies readonly UploadExtension[];
-export const DOCUMENT_TYPES = DOCUMENT_EXTENSIONS.map((e) => `.${e}`).join(",");
+const DOCUMENT_EXTENSIONS: Record<UploadExtension, true> = { pdf: true, docx: true, txt: true, md: true };
+export const DOCUMENT_TYPES = Object.keys(DOCUMENT_EXTENSIONS).map((e) => `.${e}`).join(",");
 
 // A file sent as the raw request body, the way the upload routes read it. The browser
 // leaves the type blank for some extensions; the Worker decides by the name anyway.

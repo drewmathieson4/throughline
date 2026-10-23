@@ -203,9 +203,7 @@ function readLong(grid: Grid, t: LongTable): ParsedGradebook {
     let maxScore = stated !== null && stated > 0 ? stated : DEFAULT_MAX;
     let score: number | null = null;
     if (cell.kind === "score") ({ score, maxScore } = resolve(cell, maxScore));
-    if (cell.kind !== "score" || (cell.max === null && stated === null)) {
-      if (stated === null) guessed.add(assignment);
-    }
+    if (stated === null && (cell.kind !== "score" || cell.max === null)) guessed.add(assignment);
     const category = t.category >= 0 ? cleanName(cells[t.category] ?? "").slice(0, 100) || null : null;
     const dueDate = t.date >= 0 ? parseDate(cells[t.date] ?? "") : null;
     entries.push({ line, ...name, assignment, category, score, maxScore, dueDate, position });
@@ -316,9 +314,10 @@ export function parseGradebook(grid: Grid): ParsedGradebook {
 
 // ---- Categories ------------------------------------------------------------------------
 
-// What an assignment title says about its kind. The fixed set is the category when the
-// class has no syllabus; "other" is where titles the rules and the model cannot place go.
-export const fixedCategories = ["homework", "quiz", "test", "project", "classwork", "other"] as const;
+// What an assignment title says about its kind. The default set is the categories when the
+// class has no syllabus; OTHER is where titles the rules and the model cannot place go.
+export const defaultCategories = ["homework", "quiz", "test", "project", "classwork"];
+export const OTHER = "other";
 const KIND_RULES: [string, RegExp][] = [
   ["homework", /\b(hw|homework|home ?work)\b/],
   ["quiz", /\bquiz/],

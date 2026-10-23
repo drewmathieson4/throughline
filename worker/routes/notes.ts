@@ -307,18 +307,20 @@ notes.post("/document", validate("query", documentQuery), uploadLimit, async (c)
     .returning({ id: schema.notes.id });
   const inserts: BatchItem<"sqlite">[] = [];
   const written: NoteWithTags[] = [];
+  const reportNote = (quotes: string[], classId?: string) =>
+    noteRow({ classId, kind: "progress_report", body: quotes.join("\n\n"), sourceName: name, notedAt }, now);
   // An entry whose passages could not be verified has no evidence and gets no note.
   for (const s of split.students) {
     const quotes = fittingPassages(s.quotes);
     if (quotes.length === 0) continue;
-    const note = noteRow({ classId: s.classId, kind: "progress_report", body: quotes.join("\n\n"), sourceName: name, notedAt }, now);
+    const note = reportNote(quotes, s.classId);
     inserts.push(db.insert(schema.notes).values(note), db.insert(schema.noteStudents).values({ noteId: note.id, studentId: s.studentId, quotes }));
     written.push({ ...note, students: [{ studentId: s.studentId, quotes }], mentions: [] });
   }
   for (const m of split.mentions) {
     const quotes = fittingPassages(m.quotes);
     if (quotes.length === 0) continue;
-    const note = noteRow({ kind: "progress_report", body: quotes.join("\n\n"), sourceName: name, notedAt }, now);
+    const note = reportNote(quotes);
     const mention = mentionRow(note.id, { ...m, quotes }, now);
     inserts.push(db.insert(schema.notes).values(note), db.insert(schema.noteMentions).values(mention));
     written.push({ ...note, students: [], mentions: [{ id: mention.id, mentionText: mention.mentionText, quotes, candidateIds: mention.candidateIds }] });
