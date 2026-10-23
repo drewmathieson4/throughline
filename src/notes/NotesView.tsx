@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 // Type-only imports: nothing from the Worker ends up in the browser bundle.
 import type { ClassRow } from "../../worker/db/schema";
-import type { NoteWithTags, RosterStudent, TaggedNoteResponse } from "../../worker/api-types";
+import type { DocumentImportResult, NoteWithTags, RosterStudent, TaggedNoteResponse } from "../../worker/api-types";
 import { api, jsonInit, messageOf } from "../api";
+import FilePicker from "../FilePicker";
 import NoteItem from "../NoteItem";
 import Tags, { type Person } from "./Tags";
 import { button, errorText, input, plural, subtleButton } from "../ui";
@@ -15,26 +16,30 @@ const mmss = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 
-// A note needs no class: the teacher writes or records, and tagging works out the rest.
-function NoteForm({ onCreated }: { onCreated: (note: TaggedNoteResponse) => void }) {
+// Kept in step with the extensions worker/upload.ts accepts (the browser imports only types from the Worker).
+const DOCUMENT_TYPES = ".pdf,.docx,.txt,.md";
+
+// A note needs no class: the teacher writes or records, and tagging works out the rest. An
+// uploaded document (an old progress report) becomes one note per student it is about.
+function NoteForm({ onCreated, onReplaced }: { onCreated: (note: NoteWithTags) => void; onReplaced: (replacedIds: string[], notes: NoteWithTags[]) => void }) {
   const [draft, setDraft] = useState("");
-  // Which kind of note is being saved right now; text and voice saves never overlap. Two
-  // actions that must know which one is in flight, so this form does not use useAction.
-  const [pending, setPending] = useState<"text" | "voice" | null>(null);
+  // Which kind of save is in flight; they never overlap. Several actions that must know
+  // which one is running, so this form does not use useAction.
+  const [pending, setPending] = useState<"text" | "voice" | "document" | null>(null);
   // Shown once a recording that stopped at the time limit has actually been saved.
   const [hitLimit, setHitLimit] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  // What the last save did; `warn` for a save that went only partly right.
+  const [message, setMessage] = useState<{ text: string; warn?: boolean } | null>(null);
 
-  // Posts one note and hands it to the list. False means it failed and the error is on screen.
-  async function save(kind: "text" | "voice", url: string, init: RequestInit) {
+  // Runs one save and hands what it made to the list. False means it failed and the error
+  // is on screen.
+  async function run(kind: NonNullable<typeof pending>, fn: () => Promise<void>) {
     setPending(kind);
     setError(null);
-    setNotice(null);
+    setMessage(null);
     try {
-      const note = await api<TaggedNoteResponse>(url, init);
-      onCreated(note);
-      if (note.tagging === "failed") setNotice("Saved, but tagging did not run. Students can be added later.");
+      await fn();
       return true;
     } catch (e) {
       setError(messageOf(e));
@@ -43,6 +48,34 @@ function NoteForm({ onCreated }: { onCreated: (note: TaggedNoteResponse) => void
       setPending(null);
     }
   }
+
+  // Posts one note.
+  const save = (kind: "text" | "voice", url: string, init: RequestInit) =>
+    run(kind, async () => {
+      const note = await api<TaggedNoteResponse>(url, init);
+      onCreated(note);
+      if (note.tagging === "failed") setMessage({ text: "Saved, but tagging did not run. Students can be added later.", warn: true });
+    });
+
+  // Uploads a document; the notes it was cut into join the list at once.
+  const upload = (file: File) =>
+    run("document", async () => {
+      const query = new URLSearchParams({ name: file.name });
+      // The file's own date is the fallback for notes from a document that states none.
+      if (file.lastModified > 0 && file.lastModified <= Date.now()) query.set("modified", new Date(file.lastModified).toISOString());
+      const result = await api<DocumentImportResult>(`/api/notes/document?${query}`, {
+        method: "POST",
+        headers: { "content-type": file.type || "application/octet-stream" },
+        body: file,
+      });
+      onReplaced(result.replaced, result.notes);
+      const unsure = result.notes.filter((n) => n.mentions.length > 0).length;
+      const made =
+        result.notes.length === 0
+          ? `No students from your roster were named in ${result.name}.`
+          : `Made ${plural(result.notes.length, "note")} from ${result.name}${unsure > 0 ? `, ${plural(unsure, "name")} unsure` : ""}.`;
+      setMessage({ text: result.replaced.length > 0 ? `${made} Replaced ${plural(result.replaced.length, "note")} made from it earlier.` : made });
+    });
 
   // A voice note is saved the moment transcription finishes; there is no review step.
   const recorder = useRecorder({
@@ -91,7 +124,10 @@ function NoteForm({ onCreated }: { onCreated: (note: TaggedNoteResponse) => void
         placeholder="What did you notice today?"
         className={input}
       />
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
+        <FilePicker accept={DOCUMENT_TYPES} disabled={busy || recorder.recording} onFile={upload}>
+          {pending === "document" ? "Reading and tagging…" : "Upload a document"}
+        </FilePicker>
         {recorder.supported && (
           <button type="button" onClick={recorder.recording ? recorder.stop : record} disabled={busy} className={subtleButton}>
             {pending === "voice" ? (
@@ -113,7 +149,11 @@ function NoteForm({ onCreated }: { onCreated: (note: TaggedNoteResponse) => void
         </button>
       </div>
       {error && <p className={errorText}>{error}</p>}
-      {notice && <p className="text-sm text-amber-700">{notice}</p>}
+      {message && (
+        <p role="status" className={message.warn ? "text-sm text-amber-700" : "text-sm text-gray-600"}>
+          {message.text}
+        </p>
+      )}
     </form>
   );
 }
@@ -161,7 +201,10 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
 
   return (
     <>
-      <NoteForm onCreated={(note) => setNotes((prev) => [note, ...prev])} />
+      <NoteForm
+        onCreated={(note) => setNotes((prev) => [note, ...prev])}
+        onReplaced={(gone, made) => setNotes((prev) => [...made, ...prev.filter((n) => !gone.includes(n.id))])}
+      />
       {error && <p className={`mt-4 ${errorText}`}>{error}</p>}
 
       <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">

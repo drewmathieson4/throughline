@@ -6,6 +6,7 @@ import { useAction } from "../useAction";
 // Who a student id is, and which class, for display.
 export type Person = { name: string; classId: string };
 
+const collapse = (s: string) => s.replace(/\s+/g, " ").trim();
 const smallButton = "rounded border border-amber-300 bg-white px-1.5 py-0.5 text-amber-900 hover:bg-amber-50 disabled:opacity-40";
 
 // A note's tags, each removable, and its open mentions, each settled by picking a candidate
@@ -52,7 +53,8 @@ export default function Tags({
                 ×
               </button>
             </span>
-            {s.quotes.length > 0 && (
+            {/* Quotes that are the whole body (a note cut from a document, a one-line note) say nothing new. */}
+            {s.quotes.length > 0 && collapse(s.quotes.join(" ")) !== collapse(note.body) && (
               <ul className="mt-0.5 ml-2 text-xs text-gray-500 italic">
                 {s.quotes.map((q) => (
                   <li key={q}>“{q}”</li>

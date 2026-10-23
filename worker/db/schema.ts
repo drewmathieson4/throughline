@@ -52,6 +52,8 @@ export const notes = sqliteTable(
     kind: text("kind", { enum: noteKinds }).notNull(),
     body: text("body").notNull(),
     audioKey: text("audio_key"), // R2 object key, Phase 2
+    // The uploaded file a note was cut from (a progress report), so the list can say so.
+    sourceName: text("source_name"),
     notedAt: text("noted_at").notNull(), // when the observation happened
     createdAt: text("created_at").notNull(), // when the row was written
   },

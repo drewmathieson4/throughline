@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { ImportedClass, RosterImportResult } from "../../worker/api-types";
 import { api, jsonInit } from "../api";
-import { button, errorText, input, plural, subtleButton } from "../ui";
+import FilePicker from "../FilePicker";
+import { button, errorText, input, plural } from "../ui";
 import { useAction } from "../useAction";
 import { csvToGrid } from "./csv";
 
@@ -30,20 +31,9 @@ export default function ImportRoster({ classId, onImported }: { classId: string;
   return (
     <div className="mt-6">
       <div className="flex flex-wrap items-center gap-3">
-        <label className={`${subtleButton} cursor-pointer`}>
+        <FilePicker accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" disabled={busy} onFile={importSource}>
           {busy ? "Importing…" : "Import roster file"}
-          <input
-            type="file"
-            className="sr-only"
-            accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
-            disabled={busy}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              e.target.value = ""; // so picking the same file again fires onChange
-              if (file) importSource(file);
-            }}
-          />
-        </label>
+        </FilePicker>
         <button type="button" className="text-sm text-gray-500 hover:underline" onClick={() => setPasting((p) => !p)}>
           {pasting ? "Hide paste box" : "or paste names"}
         </button>

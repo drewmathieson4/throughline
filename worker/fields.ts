@@ -21,5 +21,14 @@ export const dateField = (label: string) => z.iso.date(`${label} must be YYYY-MM
 // A day of slack covers time zones; beyond that a date is a typo, not a plan.
 export const notInFuture = (s: string) => Date.parse(s) <= Date.now() + ONE_DAY_MS;
 
+// A moment the browser reports (when a note was taken, when a file was saved). Re-serialized
+// so every stored value has the same shape and ORDER BY sorts chronologically; bounded so a
+// typo like 9999-… cannot sit at the top of a list for the rest of the term.
+export const pastDatetime = (label: string) =>
+  z.iso
+    .datetime({ offset: true })
+    .transform((s) => new Date(s).toISOString())
+    .refine(notInFuture, `${label} is in the future`);
+
 // ?classId=… on every list route.
 export const classIdQuery = z.object({ classId: z.uuid() });

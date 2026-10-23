@@ -10,19 +10,21 @@
 // comes back with `tagging: "failed"`; POST /:noteId/retag tries again.
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { bodyLimit } from "hono/body-limit";
 import Anthropic from "@anthropic-ai/sdk";
 import { and, desc, eq, isNull, sql, type SQL } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 import { z } from "zod";
 import * as schema from "../db/schema";
 import type { Note, NoteStudent } from "../db/schema";
-import type { NoteWithTags, TaggedNoteResponse, TaggingStatus } from "../api-types";
+import type { DocumentImportResult, NoteWithTags, TaggedNoteResponse, TaggingStatus } from "../api-types";
 import type { AppEnv, Db } from "../db/client";
 import { requireClass, requireNote, requireStudent, selectClasses, selectRoster } from "../db/helpers";
-import { notInFuture } from "../fields";
+import { pastDatetime } from "../fields";
 import { validate } from "../validate";
-import { quoteLocator, tagNote, union, type TagResult } from "../tagging";
+import { quoteLocator, tagNote, union, type OpenMention, type TagResult } from "../tagging";
+import { splitDocument, type SplitResult } from "../documents";
 import { transcribe } from "../transcribe";
+import { limitBody, readUpload, uploadLimit, uploadName } from "../upload";
 
 // Shared by text and voice notes. A backstop, not a product limit: a five-minute clip
 // transcribes to roughly 5,000 characters. See DECISIONS.md.
@@ -31,7 +33,13 @@ const MAX_BODY_CHARS = 50_000;
 // Well above what 5 minutes of 32 kbps speech produces (~1.2 MB), under Workers AI's input cap.
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 
+// About fifteen pages: a term's report pack for one class. The split copies the text back,
+// so this also bounds one model call's output and how long the teacher waits.
+const MAX_DOCUMENT_CHARS = 60_000;
+
 const classQuery = z.object({ classId: z.uuid().optional() });
+// A document's file name and, as a fallback date, when the file was last modified.
+const documentQuery = z.object({ name: uploadName, modified: pastDatetime("modified").optional() });
 const noteParam = z.object({ noteId: z.uuid() });
 const noteStudentParam = z.object({ noteId: z.uuid(), studentId: z.uuid() });
 const mentionParam = z.object({ noteId: z.uuid(), mentionId: z.uuid() });
@@ -40,14 +48,8 @@ const quotes = z.array(z.string().trim().min(1).max(2000)).max(50);
 const createNote = z.object({
   classId: z.uuid().optional(),
   body: z.string().trim().min(1, "body is required").max(MAX_BODY_CHARS, "body is too long"),
-  // When the observation happened; defaults to now. Re-serialized so every stored
-  // value has the same shape and ORDER BY noted_at sorts chronologically. Bounded so a
-  // typo like 9999-… cannot sit at the top of the list for the rest of the term.
-  notedAt: z.iso
-    .datetime({ offset: true })
-    .transform((s) => new Date(s).toISOString())
-    .refine(notInFuture, "notedAt is in the future")
-    .optional(),
+  // When the observation happened; defaults to now.
+  notedAt: pastDatetime("notedAt").optional(),
 });
 const addStudent = z.object({ studentId: z.uuid(), quotes: quotes.optional() });
 const assignMention = z.object({ studentId: z.uuid() });
@@ -58,16 +60,25 @@ const tagKey = (noteId: string, studentId: string) =>
 const mentionKey = (noteId: string, mentionId: string) =>
   and(eq(schema.noteMentions.id, mentionId), eq(schema.noteMentions.noteId, noteId));
 
-// Single write path for every note kind, so rows always get the same id/timestamp shape.
+// The row for a new note, whatever its kind: the one place that mints ids and timestamps.
 // A classId, when given, has already been checked with requireClass by the route.
-function insertNote(db: Db, values: { classId?: string; kind: schema.NoteKind; body: string; notedAt?: string }) {
-  const now = new Date().toISOString();
-  return db
-    .insert(schema.notes)
-    .values({ id: crypto.randomUUID(), ...values, classId: values.classId ?? null, notedAt: values.notedAt ?? now, createdAt: now })
-    .returning()
-    .get();
+type NoteValues = { classId?: string | null; kind: schema.NoteKind; body: string; notedAt?: string; sourceName?: string };
+function noteRow(values: NoteValues, now = new Date().toISOString()): Note {
+  return {
+    id: crypto.randomUUID(),
+    classId: values.classId ?? null,
+    kind: values.kind,
+    body: values.body,
+    audioKey: null,
+    sourceName: values.sourceName ?? null,
+    notedAt: values.notedAt ?? now,
+    createdAt: now,
+  };
 }
+const insertNote = (db: Db, values: NoteValues) => db.insert(schema.notes).values(noteRow(values)).returning().get();
+
+// The row for an open mention on a note.
+const mentionRow = (noteId: string, m: OpenMention, now: string) => ({ id: crypto.randomUUID(), noteId, mentionText: m.mentionText, quotes: m.quotes, candidateIds: m.candidateIds, createdAt: now });
 
 // A teacher's action on a student settles the note's class when it had none: the statement
 // copies that student's class onto the note, and only if the note still has no class, so it
@@ -166,16 +177,7 @@ async function storeTags(db: Db, note: Note, result: TagResult): Promise<Note> {
       ? [db.update(schema.notes).set({ classId }).where(and(eq(schema.notes.id, note.id), isNull(schema.notes.classId)))]
       : []),
     ...result.students.map((s) => db.insert(schema.noteStudents).values({ noteId: note.id, studentId: s.studentId, quotes: s.quotes })),
-    ...result.mentions.map((m) =>
-      db.insert(schema.noteMentions).values({
-        id: crypto.randomUUID(),
-        noteId: note.id,
-        mentionText: m.mentionText,
-        quotes: m.quotes,
-        candidateIds: m.candidateIds,
-        createdAt: now,
-      }),
-    ),
+    ...result.mentions.map((m) => db.insert(schema.noteMentions).values(mentionRow(note.id, m, now))),
   ];
   if (first) await db.batch([first, ...rest]);
   return { ...note, classId };
@@ -222,14 +224,7 @@ notes.post("/", validate("json", createNote), async (c) => {
   return c.json(await runTagging(c.var.db, c.env.ANTHROPIC_API_KEY, note), 201);
 });
 
-// Rejects on a declared content-length over the cap, otherwise stops reading the body as
-// soon as it passes the cap, so an oversized upload is never fully buffered.
-const audioLimit = bodyLimit({
-  maxSize: MAX_AUDIO_BYTES,
-  onError: () => {
-    throw new HTTPException(413, { message: "recording is too large" });
-  },
-});
+const audioLimit = limitBody(MAX_AUDIO_BYTES, "recording is too large");
 
 // POST /api/notes/voice[?classId=…] with a raw audio body → transcribes, stores a voice note,
 // and tags it, all in one request; 201 with the same shape as a text note. notedAt is the
@@ -260,6 +255,83 @@ notes.post("/voice", validate("query", classQuery), audioLimit, async (c) => {
 
   const note = await insertNote(c.var.db, { classId, kind: "voice", body: text });
   return c.json(await runTagging(c.var.db, c.env.ANTHROPIC_API_KEY, note), 201);
+});
+
+// The passages that fit one note body: later ones are dropped once it is full, and a first
+// one that is itself over the cap is cut to fit. A backstop (it takes a 50,000-character
+// document about one student to reach), not a product limit.
+function fittingPassages(passages: string[]): string[] {
+  const kept: string[] = [];
+  let length = 0;
+  for (const p of passages) {
+    const next = length + (kept.length ? 2 : 0) + p.length; // joined with "\n\n"
+    if (next > MAX_BODY_CHARS) {
+      if (kept.length === 0) kept.push(p.slice(0, MAX_BODY_CHARS).trim());
+      break;
+    }
+    kept.push(p);
+    length = next;
+  }
+  return kept;
+}
+
+// POST /api/notes/document?name=…[&modified=…] with the file as the body → one note of kind
+// progress_report per roster student the document is about, tagged to them with the passages
+// about them as quotes; a name it could not settle becomes an unassigned note with an open
+// mention. 201 with the notes written, 200 with none when the document named nobody; 400
+// when the file cannot be read and 502 when the split fails, with nothing written either
+// way. The notes an earlier upload of the same file made are replaced; `replaced` lists
+// their ids. Why these choices, and how the notes are dated: see DECISIONS.md.
+notes.post("/document", validate("query", documentQuery), uploadLimit, async (c) => {
+  const { name, modified } = c.req.valid("query");
+  const db = c.var.db;
+
+  const unreadable = () => new HTTPException(502, { message: "could not read the students out of that document" });
+  const apiKey = c.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    // Checked before the file is read: without the model there is nothing to do with it.
+    console.warn("ANTHROPIC_API_KEY is not set; document not imported", name);
+    throw unreadable();
+  }
+  const [text, [roster, classes]] = await Promise.all([readUpload(c, name, MAX_DOCUMENT_CHARS), db.batch([selectRoster(db), selectClasses(db)])]);
+  let split: SplitResult;
+  try {
+    split = await splitDocument({ text, roster, classes, client: new Anthropic({ apiKey }) });
+  } catch (err) {
+    console.error("splitting failed for document", name, err);
+    throw unreadable();
+  }
+
+  const now = new Date().toISOString();
+  // A date the document states is stored at noon UTC so it shows as that day everywhere.
+  const notedAt = split.documentDate ? `${split.documentDate}T12:00:00.000Z` : (modified ?? now);
+  const removal = db
+    .delete(schema.notes)
+    .where(and(eq(schema.notes.sourceName, name), eq(schema.notes.kind, "progress_report")))
+    .returning({ id: schema.notes.id });
+  const inserts: BatchItem<"sqlite">[] = [];
+  const written: NoteWithTags[] = [];
+  // An entry whose passages could not be verified has no evidence and gets no note.
+  for (const s of split.students) {
+    const quotes = fittingPassages(s.quotes);
+    if (quotes.length === 0) continue;
+    const note = noteRow({ classId: s.classId, kind: "progress_report", body: quotes.join("\n\n"), sourceName: name, notedAt }, now);
+    inserts.push(db.insert(schema.notes).values(note), db.insert(schema.noteStudents).values({ noteId: note.id, studentId: s.studentId, quotes }));
+    written.push({ ...note, students: [{ studentId: s.studentId, quotes }], mentions: [] });
+  }
+  for (const m of split.mentions) {
+    const quotes = fittingPassages(m.quotes);
+    if (quotes.length === 0) continue;
+    const note = noteRow({ kind: "progress_report", body: quotes.join("\n\n"), sourceName: name, notedAt }, now);
+    const mention = mentionRow(note.id, { ...m, quotes }, now);
+    inserts.push(db.insert(schema.notes).values(note), db.insert(schema.noteMentions).values(mention));
+    written.push({ ...note, students: [], mentions: [{ id: mention.id, mentionText: mention.mentionText, quotes, candidateIds: mention.candidateIds }] });
+  }
+  // One transaction: the earlier set goes even when this upload found nobody, because the
+  // file is what the teacher just said these notes should stand for.
+  const [deleted] = await db.batch([removal, ...inserts]);
+  const result: DocumentImportResult = { name, notes: written, replaced: deleted.map((r) => r.id) };
+  return c.json(result, written.length > 0 ? 201 : 200);
 });
 
 // POST /api/notes/:noteId/retag → tag a note that has no tags and no open mentions, the state

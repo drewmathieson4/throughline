@@ -1,13 +1,19 @@
-import { expect, test, vi } from "vitest";
+import { beforeEach, expect, test, vi } from "vitest";
 import app from "../index";
 import { CLASS_B_ID, SEED_CLASS_ID as CLASS_ID, SEED_CLASS_NAMES, SEED_STUDENT_COUNT, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb } from "../test-db";
 import { tagNote, type TagResult } from "../tagging";
-import type { NoteWithTags, TaggedNoteResponse as Created } from "../api-types";
+import { splitDocument, type SplitResult } from "../documents";
+import type { DocumentImportResult, NoteWithTags, TaggedNoteResponse as Created } from "../api-types";
+import { MAX_UPLOAD_BYTES } from "../upload";
 
-// The tagger is stubbed: route tests never call the API. (wrangler's proxy reads .dev.vars,
-// so once a real key exists an un-stubbed run would make real, billable calls.)
+// The tagger and the document splitter are stubbed: route tests never call the API.
+// (wrangler's proxy reads .dev.vars, so once a real key exists an un-stubbed run would make
+// real, billable calls.)
 vi.mock(import("../tagging"), async (importOriginal) => ({ ...(await importOriginal()), tagNote: vi.fn() }));
+vi.mock(import("../documents"), async (importOriginal) => ({ ...(await importOriginal()), splitDocument: vi.fn() }));
 const tagNoteMock = vi.mocked(tagNote);
+const splitMock = vi.mocked(splitDocument);
+beforeEach(() => splitMock.mockReset());
 
 const db = setupTestDb();
 // Same bindings plus an API key, so tagging is attempted.
@@ -18,13 +24,19 @@ const listOf = async (classId?: string) => (await getNotes(classId)).json() as P
 // A string body is sent verbatim so tests can post malformed JSON.
 const postNote = (body: unknown, env?: Env) => app.request("/api/notes", jsonInit("POST", body), env ?? db.env);
 
-// Voice notes: the AI binding is replaced with a fake that returns `text`, or throws.
-function fakeAi(text: string | Error) {
+// The AI binding is replaced with a fake: Whisper returns `text` (or throws); toMarkdown
+// returns `markdown` (or an error result, the way the real one reports an unreadable file).
+function fakeAi(text: string | Error, markdown: string | Error = "") {
   return {
     run: vi.fn(async () => {
       if (text instanceof Error) throw text;
       return { text };
     }),
+    toMarkdown: vi.fn(async (doc: { name: string }) =>
+      markdown instanceof Error
+        ? { id: "1", name: doc.name, mimeType: "application/pdf", format: "error", error: markdown.message }
+        : { id: "1", name: doc.name, mimeType: "application/pdf", format: "markdown", tokens: 1, data: markdown },
+    ),
   };
 }
 
@@ -415,4 +427,189 @@ test("POST /api/notes/voice returns 502 when Whisper fails and writes nothing", 
   expect(res.status).toBe(502);
   expect(await res.json()).toEqual({ error: "transcription failed" });
   expect(await listOf()).toEqual([]);
+});
+
+// Documents: the file is read (toMarkdown faked for PDFs), the split is stubbed, and the
+// route writes one note per student.
+
+const REPORT = ["Mid-term report, 14 November 2025", "", "Avery Quill", "Avery reads widely.", "", "Alex", "Alex was late."].join("\n");
+
+function postDocument(name: string, body: BodyInit, opts: { ai?: ReturnType<typeof fakeAi>; modified?: string; headers?: Record<string, string>; env?: Env } = {}) {
+  const query = new URLSearchParams({ name, ...(opts.modified ? { modified: opts.modified } : {}) });
+  return app.request(
+    `/api/notes/document?${query}`,
+    { method: "POST", headers: { "content-type": "application/octet-stream", ...opts.headers }, body },
+    { ...(opts.env ?? keyed()), AI: (opts.ai ?? fakeAi("")) as unknown as Ai },
+  );
+}
+
+const splitResult = (students: SplitResult["students"], mentions: SplitResult["mentions"] = [], documentDate: string | null = null): SplitResult => ({
+  students,
+  mentions,
+  documentDate,
+  usage: { inputTokens: 1, outputTokens: 1 },
+});
+const averySection = { studentId: STUDENT.avery, classId: CLASS_ID, quotes: ["Avery Quill", "Avery reads widely."] };
+const alexMention = { mentionText: "Alex", quotes: ["Alex was late."], candidateIds: [STUDENT.alexMarsh, STUDENT.alexRuiz] };
+
+test("POST /api/notes/document reads a text file and stores one dated note per student, plus one per unsettled name", async () => {
+  const ai = fakeAi("");
+  splitMock.mockResolvedValueOnce(splitResult([averySection], [alexMention], "2025-11-14"));
+  const res = await postDocument("report.txt", REPORT, { ai, modified: "2026-01-05T10:00:00Z" });
+  expect(res.status).toBe(201);
+  const { name, notes } = (await res.json()) as DocumentImportResult;
+  expect(name).toBe("report.txt");
+  expect(ai.toMarkdown).not.toHaveBeenCalled();
+  expect(splitMock.mock.calls[0]![0].text).toBe(REPORT);
+
+  expect(notes).toHaveLength(2);
+  const avery = notes.find((n) => n.students.length > 0)!;
+  expect(avery).toMatchObject({
+    kind: "progress_report",
+    classId: CLASS_ID,
+    body: "Avery Quill\n\nAvery reads widely.",
+    sourceName: "report.txt",
+    notedAt: "2025-11-14T12:00:00.000Z",
+    students: [{ studentId: STUDENT.avery, quotes: ["Avery Quill", "Avery reads widely."] }],
+    mentions: [],
+  });
+  const alex = notes.find((n) => n.mentions.length > 0)!;
+  expect(alex).toMatchObject({ kind: "progress_report", classId: null, body: "Alex was late.", sourceName: "report.txt", students: [] });
+  expect(alex.mentions[0]).toMatchObject({ mentionText: "Alex", quotes: ["Alex was late."], candidateIds: [STUDENT.alexMarsh, STUDENT.alexRuiz] });
+
+  // Both are in the list like any other note.
+  expect((await listOf()).map((n) => n.id).sort()).toEqual(notes.map((n) => n.id).sort());
+});
+
+test("POST /api/notes/document converts a PDF through toMarkdown and dates notes from the file when the document has no date", async () => {
+  const bytes = new Uint8Array([37, 80, 68, 70]);
+  const ai = fakeAi("", `  ${REPORT}  `);
+  splitMock.mockResolvedValueOnce(splitResult([averySection]));
+  const res = await postDocument("Report.PDF", bytes, { ai, modified: "2026-01-05T10:00:00Z" });
+  expect(res.status).toBe(201);
+  expect(ai.toMarkdown).toHaveBeenCalledTimes(1);
+  const [doc, options] = ai.toMarkdown.mock.calls[0] as unknown as [{ name: string; blob: Blob }, { conversionOptions: { pdf: { images: { convert: boolean } } } }];
+  expect(doc.name).toBe("Report.PDF");
+  expect(doc.blob.type).toBe("application/pdf");
+  expect(new Uint8Array(await doc.blob.arrayBuffer())).toEqual(bytes);
+  expect(options.conversionOptions.pdf.images.convert).toBe(false);
+  expect(splitMock.mock.calls[0]![0].text).toBe(REPORT);
+  const { notes } = (await res.json()) as DocumentImportResult;
+  expect(notes[0]!.notedAt).toBe("2026-01-05T10:00:00.000Z");
+});
+
+test("POST /api/notes/document dates notes now when neither the document nor the file says", async () => {
+  splitMock.mockResolvedValueOnce(splitResult([averySection]));
+  const before = Date.now();
+  const res = await postDocument("report.md", REPORT);
+  expect(res.status).toBe(201);
+  const { notes } = (await res.json()) as DocumentImportResult;
+  expect(Date.parse(notes[0]!.notedAt)).toBeGreaterThanOrEqual(before);
+});
+
+test("POST /api/notes/document writes nothing when the document names nobody, or only names without verifiable passages", async () => {
+  splitMock.mockResolvedValueOnce(splitResult([]));
+  const empty = await postDocument("report.txt", REPORT);
+  expect(empty.status).toBe(200);
+  expect(await empty.json()).toEqual({ name: "report.txt", notes: [], replaced: [] });
+
+  splitMock.mockResolvedValueOnce(splitResult([{ studentId: STUDENT.avery, classId: CLASS_ID, quotes: [] }]));
+  const unverified = await postDocument("report.txt", REPORT);
+  expect(unverified.status).toBe(200);
+  expect(await listOf()).toEqual([]);
+});
+
+test("POST /api/notes/document keeps a student's note under the body cap: later passages dropped, a lone oversized one cut", async () => {
+  const long = "x".repeat(29_000);
+  splitMock.mockResolvedValueOnce(splitResult([{ studentId: STUDENT.avery, classId: CLASS_ID, quotes: [long, long] }]));
+  const res = await postDocument("report.txt", `${long}\n${long}`);
+  expect(res.status).toBe(201);
+  const { notes } = (await res.json()) as DocumentImportResult;
+  expect(notes[0]!.body).toHaveLength(29_000);
+  expect(notes[0]!.students[0]!.quotes).toHaveLength(1);
+
+  const huge = "y".repeat(55_000);
+  splitMock.mockResolvedValueOnce(splitResult([{ studentId: STUDENT.avery, classId: CLASS_ID, quotes: [huge] }]));
+  const cut = await postDocument("long.txt", huge);
+  expect(cut.status).toBe(201);
+  const made = ((await cut.json()) as DocumentImportResult).notes[0]!;
+  expect(made.body).toHaveLength(50_000);
+  expect(made.students[0]!.quotes).toEqual([made.body]);
+});
+
+test("POST /api/notes/document uploaded again replaces the notes made from the same file", async () => {
+  splitMock.mockResolvedValueOnce(splitResult([averySection], [alexMention]));
+  const first = (await (await postDocument("report.txt", REPORT)).json()) as DocumentImportResult;
+  expect(first.replaced).toEqual([]);
+  // A note of another kind with the same source name is not touched; neither is another file's.
+  await db.env.DB.prepare("UPDATE notes SET source_name = 'report.txt' WHERE id = ?").bind((await createTagged()).id).run();
+  splitMock.mockResolvedValueOnce(splitResult([averySection]));
+  await postDocument("other.txt", REPORT);
+
+  splitMock.mockResolvedValueOnce(splitResult([averySection]));
+  const res = await postDocument("report.txt", REPORT);
+  expect(res.status).toBe(201);
+  const second = (await res.json()) as DocumentImportResult;
+  expect(second.replaced.sort()).toEqual(first.notes.map((n) => n.id).sort());
+  expect(second.notes).toHaveLength(1);
+  const all = await listOf();
+  expect(all.filter((n) => n.sourceName === "report.txt" && n.kind === "progress_report").map((n) => n.id)).toEqual([second.notes[0]!.id]);
+  expect(all.filter((n) => n.sourceName === "report.txt" && n.kind === "text")).toHaveLength(1);
+  expect(all.filter((n) => n.sourceName === "other.txt")).toHaveLength(1);
+  expect(all).toHaveLength(3);
+});
+
+test("POST /api/notes/document is a 502 without an API key or when the split fails, and writes nothing", async () => {
+  const ai = fakeAi("", REPORT);
+  const unkeyed = await postDocument("report.pdf", new Uint8Array([1]), { env: db.env, ai });
+  expect(unkeyed.status).toBe(502);
+  expect(await unkeyed.json()).toEqual({ error: "could not read the students out of that document" });
+  expect(splitMock).not.toHaveBeenCalled();
+  expect(ai.toMarkdown).not.toHaveBeenCalled();
+
+  splitMock.mockRejectedValueOnce(new Error("rate limited"));
+  const failed = await quietErrors(() => postDocument("report.txt", REPORT));
+  expect(failed.status).toBe(502);
+  expect(await listOf()).toEqual([]);
+});
+
+test("POST /api/notes/document rejects a file it cannot read, an empty one, and one that is too long", async () => {
+  const unreadable = await quietErrors(() => postDocument("scan.pdf", new Uint8Array([1]), { ai: fakeAi("", new Error("no text layer")) }));
+  expect(unreadable.status).toBe(400);
+  expect(await unreadable.json()).toEqual({ error: "could not read that file" });
+
+  const blank = await postDocument("blank.pdf", new Uint8Array([1]), { ai: fakeAi("", "   ") });
+  expect(blank.status).toBe(400);
+  expect(await blank.json()).toEqual({ error: "could not read that file" });
+
+  // The binding throws (rather than answering with an error result) on input it will not take.
+  const throwing = fakeAi("");
+  throwing.toMarkdown.mockRejectedValueOnce(new Error("Too small"));
+  const refused = await quietErrors(() => postDocument("odd.docx", new Uint8Array([1]), { ai: throwing }));
+  expect(refused.status).toBe(400);
+  expect(await refused.json()).toEqual({ error: "could not read that file" });
+
+  const empty = await postDocument("report.txt", new Uint8Array(0));
+  expect(empty.status).toBe(400);
+  expect(await empty.json()).toEqual({ error: "file is empty" });
+
+  const long = await postDocument("report.txt", "x".repeat(60_001));
+  expect(long.status).toBe(400);
+  expect(await long.json()).toEqual({ error: "file is too long (over 60,000 characters)" });
+  expect(splitMock).not.toHaveBeenCalled();
+});
+
+test("POST /api/notes/document rejects an unsupported type, a missing name, a future modified date, and an oversized file", async () => {
+  const ai = fakeAi("");
+  expect((await postDocument("notes.xlsx", "x", { ai })).status).toBe(400);
+  expect(await (await postDocument("notes.xlsx", "x", { ai })).json()).toEqual({ error: "unsupported file type (use pdf, docx, txt, md)" });
+  expect((await app.request("/api/notes/document", { method: "POST", body: "x" }, keyed())).status).toBe(400);
+  expect((await postDocument("report.txt", "x", { ai, modified: "2999-01-01T00:00:00Z" })).status).toBe(400);
+
+  const tooBig = await postDocument("report.txt", new Uint8Array(MAX_UPLOAD_BYTES + 1), { ai });
+  expect(tooBig.status).toBe(413);
+  expect(await tooBig.json()).toEqual({ error: "file is too large" });
+  const declared = await postDocument("report.txt", "x", { ai, headers: { "content-length": "99999999" } });
+  expect(declared.status).toBe(413);
+  expect(ai.toMarkdown).not.toHaveBeenCalled();
 });

@@ -75,6 +75,9 @@ function uniqueLabels<T>(items: T[], base: (item: T) => string): Map<string, T> 
 }
 export const rosterLabels = (roster: RosterEntry[]) => uniqueLabels(roster, (s) => `${s.firstName} ${s.lastName}`);
 export const classLabels = (classes: TagClass[]) => uniqueLabels(classes, (c) => c.name);
+// The labels as a zod enum for the model's answer. zod wants a non-empty tuple; callers have
+// already returned early on an empty map.
+export const labelEnum = (labels: Map<string, unknown>) => z.enum([...labels.keys()] as [string, ...string[]]);
 
 // The numbered roster as the model sees it, grouped under each class name. The eval's case
 // generator shows Opus the same text so the answer key follows the production prompt exactly.
@@ -93,10 +96,15 @@ export function rosterLines(labels: Map<string, RosterEntry>, classes: TagClass[
     .join("\n\n");
 }
 
+// Text the model must treat as data, fenced in a tag. A closing tag inside the text would end
+// the data region early (no teacher types one, but a document could carry one), so it is cut.
+export function wrapData(tag: string, text: string): string {
+  const safe = text.replace(new RegExp(`</${tag}>`, "gi"), "");
+  return `<${tag}>\n${safe}\n</${tag}>`;
+}
+
 export function buildUserMessage(labels: Map<string, RosterEntry>, classes: TagClass[], body: string): string {
-  // A closing tag inside the note would end the data region early; no teacher types one.
-  const safeBody = body.replace(/<\/note>/gi, "");
-  return `Roster:\n${rosterLines(labels, classes)}\n\nNote:\n<note>\n${safeBody}\n</note>`;
+  return `Roster:\n${rosterLines(labels, classes)}\n\nNote:\n${wrapData("note", body)}`;
 }
 
 // Whitespace normalisation that decides whether a quote "is in the note"; the eval shares it.
@@ -111,16 +119,36 @@ function fold(s: string): string {
 }
 
 // A finder for quotes in one note body, tolerant of case and whitespace differences. It
-// returns the quote as the body actually spells it (whitespace collapsed), or null when the
-// quote is not in the note. The body is normalised once however many quotes are checked.
+// returns the quote as the body actually spells it, whitespace and line breaks included (a
+// passage of a document keeps its paragraphs; a one-line rendering collapses it anyway), or
+// null when the quote is not in the note. The body is normalised once however many quotes
+// are checked.
 export function quoteLocator(body: string): (quote: string) => string | null {
-  const hay = collapse(body);
+  // The collapsed body, with each of its non-space characters mapped to where it sits in
+  // the original, so a match found in the collapsed text can be cut from the original.
+  let hay = "";
+  const origin: number[] = [];
+  let space = false;
+  for (let i = 0; i < body.length; i++) {
+    if (/\s/.test(body[i]!)) {
+      space = hay.length > 0;
+      continue;
+    }
+    if (space) {
+      hay += " ";
+      origin.push(i);
+      space = false;
+    }
+    hay += body[i];
+    origin.push(i);
+  }
   const folded = fold(hay);
   return (quote) => {
     const needle = collapse(stripWrap(quote));
     if (!needle) return null;
     const at = folded.indexOf(fold(needle));
-    return at === -1 ? null : hay.slice(at, at + needle.length);
+    if (at === -1) return null;
+    return body.slice(origin[at]!, origin[at + needle.length - 1]! + 1);
   };
 }
 export const locateQuote = (body: string, quote: string) => quoteLocator(body)(quote);
@@ -130,6 +158,60 @@ export function union(existing: string[], more: string[]): string[] {
   const out = [...existing];
   for (const q of more) if (!out.includes(q)) out.push(q);
   return out;
+}
+
+// The per-name entry every tagger-shaped answer is made of: a name, the roster student it is
+// (or the candidates when it is not settled), and the passages about them. The label enum is
+// built per request, so the schema is a function of it. `what` names the data ("note",
+// "document") in the field descriptions. Shared with the document splitter.
+export function mentionEntry(Label: ReturnType<typeof labelEnum>, what: string) {
+  return z.object({
+    name_as_written: z.string().describe(`The name as it appears in the ${what}`),
+    student: Label.nullable().describe("The roster student, or null if more than one fits"),
+    candidates: z.array(Label).describe("When student is null: every roster student the name could be"),
+    quotes: z.array(z.string()).describe(`Exact passages of the ${what} about this student`),
+  });
+}
+type ParsedMention = z.infer<ReturnType<typeof mentionEntry>>;
+
+// Turn the model's entries into tags and open mentions: labels back to students, every quote
+// located in the text (or dropped), entries for one student merged, one candidate treated as
+// a resolution. A null student with no candidates is a name that is nobody on the roster.
+export function resolveMentions(
+  parsed: ParsedMention[],
+  labels: Map<string, RosterEntry>,
+  locate: (quote: string) => string | null,
+): { students: TaggedStudent[]; mentions: OpenMention[] } {
+  const students = new Map<string, TaggedStudent>();
+  const mentions = new Map<string, OpenMention>();
+  for (const m of parsed) {
+    const quotes = union([], m.quotes.map(locate).filter((q) => q !== null));
+    const candidateIds = union([], m.candidates.map((c) => labels.get(c)?.id).filter((id) => id !== undefined));
+    const resolved = m.student ? labels.get(m.student) : candidateIds.length === 1 ? labels.get(m.candidates[0]!) : undefined;
+    if (resolved) {
+      const prev = students.get(resolved.id);
+      students.set(resolved.id, { studentId: resolved.id, classId: resolved.classId, quotes: union(prev?.quotes ?? [], quotes) });
+    } else if (candidateIds.length > 1) {
+      const key = collapse(m.name_as_written).toLowerCase();
+      const existing = mentions.get(key);
+      if (existing) {
+        existing.quotes = union(existing.quotes, quotes);
+        existing.candidateIds = union(existing.candidateIds, candidateIds);
+      } else {
+        mentions.set(key, { mentionText: collapse(m.name_as_written), quotes, candidateIds });
+      }
+    }
+  }
+  return { students: [...students.values()], mentions: [...mentions.values()] };
+}
+
+// The parsed output of a parse() answer, or the error that says why there is none. `task`
+// names the call in the error ("tagging", "splitting"). Shared with the splitter.
+export function parsedOutput<T>(res: { stop_reason: string | null; parsed_output: T | null }, task: string): T {
+  if (res.stop_reason === "refusal") throw new TaggingError(`model refused ${task}`);
+  if (res.stop_reason === "max_tokens") throw new TaggingError(`${task} response was cut off`);
+  if (!res.parsed_output) throw new TaggingError(`${task} response was not valid JSON`);
+  return res.parsed_output;
 }
 
 export async function tagNote(input: {
@@ -146,17 +228,10 @@ export async function tagNote(input: {
   if (labels.size === 0) return empty;
 
   const classByLabel = classLabels(classes);
-  const Label = z.enum([...labels.keys()] as [string, ...string[]]);
-  const ClassName = classByLabel.size ? z.enum([...classByLabel.keys()] as [string, ...string[]]).nullable() : z.null();
+  const Label = labelEnum(labels);
+  const ClassName = classByLabel.size ? labelEnum(classByLabel).nullable() : z.null();
   const Output = z.object({
-    mentions: z.array(
-      z.object({
-        name_as_written: z.string().describe("The name as it appears in the note"),
-        student: Label.nullable().describe("The roster student, or null if more than one fits"),
-        candidates: z.array(Label).describe("When student is null: every roster student the name could be"),
-        quotes: z.array(z.string()).describe("Exact passages of the note about this student"),
-      }),
-    ),
+    mentions: z.array(mentionEntry(Label, "note")),
     class_mentioned: ClassName.describe("A class the note names in any way (as a whole, as a setting, or to say which class a student is in), or null"),
   });
 
@@ -169,38 +244,11 @@ export async function tagNote(input: {
     messages: [{ role: "user", content: buildUserMessage(labels, classes, body) }],
     output_config: { effort, format: zodOutputFormat(Output) },
   });
-  if (res.stop_reason === "refusal") throw new TaggingError("model refused to tag this note");
-  if (res.stop_reason === "max_tokens") throw new TaggingError("tagging response was cut off");
-  if (!res.parsed_output) throw new TaggingError("tagging response was not valid JSON");
-
-  const locate = quoteLocator(body);
-  const students = new Map<string, TaggedStudent>();
-  const mentions = new Map<string, OpenMention>();
-  for (const m of res.parsed_output.mentions) {
-    const quotes = union([], m.quotes.map(locate).filter((q) => q !== null));
-    const candidates = union([], m.candidates.map((c) => labels.get(c)?.id).filter((id) => id !== undefined));
-    // One candidate is a resolution, not an ambiguity.
-    const resolved = m.student ? labels.get(m.student)?.id : candidates.length === 1 ? candidates[0] : undefined;
-    if (resolved) {
-      const prev = students.get(resolved);
-      students.set(resolved, { studentId: resolved, classId: prev?.classId ?? roster.find((s) => s.id === resolved)!.classId, quotes: union(prev?.quotes ?? [], quotes) });
-    } else if (candidates.length > 1) {
-      const key = collapse(m.name_as_written).toLowerCase();
-      const existing = mentions.get(key);
-      if (existing) {
-        existing.quotes = union(existing.quotes, quotes);
-        existing.candidateIds = union(existing.candidateIds, candidates);
-      } else {
-        mentions.set(key, { mentionText: collapse(m.name_as_written), quotes, candidateIds: candidates });
-      }
-    }
-    // null student with no candidates: the model found nobody on the roster, so no entry.
-  }
+  const parsed = parsedOutput(res, "tagging");
 
   return {
-    students: [...students.values()],
-    mentions: [...mentions.values()],
-    mentionedClassId: (res.parsed_output.class_mentioned && classByLabel.get(res.parsed_output.class_mentioned)?.id) ?? null,
+    ...resolveMentions(parsed.mentions, labels, quoteLocator(body)),
+    mentionedClassId: (parsed.class_mentioned && classByLabel.get(parsed.class_mentioned)?.id) ?? null,
     usage: { inputTokens: res.usage.input_tokens, outputTokens: res.usage.output_tokens },
   };
 }

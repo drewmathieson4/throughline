@@ -1,0 +1,1 @@
+ALTER TABLE `notes` ADD `source_name` text;

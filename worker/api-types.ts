@@ -16,6 +16,10 @@ export type NoteWithTags = Note & {
 export type TaggingStatus = "done" | "failed";
 // What POST /api/notes, POST /api/notes/voice, and POST /api/notes/:id/retag return.
 export type TaggedNoteResponse = NoteWithTags & { tagging: TaggingStatus };
+// What POST /api/notes/document returns: one note per student the document was about (a
+// note with an open mention for a name it could not settle). Empty when it named nobody.
+// replaced: ids of the notes an earlier upload of the same file made, now gone.
+export type DocumentImportResult = { name: string; notes: NoteWithTags[]; replaced: string[] };
 
 // Roster import. The browser sends the pasted or uploaded spreadsheet as a grid of cells; the
 // Worker finds the students in it and adds them, splitting them across classes when the

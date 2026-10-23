@@ -1,29 +1,10 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import type Anthropic from "@anthropic-ai/sdk";
-import { buildUserMessage, locateQuote, rosterLabels, tagNote, TaggingError, union, type RosterEntry, type TagClass } from "./tagging";
+import { buildUserMessage, locateQuote, rosterLabels, tagNote, TaggingError, union, type TagClass } from "./tagging";
+import { classes, fakeParseClient, roster, type Entry } from "./test-roster";
 
-// No network: the client is a stub whose parse() returns whatever a test hands it.
-const classes: TagClass[] = [
-  { id: "c-p3", name: "Period 3" },
-  { id: "c-b", name: "B Block" },
-];
-const roster: RosterEntry[] = [
-  { id: "s-avery", classId: "c-p3", firstName: "Avery", lastName: "Quill", aliases: [] },
-  { id: "s-juniper", classId: "c-p3", firstName: "Juniper", lastName: "Vale", aliases: ["Juni"] },
-  { id: "s-alex1", classId: "c-p3", firstName: "Alex", lastName: "Marsh", aliases: [] },
-  { id: "s-alex2", classId: "c-b", firstName: "Alex", lastName: "Ruiz", aliases: [] },
-];
-
-type Entry = { name_as_written: string; student: string | null; candidates: string[]; quotes: string[] };
-
-function fakeClient(mentions: Entry[], opts: { stop_reason?: string; parsed?: boolean; class_mentioned?: string | null } = {}) {
-  const parse = vi.fn(async (_params: unknown) => ({
-    stop_reason: opts.stop_reason ?? "end_turn",
-    parsed_output: (opts.parsed ?? true) ? { mentions, class_mentioned: opts.class_mentioned ?? null } : null,
-    usage: { input_tokens: 100, output_tokens: 20 },
-  }));
-  return { client: { messages: { parse } } as unknown as Anthropic, parse };
-}
+const fakeClient = (mentions: Entry[], opts: { stop_reason?: string; parsed?: boolean; class_mentioned?: string | null } = {}) =>
+  fakeParseClient((opts.parsed ?? true) ? { mentions, class_mentioned: opts.class_mentioned ?? null } : null, opts.stop_reason);
 
 describe("rosterLabels", () => {
   test("labels are full names, duplicates get a suffix", () => {
@@ -61,19 +42,24 @@ describe("buildUserMessage", () => {
 
 describe("locateQuote", () => {
   const body = "Avery   worked hard today.\nShe said “I get it now”.";
-  test("exact match returns the body's spelling", () => {
-    expect(locateQuote(body, "Avery worked hard today.")).toBe("Avery worked hard today.");
+  test("returns the body's own spelling, whitespace included", () => {
+    expect(locateQuote(body, "Avery worked hard today.")).toBe("Avery   worked hard today.");
   });
   test("tolerates case and whitespace differences", () => {
-    expect(locateQuote(body, "avery worked\nhard TODAY.")).toBe("Avery worked hard today.");
+    expect(locateQuote(body, "avery worked\nhard TODAY.")).toBe("Avery   worked hard today.");
   });
   test("strips wrapping quote marks the model added", () => {
-    expect(locateQuote(body, '"Avery worked hard today."')).toBe("Avery worked hard today.");
+    expect(locateQuote(body, '"Avery worked hard today."')).toBe("Avery   worked hard today.");
     expect(locateQuote(body, "“She said “I get it now”.”")).toBe("She said “I get it now”.");
   });
   test("returns null for text not in the note", () => {
     expect(locateQuote(body, "Avery was absent.")).toBeNull();
     expect(locateQuote(body, "")).toBeNull();
+  });
+  test("a passage keeps its line breaks, so a section still reads as paragraphs or a table", () => {
+    const doc = "## Avery\n\nAvery   reads widely.\n| HW | 7/10 |";
+    expect(locateQuote(doc, "Avery reads widely. | HW | 7/10 |")).toBe("Avery   reads widely.\n| HW | 7/10 |");
+    expect(locateQuote(doc, "## avery  Avery reads widely.")).toBe("## Avery\n\nAvery   reads widely.");
   });
   test("letters whose lowercase form is longer do not shift the match", () => {
     // İ (dotted capital I) lowercases to two code units.
