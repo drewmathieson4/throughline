@@ -1,0 +1,1 @@
+ALTER TABLE `note_students` DROP COLUMN `confirmed`;

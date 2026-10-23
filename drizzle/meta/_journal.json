@@ -22,6 +22,13 @@
       "when": 1792719873086,
       "tag": "0002_low_forge",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1792738041594,
+      "tag": "0003_blue_scalphunter",
+      "breakpoints": true
     }
   ]
 }

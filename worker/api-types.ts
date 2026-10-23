@@ -3,14 +3,14 @@
 // both places instead of drifting. Kept free of Hono and Env imports for that reason.
 import type { ClassRow, Note, NoteMention, NoteStudent, Student } from "./db/schema";
 
-// lastNotedAt: noted_at of the newest note tagged to the student, suggested or confirmed;
-// null when no note has named them yet.
-export type RosterStudent = Student & { noteCount: number; pendingCount: number; lastNotedAt: string | null };
-export type StudentDetail = { student: Student; notes: (Note & { confirmed: number })[] };
+// lastNotedAt: noted_at of the newest note tagged to the student, null when none has named
+// them yet. unsureCount: open mentions the student is a candidate for.
+export type RosterStudent = Student & { noteCount: number; unsureCount: number; lastNotedAt: string | null };
+export type StudentDetail = { student: Student; notes: Note[] };
 
 // What /api/notes returns: a note with its student tags and any open mentions.
 export type NoteWithTags = Note & {
-  students: Pick<NoteStudent, "studentId" | "confirmed" | "quotes">[];
+  students: Pick<NoteStudent, "studentId" | "quotes">[];
   mentions: Omit<NoteMention, "noteId" | "createdAt">[];
 };
 export type TaggingStatus = "done" | "failed";

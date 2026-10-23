@@ -41,7 +41,7 @@ One Cloudflare Worker serves both halves. Cloudflare serves the built React app 
 - `src/` is the React frontend. `src/App.tsx` is the shell (class picker, view tabs); `src/notes/` and `src/students/` hold the two views. The frontend imports row types (type-only) from `worker/db/schema.ts`.
 - Three tsconfigs exist because the three environments differ: `tsconfig.app.json` (browser, DOM), `tsconfig.worker.json` (Workers runtime, no DOM), `tsconfig.node.json` (vite.config). `tsconfig.json` only references them.
 
-Data model shape worth knowing before touching routes: a `note` belongs to a class; `note_students` is the many-to-many to students with a `confirmed` flag for teacher-approved tags; a note with no `note_students` rows is class-level context. `syntheses` stores one row per AI run with an `input_hash` to skip reruns; `report_drafts` keeps generated text and the teacher's edits in separate columns.
+Data model shape worth knowing before touching routes: a `note` belongs to a class; `note_students` is the many-to-many to students, each row a live tag with the verbatim quotes as evidence; `note_mentions` holds names the tagger could not settle, with candidate students, until the teacher does; a note with no `note_students` rows is class-level context. `syntheses` stores one row per AI run with an `input_hash` to skip reruns; `report_drafts` keeps generated text and the teacher's edits in separate columns.
 
 ## Constraints
 

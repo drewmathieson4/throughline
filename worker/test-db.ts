@@ -27,8 +27,9 @@ export const STUDENT = {
   cassius: "22222222-2222-4222-8222-222222222212",
 } as const;
 export const UNKNOWN_ID = "99999999-9999-4999-8999-999999999999";
-// Ids for notes a test inserts directly.
+// Ids for notes and mentions a test inserts directly.
 export const NOTE_ID = (n: number) => `33333333-3333-4333-8333-3333333333${String(n).padStart(2, "0")}`;
+export const MENTION_ID = (n: number) => `44444444-4444-4444-8444-4444444444${String(n).padStart(2, "0")}`;
 
 // Same splitter `wrangler d1 execute --file` uses, so the seed file has one loader contract.
 const seedStatements = splitSql(seed);
@@ -64,8 +65,16 @@ export function setupTestDb() {
     // Raw inserts for tests that need rows without going through tagging.
     insertNote: (id: string, classId: string | null, notedAt: string) =>
       prepare("INSERT INTO notes (id, class_id, kind, body, noted_at, created_at) VALUES (?, ?, 'text', ?, ?, ?)", id, classId, `note ${id.slice(-2)}`, notedAt, notedAt),
-    tagNote: (noteId: string, studentId: string, confirmed: 0 | 1) =>
-      prepare("INSERT INTO note_students (note_id, student_id, confirmed) VALUES (?, ?, ?)", noteId, studentId, confirmed),
+    tagNote: (noteId: string, studentId: string) => prepare("INSERT INTO note_students (note_id, student_id) VALUES (?, ?)", noteId, studentId),
+    // An open mention ("Alex") that could be any of the given students.
+    mentionNote: (id: string, noteId: string, candidateIds: string[]) =>
+      prepare(
+        "INSERT INTO note_mentions (id, note_id, mention_text, candidate_ids, created_at) VALUES (?, ?, 'Alex', ?, ?)",
+        id,
+        noteId,
+        JSON.stringify(candidateIds),
+        "2026-10-01T00:00:00.000Z",
+      ),
   };
 }
 

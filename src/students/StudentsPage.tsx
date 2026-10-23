@@ -152,11 +152,7 @@ function StudentDetail({ id, onBack }: { id: string; onBack: () => void }) {
       <h3 className="mt-6 text-sm font-medium text-gray-600">Notes tagged to {student.firstName}</h3>
       <ul className="mt-2 divide-y divide-gray-200">
         {notes.map((n) => (
-          <NoteItem
-            key={n.id}
-            note={n}
-            badge={!n.confirmed && <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-800">needs confirmation</span>}
-          />
+          <NoteItem key={n.id} note={n} />
         ))}
         {notes.length === 0 && <li className="py-3 text-sm text-gray-500">No notes tagged to this student yet.</li>}
       </ul>
@@ -215,7 +211,7 @@ export default function StudentsPage({ classId, onClassesChanged }: { classId: s
         <thead className="text-left text-xs text-gray-500">
           <tr>
             <th className="py-1 font-medium">Name</th>
-            <th className="py-1 font-medium">Tagged notes</th>
+            <th className="py-1 font-medium">Notes</th>
             <th className="py-1 font-medium">Last note</th>
             <th className="py-1 font-medium">Status</th>
           </tr>
@@ -230,7 +226,7 @@ export default function StudentsPage({ classId, onClassesChanged }: { classId: s
               </td>
               <td className="py-2">
                 {s.noteCount}
-                {s.pendingCount > 0 && <span className="text-gray-500"> (+{s.pendingCount} pending)</span>}
+                {s.unsureCount > 0 && <span className="text-amber-700"> · {s.unsureCount} unsure</span>}
               </td>
               <td className="py-2">
                 <LastNote at={s.lastNotedAt} />

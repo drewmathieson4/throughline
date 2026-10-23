@@ -4,7 +4,7 @@ import type { Student } from "../db/schema";
 import type { ClassRow } from "../db/schema";
 import type { RosterImportResult, RosterStudent, StudentDetail } from "../api-types";
 import { suggestMapping } from "../roster-model";
-import { CLASS_B_ID, NOTE_ID, PERIOD_3_COUNT, SEED_CLASS_ID, SEED_CLASS_NAMES, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb } from "../test-db";
+import { CLASS_B_ID, MENTION_ID, NOTE_ID, PERIOD_3_COUNT, SEED_CLASS_ID, SEED_CLASS_NAMES, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb } from "../test-db";
 
 // The model fallback for column mapping is mocked: no network, and each test says what it answers.
 vi.mock(import("../roster-model"), async (importOriginal) => ({ ...(await importOriginal()), suggestMapping: vi.fn() }));
@@ -20,23 +20,25 @@ const patch = (id: string, body: unknown) => db.request(`/api/students/${id}`, j
 const patchJson = (id: string, body: unknown) => db.json<Student>(`/api/students/${id}`, jsonInit("PATCH", body));
 const get = (id: string) => db.request(`/api/students/${id}`);
 
-test("GET /api/students lists the roster by last name, counting confirmed and pending tags apart, with the newest note's date", async () => {
+test("GET /api/students lists the roster by last name with tag counts, open mentions, and the newest note's date", async () => {
   await db.env.DB.batch([
     db.insertNote(NOTE_ID(1), SEED_CLASS_ID, "2026-10-01T00:00:00.000Z"),
     db.insertNote(NOTE_ID(2), SEED_CLASS_ID, "2026-10-02T00:00:00.000Z"),
     db.insertNote(NOTE_ID(3), SEED_CLASS_ID, "2026-10-03T00:00:00.000Z"),
-    db.tagNote(NOTE_ID(1), STUDENT.avery, 1),
-    db.tagNote(NOTE_ID(2), STUDENT.avery, 0),
-    db.tagNote(NOTE_ID(3), STUDENT.avery, 0),
+    db.tagNote(NOTE_ID(1), STUDENT.avery),
+    db.tagNote(NOTE_ID(2), STUDENT.avery),
+    db.tagNote(NOTE_ID(3), STUDENT.avery),
+    db.mentionNote(MENTION_ID(1), NOTE_ID(1), [STUDENT.avery, STUDENT.alexMarsh]),
   ]);
   const res = await roster(SEED_CLASS_ID);
   expect(res.status).toBe(200);
   const rows = (await res.json()) as RosterStudent[];
   expect(rows).toHaveLength(PERIOD_3_COUNT);
   expect(rows.map((r) => r.lastName)).toEqual([...rows.map((r) => r.lastName)].sort());
-  // The newest note is a suggestion: lastNotedAt counts those too.
-  expect(rows.find((r) => r.id === STUDENT.avery)).toMatchObject({ noteCount: 1, pendingCount: 2, lastNotedAt: "2026-10-03T00:00:00.000Z" });
-  expect(rows.filter((r) => r.noteCount === 0 && r.pendingCount === 0 && r.lastNotedAt === null)).toHaveLength(PERIOD_3_COUNT - 1);
+  expect(rows.find((r) => r.id === STUDENT.avery)).toMatchObject({ noteCount: 3, unsureCount: 1, lastNotedAt: "2026-10-03T00:00:00.000Z" });
+  // A mention is not a tag: it counts as unsure, not as a note.
+  expect(rows.find((r) => r.id === STUDENT.alexMarsh)).toMatchObject({ noteCount: 0, unsureCount: 1, lastNotedAt: null });
+  expect(rows.filter((r) => r.noteCount === 0 && r.unsureCount === 0 && r.lastNotedAt === null)).toHaveLength(PERIOD_3_COUNT - 2);
 });
 
 test("GET /api/students sorts by last name ignoring case and accents", async () => {
@@ -79,15 +81,15 @@ test("GET /api/students/:id returns the student and the notes tagged to them, ne
     db.insertNote(older, SEED_CLASS_ID, "2026-10-01T00:00:00.000Z"),
     db.insertNote(newer, SEED_CLASS_ID, "2026-10-05T00:00:00.000Z"),
     db.insertNote(other, SEED_CLASS_ID, "2026-10-06T00:00:00.000Z"),
-    db.tagNote(older, STUDENT.avery, 1),
-    db.tagNote(newer, STUDENT.avery, 0),
-    db.tagNote(other, STUDENT.rowan, 1),
+    db.tagNote(older, STUDENT.avery),
+    db.tagNote(newer, STUDENT.avery),
+    db.tagNote(other, STUDENT.rowan),
   ]);
   const res = await get(STUDENT.avery);
   expect(res.status).toBe(200);
   const body = (await res.json()) as StudentDetail;
   expect(body.student.id).toBe(STUDENT.avery);
-  expect(body.notes.map((n) => [n.id, n.confirmed])).toEqual([[newer, 0], [older, 1]]);
+  expect(body.notes.map((n) => n.id)).toEqual([newer, older]);
 });
 
 test("GET /api/students/:id 404s for an unknown id", async () => {

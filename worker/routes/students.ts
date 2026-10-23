@@ -131,11 +131,9 @@ students.post("/import", validate("json", importBody), async (c) => {
 const byName = new Intl.Collator("en");
 
 // GET /api/students?classId=… → the whole roster, departed students included (left_at set),
-// ordered by last name then first name. noteCount is teacher-confirmed tags only;
-// pendingCount is AI suggestions awaiting confirmation, kept separate so the number the
-// teacher reads for report-readiness is never inflated. lastNotedAt counts suggested and
-// confirmed tags alike: either way a note named the student. The client decides whether to
-// show who has left.
+// ordered by last name then first name. noteCount is every note tagged to the student and
+// lastNotedAt the newest of them; unsureCount is open mentions that could be this student,
+// the ones that need the teacher. The client decides whether to show who has left.
 students.get("/", validate("query", classIdQuery), async (c) => {
   const { classId } = c.req.valid("query");
   await requireClass(c.var.db, classId);
@@ -145,9 +143,10 @@ students.get("/", validate("query", classIdQuery), async (c) => {
   const rows = await c.var.db
     .select({
       ...getTableColumns(s),
-      noteCount: sql<number>`count(CASE WHEN ${ns.confirmed} = 1 THEN 1 END)`.mapWith(Number),
-      pendingCount: sql<number>`count(CASE WHEN ${ns.confirmed} = 0 THEN 1 END)`.mapWith(Number),
+      noteCount: sql<number>`count(${ns.studentId})`.mapWith(Number),
       lastNotedAt: sql<string | null>`max(${n.notedAt})`,
+      // candidate_ids is a JSON array; json_each unnests it.
+      unsureCount: sql<number>`(select count(*) from ${schema.noteMentions} m, json_each(m.candidate_ids) j where j.value = ${s.id})`.mapWith(Number),
     })
     .from(s)
     .leftJoin(ns, eq(ns.studentId, s.id))
@@ -171,7 +170,7 @@ students.post("/", validate("json", createStudent), async (c) => {
 });
 
 // GET /api/students/:id → { student, notes } where notes are the ones tagged to this
-// student, newest first, each carrying the tag's confirmed flag.
+// student, newest first.
 students.get("/:id", validate("param", idParam), async (c) => {
   const { id } = c.req.valid("param");
   const n = schema.notes;
@@ -179,7 +178,7 @@ students.get("/:id", validate("param", idParam), async (c) => {
   const [[student], notes] = await c.var.db.batch([
     c.var.db.select().from(schema.students).where(eq(schema.students.id, id)),
     c.var.db
-      .select({ ...getTableColumns(n), confirmed: schema.noteStudents.confirmed })
+      .select(getTableColumns(n))
       .from(schema.noteStudents)
       .innerJoin(n, eq(n.id, schema.noteStudents.noteId))
       .where(eq(schema.noteStudents.studentId, id))

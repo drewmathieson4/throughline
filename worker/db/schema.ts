@@ -58,15 +58,16 @@ export const notes = sqliteTable(
   (t) => [index("notes_class_idx").on(t.classId), index("notes_noted_at_idx").on(t.notedAt)],
 );
 
-// One note can be about several students. confirmed=1 once the teacher has approved the tag
-// (or added it themselves). quotes are the verbatim spans of the note body about this student,
-// verified to exist in the body before they are stored; they are the evidence synthesis cites.
+// One note can be about several students. A row is a live tag the moment it is written,
+// whether the tagger or the teacher wrote it; a name the tagger could not settle goes to
+// note_mentions instead, so there is no "unconfirmed" state. quotes are the verbatim spans of
+// the note body about this student, verified to exist in the body before they are stored;
+// they are the evidence synthesis cites.
 export const noteStudents = sqliteTable(
   "note_students",
   {
     noteId: text("note_id").notNull().references(() => notes.id, { onDelete: "cascade" }),
     studentId: text("student_id").notNull().references(() => students.id, { onDelete: "cascade" }),
-    confirmed: integer("confirmed").notNull().default(0),
     quotes: stringList("quotes"),
   },
   (t) => [primaryKey({ columns: [t.noteId, t.studentId] }), index("note_students_student_idx").on(t.studentId)],

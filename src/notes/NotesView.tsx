@@ -4,6 +4,7 @@ import type { ClassRow } from "../../worker/db/schema";
 import type { NoteWithTags, RosterStudent, TaggedNoteResponse } from "../../worker/api-types";
 import { api, jsonInit, messageOf } from "../api";
 import NoteItem from "../NoteItem";
+import Tags, { type Person } from "./Tags";
 import { button, errorText, input, plural, subtleButton } from "../ui";
 import { useRecorder } from "../useRecorder";
 
@@ -117,64 +118,6 @@ function NoteForm({ onCreated }: { onCreated: (note: TaggedNoteResponse) => void
   );
 }
 
-// Who a student id is, and which class, for display.
-type Person = { name: string; classId: string };
-
-// Read-only for now: suggested tags look tentative, confirmed ones solid, and a name the
-// tagger could not resolve is called out so the teacher knows it needs settling. A student's
-// class is shown only when it would otherwise be unclear: the note has no class and its
-// students span more than one, a student is outside the note's class, or a mention's
-// candidates are in different classes.
-function Tags({ note, people, classNames }: { note: NoteWithTags; people: Map<string, Person>; classNames: Map<string, string> }) {
-  const label = (p: Person | undefined, withClass: boolean) => {
-    if (!p) return "Unknown student";
-    return withClass ? `${p.name} (${classNames.get(p.classId) ?? "class"})` : p.name;
-  };
-  if (note.students.length === 0 && note.mentions.length === 0) {
-    // With a class and nobody named, the note is class-level context. Without a class it
-    // was simply not tagged (no key, a failed call, or nothing to find).
-    return <p className="mt-1 text-xs text-gray-400">{note.classId ? "class note" : "no students found"}</p>;
-  }
-  const spans = new Set(note.students.map((s) => people.get(s.studentId)?.classId)).size > 1;
-  return (
-    <div className="mt-2 flex flex-col gap-1.5">
-      {note.students.map((s) => {
-        const p = people.get(s.studentId);
-        return (
-          <div key={s.studentId}>
-            <span
-              className={
-                s.confirmed
-                  ? "rounded-full bg-gray-900 px-2 py-0.5 text-xs text-white"
-                  : "rounded-full border border-dashed border-gray-400 px-2 py-0.5 text-xs text-gray-700"
-              }
-              title={s.confirmed ? "Confirmed" : "Suggested"}
-            >
-              {label(p, note.classId === null ? spans : p?.classId !== note.classId)}
-            </span>
-            {s.quotes.length > 0 && (
-              <ul className="mt-0.5 ml-2 text-xs text-gray-500 italic">
-                {s.quotes.map((q) => (
-                  <li key={q}>“{q}”</li>
-                ))}
-              </ul>
-            )}
-          </div>
-        );
-      })}
-      {note.mentions.map((m) => {
-        const spansClasses = new Set(m.candidateIds.map((id) => people.get(id)?.classId)).size > 1;
-        return (
-          <p key={m.id} className="text-xs text-amber-700">
-            Unsure who “{m.mentionText}” is
-            {m.candidateIds.length > 0 && `: ${m.candidateIds.map((id) => label(people.get(id), spansClasses)).join(" or ")}`}
-          </p>
-        );
-      })}
-    </div>
-  );
-}
-
 // Tagged, or a candidate for a name the tagger could not settle ("Alex" with two Alexes).
 const about = (n: NoteWithTags, studentId: string) =>
   n.students.some((s) => s.studentId === studentId) || n.mentions.some((m) => m.candidateIds.includes(studentId));
@@ -254,7 +197,12 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
               </span>
             }
           >
-            <Tags note={n} people={people} classNames={classNames} />
+            <Tags
+              note={n}
+              people={people}
+              classNames={classNames}
+              onChange={(updated) => setNotes((prev) => prev.map((x) => (x.id === updated.id ? updated : x)))}
+            />
           </NoteItem>
         ))}
         {shown.length === 0 && <li className="py-3 text-sm text-gray-500">{empty}</li>}

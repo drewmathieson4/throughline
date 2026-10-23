@@ -107,7 +107,7 @@ async function attachTags(db: Db, where: SQL | undefined, rows: Note[]): Promise
       .where(where),
   ]);
   const byId = new Map(rows.map((n): [string, NoteWithTags] => [n.id, { ...n, students: [], mentions: [] }]));
-  for (const { row } of students) byId.get(row.noteId)?.students.push({ studentId: row.studentId, confirmed: row.confirmed, quotes: row.quotes });
+  for (const { row } of students) byId.get(row.noteId)?.students.push({ studentId: row.studentId, quotes: row.quotes });
   for (const { row } of mentions) {
     byId.get(row.noteId)?.mentions.push({ id: row.id, mentionText: row.mentionText, quotes: row.quotes, candidateIds: row.candidateIds });
   }
@@ -117,14 +117,12 @@ async function attachTags(db: Db, where: SQL | undefined, rows: Note[]): Promise
 const withTags = async (db: Db, note: Note) => (await attachTags(db, eq(schema.notes.id, note.id), [note]))[0]!;
 
 // The statement that puts a student on a note: a new row, or new quotes folded into the one
-// that exists. Confirmed rows are never downgraded; `confirm` only ever raises the flag.
-function tagStatement(db: Db, existing: NoteStudent | undefined, noteId: string, studentId: string, quotes: string[], confirm: boolean) {
-  if (!existing) {
-    return db.insert(schema.noteStudents).values({ noteId, studentId, confirmed: confirm ? 1 : 0, quotes });
-  }
+// that exists.
+function tagStatement(db: Db, existing: NoteStudent | undefined, noteId: string, studentId: string, quotes: string[]) {
+  if (!existing) return db.insert(schema.noteStudents).values({ noteId, studentId, quotes });
   return db
     .update(schema.noteStudents)
-    .set({ confirmed: confirm ? 1 : existing.confirmed, quotes: union(existing.quotes, quotes) })
+    .set({ quotes: union(existing.quotes, quotes) })
     .where(tagKey(noteId, studentId));
 }
 
@@ -157,26 +155,17 @@ function inferClass(result: TagResult): string | null {
   return null;
 }
 
-// Swap the note's unconfirmed suggestions and open mentions for the model's latest, in one
-// atomic batch, and settle the note's class if it had none. Confirmed rows survive and only
-// gain quotes. On a fresh note there is nothing to swap out, so create and retag are the
-// same operation. Returns the note as it now stands.
+// Write the model's tags and open mentions for a note that has none, in one atomic batch,
+// and settle the note's class if it had none. Returns the note as it now stands.
 async function storeTags(db: Db, note: Note, result: TagResult): Promise<Note> {
   const classId = note.classId ?? inferClass(result);
-  const confirmed = await db
-    .select()
-    .from(schema.noteStudents)
-    .where(and(eq(schema.noteStudents.noteId, note.id), eq(schema.noteStudents.confirmed, 1)));
-  const confirmedById = new Map(confirmed.map((r) => [r.studentId, r]));
   const now = new Date().toISOString();
-  await db.batch([
-    db.delete(schema.noteStudents).where(and(eq(schema.noteStudents.noteId, note.id), eq(schema.noteStudents.confirmed, 0))),
-    db.delete(schema.noteMentions).where(eq(schema.noteMentions.noteId, note.id)),
+  const [first, ...rest] = [
     // Only an unassigned note gets a class here; a set class is never touched.
     ...(!note.classId && classId
       ? [db.update(schema.notes).set({ classId }).where(and(eq(schema.notes.id, note.id), isNull(schema.notes.classId)))]
       : []),
-    ...result.students.map((s) => tagStatement(db, confirmedById.get(s.studentId), note.id, s.studentId, s.quotes, false)),
+    ...result.students.map((s) => db.insert(schema.noteStudents).values({ noteId: note.id, studentId: s.studentId, quotes: s.quotes })),
     ...result.mentions.map((m) =>
       db.insert(schema.noteMentions).values({
         id: crypto.randomUUID(),
@@ -187,7 +176,8 @@ async function storeTags(db: Db, note: Note, result: TagResult): Promise<Note> {
         createdAt: now,
       }),
     ),
-  ]);
+  ];
+  if (first) await db.batch([first, ...rest]);
   return { ...note, classId };
 }
 
@@ -272,51 +262,41 @@ notes.post("/voice", validate("query", classQuery), audioLimit, async (c) => {
   return c.json(await runTagging(c.var.db, c.env.ANTHROPIC_API_KEY, note), 201);
 });
 
-// POST /api/notes/:noteId/retag → tag again. On success the unconfirmed suggestions and open
-// mentions are replaced; a failed call leaves what was there, so a retry during an outage
-// never strips a note.
+// POST /api/notes/:noteId/retag → tag a note that has no tags and no open mentions, the state
+// a failed tagging call leaves. A tagged note is refused (409): nothing records which tags the
+// teacher settled, so replacing them would discard that work.
 notes.post("/:noteId/retag", validate("param", noteParam), async (c) => {
   const note = await requireNote(c.var.db, c.req.valid("param").noteId);
+  const current = await withTags(c.var.db, note);
+  if (current.students.length > 0 || current.mentions.length > 0) throw new HTTPException(409, { message: "note is already tagged" });
   return c.json(await runTagging(c.var.db, c.env.ANTHROPIC_API_KEY, note));
 });
 
 // POST /api/notes/:noteId/students { studentId, quotes? } → the teacher adds a student the
-// model missed. Written as confirmed; 201 with the note.
+// model missed. 201 with the note.
 notes.post("/:noteId/students", validate("param", noteParam), validate("json", addStudent), async (c) => {
   const note = await requireNote(c.var.db, c.req.valid("param").noteId);
   const { studentId, quotes } = c.req.valid("json");
   await requireStudent(c.var.db, studentId);
   const existing = await existingTag(c.var.db, note.id, studentId);
   await c.var.db.batch([
-    tagStatement(c.var.db, existing, note.id, studentId, verifyQuotes(note.body, quotes), true),
+    tagStatement(c.var.db, existing, note.id, studentId, verifyQuotes(note.body, quotes)),
     settleClassFrom(c.var.db, note.id, studentId),
   ]);
   return c.json(await withTags(c.var.db, await requireNote(c.var.db, note.id)), 201);
 });
 
-// POST /api/notes/:noteId/students/:studentId/confirm → the teacher approves a suggestion
-notes.post("/:noteId/students/:studentId/confirm", validate("param", noteStudentParam), async (c) => {
-  const { noteId, studentId } = c.req.valid("param");
-  await requireNote(c.var.db, noteId);
-  const [updated] = await c.var.db.batch([
-    c.var.db.update(schema.noteStudents).set({ confirmed: 1 }).where(tagKey(noteId, studentId)).returning(),
-    settleClassFrom(c.var.db, noteId, studentId),
-  ]);
-  if (updated.length === 0) throw new HTTPException(404, { message: "tag not found" });
-  return c.json(await withTags(c.var.db, await requireNote(c.var.db, noteId)));
-});
-
-// DELETE /api/notes/:noteId/students/:studentId → remove a tag, suggested or confirmed
+// DELETE /api/notes/:noteId/students/:studentId → remove a tag; 200 with the note
 notes.delete("/:noteId/students/:studentId", validate("param", noteStudentParam), async (c) => {
   const { noteId, studentId } = c.req.valid("param");
-  await requireNote(c.var.db, noteId);
+  const note = await requireNote(c.var.db, noteId);
   const deleted = await c.var.db.delete(schema.noteStudents).where(tagKey(noteId, studentId)).returning().get();
   if (!deleted) throw new HTTPException(404, { message: "tag not found" });
-  return c.body(null, 204);
+  return c.json(await withTags(c.var.db, note));
 });
 
 // POST /api/notes/:noteId/mentions/:mentionId/assign { studentId } → the teacher says who an
-// unresolved name meant. The mention's quotes move to a confirmed tag and the mention closes.
+// unresolved name meant. The mention's quotes move to a tag and the mention closes.
 notes.post(
   "/:noteId/mentions/:mentionId/assign",
   validate("param", mentionParam),
@@ -330,7 +310,7 @@ notes.post(
     await requireStudent(c.var.db, studentId);
     const existing = await existingTag(c.var.db, noteId, studentId);
     await c.var.db.batch([
-      tagStatement(c.var.db, existing, noteId, studentId, mention.quotes, true),
+      tagStatement(c.var.db, existing, noteId, studentId, mention.quotes),
       c.var.db.delete(schema.noteMentions).where(mentionKey(noteId, mentionId)),
       settleClassFrom(c.var.db, noteId, studentId),
     ]);
@@ -338,13 +318,13 @@ notes.post(
   },
 );
 
-// DELETE /api/notes/:noteId/mentions/:mentionId → the name was nobody on the roster
+// DELETE /api/notes/:noteId/mentions/:mentionId → the name was nobody on the roster; 200 with the note
 notes.delete("/:noteId/mentions/:mentionId", validate("param", mentionParam), async (c) => {
   const { noteId, mentionId } = c.req.valid("param");
-  await requireNote(c.var.db, noteId);
+  const note = await requireNote(c.var.db, noteId);
   const deleted = await c.var.db.delete(schema.noteMentions).where(mentionKey(noteId, mentionId)).returning().get();
   if (!deleted) throw new HTTPException(404, { message: "mention not found" });
-  return c.body(null, 204);
+  return c.json(await withTags(c.var.db, note));
 });
 
 export default notes;
