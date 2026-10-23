@@ -9,18 +9,11 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import type { ColumnRole } from "./api-types";
+import { HAIKU_MODEL, ModelError, parsedOutput } from "./model";
 import { columnRoles } from "./roster";
 
-export const MAPPING_MODEL = "claude-haiku-5-5";
 export const SAMPLE_ROWS = 6;
 const CELL_CHARS = 60;
-
-export class MappingError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "MappingError";
-  }
-}
 
 export const SYSTEM_PROMPT = `You are given the first rows of a spreadsheet a teacher exported from a class roster. Say what each column holds.
 
@@ -59,27 +52,25 @@ export type SuggestedMapping = { hasHeader: boolean; roles: ColumnRole[] };
 export async function suggestMapping(input: { sample: string[][]; client: Anthropic }): Promise<SuggestedMapping> {
   const sample = input.sample.slice(0, SAMPLE_ROWS);
   const width = Math.max(0, ...sample.map((r) => r.length));
-  if (width === 0) throw new MappingError("nothing to map");
+  if (width === 0) throw new ModelError("nothing to map");
 
   const res = await input.client.messages.parse({
-    model: MAPPING_MODEL,
+    model: HAIKU_MODEL,
     max_tokens: 1024,
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: buildMappingMessage(sample) }],
     output_config: { effort: "low", format: zodOutputFormat(Output) },
   });
-  if (res.stop_reason === "refusal") throw new MappingError("model refused to read the roster");
-  if (res.stop_reason === "max_tokens") throw new MappingError("mapping response was cut off");
-  if (!res.parsed_output) throw new MappingError("mapping response was not valid JSON");
+  const parsed = parsedOutput(res, "mapping");
 
   // A column the model skipped is ignored; one it named twice keeps the first answer; an index
   // outside the grid is dropped.
   const roles: ColumnRole[] = Array.from({ length: width }, () => "ignore");
   const seen = new Set<number>();
-  for (const col of res.parsed_output.columns) {
+  for (const col of parsed.columns) {
     if (col.index < 0 || col.index >= width || seen.has(col.index)) continue;
     seen.add(col.index);
     roles[col.index] = col.role;
   }
-  return { hasHeader: res.parsed_output.has_header, roles };
+  return { hasHeader: parsed.has_header, roles };
 }

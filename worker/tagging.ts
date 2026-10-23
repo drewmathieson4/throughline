@@ -8,8 +8,8 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
+import { HAIKU_MODEL, labelEnum, parsedOutput, wrapData } from "./model.ts";
 
-export const TAGGING_MODEL = "claude-haiku-5-5";
 export type Effort = "low" | "medium" | "high";
 
 // What the tagger sees about a student and a class. Structural (no schema import) so this
@@ -27,14 +27,6 @@ export type TagResult = {
   mentionedClassId: string | null;
   usage: { inputTokens: number; outputTokens: number };
 };
-
-// The model answered but not usably (refused, ran out of tokens, or returned no JSON).
-export class TaggingError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "TaggingError";
-  }
-}
 
 export const SYSTEM_PROMPT = `You tag a teacher's note to the students it is about.
 
@@ -75,9 +67,6 @@ function uniqueLabels<T>(items: T[], base: (item: T) => string): Map<string, T> 
 }
 export const rosterLabels = (roster: RosterEntry[]) => uniqueLabels(roster, (s) => `${s.firstName} ${s.lastName}`);
 export const classLabels = (classes: TagClass[]) => uniqueLabels(classes, (c) => c.name);
-// The labels as a zod enum for the model's answer. zod wants a non-empty tuple; callers have
-// already returned early on an empty map.
-export const labelEnum = (labels: Map<string, unknown>) => z.enum([...labels.keys()] as [string, ...string[]]);
 
 // The numbered roster as the model sees it, grouped under each class name. The eval's case
 // generator shows Opus the same text so the answer key follows the production prompt exactly.
@@ -94,13 +83,6 @@ export function rosterLines(labels: Map<string, RosterEntry>, classes: TagClass[
         g.members.map(([label, s]) => `${++n}. ${label}${s.aliases.length ? ` (also called: ${s.aliases.join(", ")})` : ""}`).join("\n"),
     )
     .join("\n\n");
-}
-
-// Text the model must treat as data, fenced in a tag. A closing tag inside the text would end
-// the data region early (no teacher types one, but a document could carry one), so it is cut.
-export function wrapData(tag: string, text: string): string {
-  const safe = text.replace(new RegExp(`</${tag}>`, "gi"), "");
-  return `<${tag}>\n${safe}\n</${tag}>`;
 }
 
 export function buildUserMessage(labels: Map<string, RosterEntry>, classes: TagClass[], body: string): string {
@@ -205,15 +187,6 @@ export function resolveMentions(
   return { students: [...students.values()], mentions: [...mentions.values()] };
 }
 
-// The parsed output of a parse() answer, or the error that says why there is none. `task`
-// names the call in the error ("tagging", "splitting"). Shared with the splitter.
-export function parsedOutput<T>(res: { stop_reason: string | null; parsed_output: T | null }, task: string): T {
-  if (res.stop_reason === "refusal") throw new TaggingError(`model refused ${task}`);
-  if (res.stop_reason === "max_tokens") throw new TaggingError(`${task} response was cut off`);
-  if (!res.parsed_output) throw new TaggingError(`${task} response was not valid JSON`);
-  return res.parsed_output;
-}
-
 export async function tagNote(input: {
   body: string;
   roster: RosterEntry[];
@@ -236,7 +209,7 @@ export async function tagNote(input: {
   });
 
   const res = await client.messages.parse({
-    model: TAGGING_MODEL,
+    model: HAIKU_MODEL,
     // Output is mostly quotes copied from the note, so the cap grows with the note (roughly a
     // token per three characters, with room for the JSON and for thinking).
     max_tokens: Math.min(16_000, 4096 + Math.ceil(body.length / 2)),

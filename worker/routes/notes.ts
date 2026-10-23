@@ -33,10 +33,6 @@ const MAX_BODY_CHARS = 50_000;
 // Well above what 5 minutes of 32 kbps speech produces (~1.2 MB), under Workers AI's input cap.
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 
-// About fifteen pages: a term's report pack for one class. The split copies the text back,
-// so this also bounds one model call's output and how long the teacher waits.
-const MAX_DOCUMENT_CHARS = 60_000;
-
 const classQuery = z.object({ classId: z.uuid().optional() });
 // A document's file name and, as a fallback date, when the file was last modified.
 const documentQuery = z.object({ name: uploadName, modified: pastDatetime("modified").optional() });
@@ -293,7 +289,7 @@ notes.post("/document", validate("query", documentQuery), uploadLimit, async (c)
     console.warn("ANTHROPIC_API_KEY is not set; document not imported", name);
     throw unreadable();
   }
-  const [text, [roster, classes]] = await Promise.all([readUpload(c, name, MAX_DOCUMENT_CHARS), db.batch([selectRoster(db), selectClasses(db)])]);
+  const [text, [roster, classes]] = await Promise.all([readUpload(c, name), db.batch([selectRoster(db), selectClasses(db)])]);
   let split: SplitResult;
   try {
     split = await splitDocument({ text, roster, classes, client: new Anthropic({ apiKey }) });

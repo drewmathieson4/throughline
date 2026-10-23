@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 // Type-only imports: nothing from the Worker ends up in the browser bundle.
 import type { ClassRow } from "../../worker/db/schema";
 import type { DocumentImportResult, NoteWithTags, RosterStudent, TaggedNoteResponse } from "../../worker/api-types";
-import { api, jsonInit, messageOf } from "../api";
+import { DOCUMENT_TYPES, api, fileInit, jsonInit, messageOf } from "../api";
 import FilePicker from "../FilePicker";
 import NoteItem from "../NoteItem";
 import Tags, { type Person } from "./Tags";
@@ -15,9 +15,6 @@ const mmss = (ms: number) => {
   const s = Math.floor(ms / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
-
-// Kept in step with the extensions worker/upload.ts accepts (the browser imports only types from the Worker).
-const DOCUMENT_TYPES = ".pdf,.docx,.txt,.md";
 
 // A note needs no class: the teacher writes or records, and tagging works out the rest. An
 // uploaded document (an old progress report) becomes one note per student it is about.
@@ -63,11 +60,7 @@ function NoteForm({ onCreated, onReplaced }: { onCreated: (note: NoteWithTags) =
       const query = new URLSearchParams({ name: file.name });
       // The file's own date is the fallback for notes from a document that states none.
       if (file.lastModified > 0 && file.lastModified <= Date.now()) query.set("modified", new Date(file.lastModified).toISOString());
-      const result = await api<DocumentImportResult>(`/api/notes/document?${query}`, {
-        method: "POST",
-        headers: { "content-type": file.type || "application/octet-stream" },
-        body: file,
-      });
+      const result = await api<DocumentImportResult>(`/api/notes/document?${query}`, fileInit(file));
       onReplaced(result.replaced, result.notes);
       const unsure = result.notes.filter((n) => n.mentions.length > 0).length;
       const made =

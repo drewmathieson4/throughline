@@ -30,5 +30,6 @@ export const pastDatetime = (label: string) =>
     .transform((s) => new Date(s).toISOString())
     .refine(notInFuture, `${label} is in the future`);
 
-// ?classId=… on every list route.
+// ?classId=… on every list route; /:id on every single-row route.
 export const classIdQuery = z.object({ classId: z.uuid() });
+export const idParam = z.object({ id: z.uuid() });

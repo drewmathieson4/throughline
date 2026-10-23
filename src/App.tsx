@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 // Type-only imports: nothing from the Worker ends up in the browser bundle.
 import type { ClassRow } from "../worker/db/schema";
 import { api, jsonInit, messageOf } from "./api";
+import ClassPage from "./class/ClassPage";
 import NotesView from "./notes/NotesView";
 import StudentsPage from "./students/StudentsPage";
 import { button, errorText, fieldLabel, input, subtleButton } from "./ui";
@@ -51,6 +52,7 @@ function NewClassForm({ onCreated, onCancel }: { onCreated: (c: ClassRow) => voi
 const views = [
   ["notes", "Notes"],
   ["students", "Students"],
+  ["class", "Class"],
 ] as const;
 type View = (typeof views)[number][0];
 
@@ -146,6 +148,7 @@ function App() {
           </nav>
           {view === "notes" && <NotesView classes={classes} />}
           {view === "students" && <StudentsPage key={cls.id} classId={cls.id} onClassesChanged={loadClasses} />}
+          {view === "class" && <ClassPage key={cls.id} classId={cls.id} />}
         </>
       )}
     </main>

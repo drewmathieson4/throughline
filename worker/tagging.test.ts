@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type Anthropic from "@anthropic-ai/sdk";
-import { buildUserMessage, locateQuote, rosterLabels, tagNote, TaggingError, union, type TagClass } from "./tagging";
+import { ModelError } from "./model";
+import { buildUserMessage, locateQuote, rosterLabels, tagNote, union, type TagClass } from "./tagging";
 import { classes, fakeParseClient, roster, type Entry } from "./test-roster";
 
 const fakeClient = (mentions: Entry[], opts: { stop_reason?: string; parsed?: boolean; class_mentioned?: string | null } = {}) =>
@@ -173,8 +174,8 @@ describe("tagNote", () => {
     expect(result).toMatchObject({ students: [], mentions: [], mentionedClassId: null });
   });
 
-  test("refusal, truncation, and unparseable output throw TaggingError", async () => {
-    await expect(call(fakeClient([], { stop_reason: "refusal" }).client)).rejects.toThrow(TaggingError);
+  test("refusal, truncation, and unparseable output throw ModelError", async () => {
+    await expect(call(fakeClient([], { stop_reason: "refusal" }).client)).rejects.toThrow(ModelError);
     await expect(call(fakeClient([], { stop_reason: "max_tokens" }).client)).rejects.toThrow(/cut off/);
     await expect(call(fakeClient([], { parsed: false }).client)).rejects.toThrow(/valid JSON/);
   });

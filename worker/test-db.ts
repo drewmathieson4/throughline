@@ -78,6 +78,22 @@ export function setupTestDb() {
   };
 }
 
+// The AI binding, faked: Whisper returns `text` (or throws); toMarkdown returns `markdown`
+// (or an error result, the way the real one reports an unreadable file).
+export function fakeAi(text: string | Error, markdown: string | Error = "") {
+  return {
+    run: vi.fn(async () => {
+      if (text instanceof Error) throw text;
+      return { text };
+    }),
+    toMarkdown: vi.fn(async (doc: { name: string }) =>
+      markdown instanceof Error
+        ? { id: "1", name: doc.name, mimeType: "application/pdf", format: "error", error: markdown.message }
+        : { id: "1", name: doc.name, mimeType: "application/pdf", format: "markdown", tokens: 1, data: markdown },
+    ),
+  };
+}
+
 // Like src/api.ts jsonInit, except a string body is sent verbatim so tests can post
 // malformed JSON. (Worker and browser code live in different tsconfigs, hence two copies.)
 export const jsonInit = (method: string, body: unknown): RequestInit => ({

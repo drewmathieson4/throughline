@@ -7,22 +7,25 @@ import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { bodyLimit } from "hono/body-limit";
 import { z } from "zod";
+import type { UploadExtension } from "./api-types";
 import type { AppEnv } from "./db/client";
 
 // Well above a term's report pack; a 10 MB PDF is a scan, which toMarkdown cannot read anyway.
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+// About fifteen pages of text once converted: a term's report pack, a syllabus. A document of
+// reports is copied back by the model, so this also bounds one call's output and the wait.
+const MAX_UPLOAD_CHARS = 60_000;
 
 // What each accepted extension is read as. toMarkdown wants the media type on the blob (an
 // untyped blob is rejected), and the extension is a surer guide than what the browser sends.
-const mediaTypes = {
+const mediaTypes: Record<UploadExtension, string> = {
   pdf: "application/pdf",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   txt: "text/plain",
   md: "text/markdown",
-} as const;
-const uploadExtensions = Object.keys(mediaTypes) as (keyof typeof mediaTypes)[];
-type Extension = (typeof uploadExtensions)[number];
-const extensionOf = (name: string): Extension | null => {
+};
+const uploadExtensions = Object.keys(mediaTypes) as UploadExtension[];
+const extensionOf = (name: string): UploadExtension | null => {
   const ext = name.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
   return uploadExtensions.find((e) => e === ext) ?? null;
 };
@@ -52,7 +55,7 @@ const noImages = { images: { convert: false } };
 
 // The text of the uploaded file, trimmed, or a 400 saying why there is none. `name` has
 // passed uploadName.
-export async function readUpload(c: Context<AppEnv>, name: string, maxChars: number): Promise<string> {
+export async function readUpload(c: Context<AppEnv>, name: string): Promise<string> {
   const bytes = await c.req.arrayBuffer();
   if (bytes.byteLength === 0) throw new HTTPException(400, { message: "file is empty" });
 
@@ -79,6 +82,6 @@ export async function readUpload(c: Context<AppEnv>, name: string, maxChars: num
   }
   text = text.trim();
   if (!text) throw new HTTPException(400, { message: "could not read that file" });
-  if (text.length > maxChars) throw new HTTPException(400, { message: `file is too long (over ${maxChars.toLocaleString("en")} characters)` });
+  if (text.length > MAX_UPLOAD_CHARS) throw new HTTPException(400, { message: `file is too long (over ${MAX_UPLOAD_CHARS.toLocaleString("en")} characters)` });
   return text;
 }

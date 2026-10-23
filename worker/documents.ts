@@ -10,22 +10,8 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import { dateField, notInFuture } from "./fields";
-import {
-  TAGGING_MODEL,
-  labelEnum,
-  mentionEntry,
-  parsedOutput,
-  quoteLocator,
-  resolveMentions,
-  rosterLabels,
-  rosterLines,
-  wrapData,
-  type Effort,
-  type OpenMention,
-  type RosterEntry,
-  type TagClass,
-  type TaggedStudent,
-} from "./tagging";
+import { HAIKU_MODEL, labelEnum, parsedOutput, wrapData } from "./model";
+import { mentionEntry, quoteLocator, resolveMentions, rosterLabels, rosterLines, type Effort, type OpenMention, type RosterEntry, type TagClass, type TaggedStudent } from "./tagging";
 
 // Without an explicit timeout the SDK refuses a non-streaming call whose max_tokens could
 // take over ten minutes (about 21k tokens). A long document legitimately asks for more; the
@@ -89,7 +75,7 @@ export async function splitDocument(input: {
 
   const res = await client.messages.parse(
     {
-      model: TAGGING_MODEL,
+      model: HAIKU_MODEL,
       // The answer is mostly the document copied back, so the cap grows with it: roughly a
       // token per three characters, with room for the JSON and for thinking.
       max_tokens: Math.min(64_000, 4096 + Math.ceil(text.length / 2)),

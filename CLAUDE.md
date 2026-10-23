@@ -29,7 +29,9 @@ Schema change workflow: edit `worker/db/schema.ts`, run `db:generate`, run `db:m
 - Default to plan mode always to discuss features.  Ask clarifying questions before proposing a plan
 - One feature per commit
 - Ask before adding dependancies.  Explain what the dependancy is and why it's needed
-- Before proposing a commit, run /code-review and /simplify on the diff and apply what survives. Run /security-review too when the change touches API routes, student data, uploads, or AI prompt inputs. For non-trivial features, do the reviews from a fresh session.
+- One branch per feature (`git checkout -b <feature>`), stacked on the previous feature's branch when it builds on unmerged work.
+- Per feature, the gate is typecheck, lint, and tests. Do not run /code-review, /simplify, or /security-review inside the feature session.
+- Reviews are batched and token-light: every few commits, or before a merge to main or a deploy, Drew opens a fresh session and runs `/code-review low` and `/simplify low` over the batch; `/security-review` only when the batch touched API routes, student data, uploads, or AI prompt inputs. Never run them at higher effort or from the session that wrote the code. This is a demo on synthetic data: things may break and be fixed later.
 
 
 ## Architecture

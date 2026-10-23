@@ -91,6 +91,33 @@ export const noteMentions = sqliteTable(
   (t) => [index("note_mentions_note_idx").on(t.noteId)],
 );
 
+// What Haiku pulls out of a course document (a syllabus, a unit plan, a grading policy): the
+// structure the synthesis reads and the grade summary weights by. Every list may be empty;
+// the model is told to leave out what the document does not say.
+export type CourseSummary = {
+  description: string; // one line: what this document is
+  goals: string[]; // what students should learn or be able to do
+  grading: { category: string; weight: number }[]; // percent of the grade per category
+  units: { name: string; when: string | null }[]; // topics in order, with timing when stated
+  policies: string[]; // late work, retakes, participation: one short line each
+};
+
+// A course document the teacher uploaded for one class. The text is kept whole for the
+// synthesis prompt; summary is the structure the model read out of it, null when the model
+// could not be asked. Not a note: undated, about the course rather than a student.
+export const classMaterials = sqliteTable(
+  "class_materials",
+  {
+    id: text("id").primaryKey(),
+    classId: text("class_id").notNull().references(() => classes.id, { onDelete: "cascade" }),
+    name: text("name").notNull(), // the uploaded file's name
+    text: text("text").notNull(),
+    summary: text("summary", { mode: "json" }).$type<CourseSummary>(),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("class_materials_class_idx").on(t.classId)],
+);
+
 export const gradeEntries = sqliteTable(
   "grade_entries",
   {
@@ -141,3 +168,4 @@ export type Student = typeof students.$inferSelect;
 export type Note = typeof notes.$inferSelect;
 export type NoteStudent = typeof noteStudents.$inferSelect;
 export type NoteMention = typeof noteMentions.$inferSelect;
+export type ClassMaterial = typeof classMaterials.$inferSelect;

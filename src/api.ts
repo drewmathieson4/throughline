@@ -1,3 +1,5 @@
+import type { UploadExtension } from "../worker/api-types";
+
 // Every /api error response is { error: string }; surface that message when present.
 export async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
@@ -10,6 +12,19 @@ export const jsonInit = (method: string, body: unknown): RequestInit => ({
   method,
   headers: { "content-type": "application/json" },
   body: JSON.stringify(body),
+});
+
+// What the document upload routes read. The type-only import means a misspelt or dropped
+// extension fails typecheck without any Worker code reaching the browser bundle.
+const DOCUMENT_EXTENSIONS = ["pdf", "docx", "txt", "md"] as const satisfies readonly UploadExtension[];
+export const DOCUMENT_TYPES = DOCUMENT_EXTENSIONS.map((e) => `.${e}`).join(",");
+
+// A file sent as the raw request body, the way the upload routes read it. The browser
+// leaves the type blank for some extensions; the Worker decides by the name anyway.
+export const fileInit = (file: File): RequestInit => ({
+  method: "POST",
+  headers: { "content-type": file.type || "application/octet-stream" },
+  body: file,
 });
 
 export const messageOf = (e: unknown) => (e instanceof Error ? e.message : String(e));

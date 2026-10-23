@@ -1,6 +1,7 @@
 import { expect, test, vi } from "vitest";
 import type Anthropic from "@anthropic-ai/sdk";
-import { buildMappingMessage, MappingError, suggestMapping } from "./roster-model";
+import { ModelError as MappingError } from "./model";
+import { buildMappingMessage, suggestMapping } from "./roster-model";
 
 // No network: the client is a stub whose parse() returns whatever a test hands it.
 function fakeClient(output: unknown, stop_reason = "end_turn") {

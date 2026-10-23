@@ -8,12 +8,11 @@ import * as schema from "../db/schema";
 import type { AppEnv } from "../db/client";
 import type { ImportedClass, RosterImportResult, RosterStudent, StudentDetail } from "../api-types";
 import { notFound, requireClass, selectClasses, selectRoster } from "../db/helpers";
-import { classIdQuery, dateField, nameField, notInFuture } from "../fields";
+import { classIdQuery, dateField, idParam, nameField, notInFuture } from "../fields";
 import { applyMapping, detectTable, hasNameColumn, planImport, type Grid, type ParsedRow, type Table } from "../roster";
 import { suggestMapping } from "../roster-model";
 import { validate } from "../validate";
 
-const idParam = z.object({ id: z.uuid() });
 
 const createStudent = z.object({
   classId: z.uuid(),

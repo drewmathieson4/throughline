@@ -1,6 +1,6 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import app from "../index";
-import { CLASS_B_ID, SEED_CLASS_ID as CLASS_ID, SEED_CLASS_NAMES, SEED_STUDENT_COUNT, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb } from "../test-db";
+import { CLASS_B_ID, SEED_CLASS_ID as CLASS_ID, SEED_CLASS_NAMES, SEED_STUDENT_COUNT, STUDENT, UNKNOWN_ID, fakeAi, jsonInit, quietErrors, setupTestDb } from "../test-db";
 import { tagNote, type TagResult } from "../tagging";
 import { splitDocument, type SplitResult } from "../documents";
 import type { DocumentImportResult, NoteWithTags, TaggedNoteResponse as Created } from "../api-types";
@@ -23,22 +23,6 @@ const getNotes = (classId?: string) => db.request(classId ? `/api/notes?classId=
 const listOf = async (classId?: string) => (await getNotes(classId)).json() as Promise<NoteWithTags[]>;
 // A string body is sent verbatim so tests can post malformed JSON.
 const postNote = (body: unknown, env?: Env) => app.request("/api/notes", jsonInit("POST", body), env ?? db.env);
-
-// The AI binding is replaced with a fake: Whisper returns `text` (or throws); toMarkdown
-// returns `markdown` (or an error result, the way the real one reports an unreadable file).
-function fakeAi(text: string | Error, markdown: string | Error = "") {
-  return {
-    run: vi.fn(async () => {
-      if (text instanceof Error) throw text;
-      return { text };
-    }),
-    toMarkdown: vi.fn(async (doc: { name: string }) =>
-      markdown instanceof Error
-        ? { id: "1", name: doc.name, mimeType: "application/pdf", format: "error", error: markdown.message }
-        : { id: "1", name: doc.name, mimeType: "application/pdf", format: "markdown", tokens: 1, data: markdown },
-    ),
-  };
-}
 
 function postVoice(
   classId: string | undefined,
