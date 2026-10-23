@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
-import { subtleButton } from "./ui";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 // A button that opens the file dialog: a label styled as a button around a visually hidden
 // input. The input is cleared after each pick so choosing the same file again fires onChange.
 export default function FilePicker({ accept, disabled, onFile, children }: { accept: string; disabled?: boolean; onFile: (file: File) => void; children: ReactNode }) {
   return (
-    <label className={`${subtleButton} cursor-pointer ${disabled ? "opacity-40" : ""}`}>
+    <label className={cn(buttonVariants({ variant: "outline", size: "sm" }), "cursor-pointer has-focus-visible:ring-3 has-focus-visible:ring-ring/50", disabled && "pointer-events-none opacity-50")}>
       {children}
       <input
         type="file"

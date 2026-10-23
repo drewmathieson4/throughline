@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from "react";
 import type { SkippedRow } from "../../worker/api-types";
 import FilePicker from "../FilePicker";
-import { button, input } from "../ui";
+import { input } from "../ui";
 import { csvToGrid } from "./csv";
+import { Button } from "@/components/ui/button";
 
 const MAX_LINES = 600;
 const ACCEPT = ".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain";
@@ -54,9 +55,9 @@ export default function GridImport({
         <div className="mt-2 flex flex-col gap-2">
           <textarea aria-label={pasteLabel} rows={5} className={`w-full font-mono ${input}`} value={text} onChange={(e) => setText(e.target.value)} placeholder={placeholder} />
           <div>
-            <button type="button" className={button} disabled={busy || !text.trim()} onClick={() => run(text)}>
+            <Button type="button" disabled={busy || !text.trim()} onClick={() => run(text)}>
               {busy ? "Importing…" : "Import"}
-            </button>
+            </Button>
           </div>
         </div>
       )}

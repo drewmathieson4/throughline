@@ -6,10 +6,13 @@ import { DOCUMENT_TYPES, api, fileInit, jsonInit, messageOf } from "../api";
 import FilePicker from "../FilePicker";
 import NoteItem from "../NoteItem";
 import Tags, { type Person } from "./Tags";
-import { button, errorText, input, mmss, plural, subtleButton } from "../ui";
+import { errorText, input, mmss, plural } from "../ui";
 import { useRecorder } from "../useRecorder";
+import { PageTitle } from "@/components/page";
+import { Button } from "@/components/ui/button";
 
 const MAX_RECORDING_MS = 5 * 60 * 1000;
+const todayLabel = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" });
 
 // A note needs no class: the teacher writes or records, and tagging works out the rest. An
 // uploaded document (an old progress report) becomes one note per student it is about.
@@ -117,7 +120,7 @@ function NoteForm({ onCreated, onReplaced }: { onCreated: (note: NoteWithTags) =
           {pending === "document" ? "Reading and tagging…" : "Upload a document"}
         </FilePicker>
         {recorder.supported && (
-          <button type="button" onClick={recorder.recording ? recorder.stop : record} disabled={busy} className={subtleButton}>
+          <Button type="button" onClick={recorder.recording ? recorder.stop : record} disabled={busy} variant="outline" size="sm">
             {pending === "voice" ? (
               "Transcribing and tagging…"
             ) : recorder.recording ? (
@@ -130,11 +133,11 @@ function NoteForm({ onCreated, onReplaced }: { onCreated: (note: NoteWithTags) =
             ) : (
               "Record"
             )}
-          </button>
+          </Button>
         )}
-        <button type="submit" disabled={busy || recorder.recording || !draft.trim()} className={button}>
+        <Button type="submit" disabled={busy || recorder.recording || !draft.trim()}>
           {pending === "text" ? "Saving and tagging…" : "Add note"}
-        </button>
+        </Button>
       </div>
       {error && <p className={errorText}>{error}</p>}
       {message && (
@@ -150,8 +153,7 @@ function NoteForm({ onCreated, onReplaced }: { onCreated: (note: NoteWithTags) =
 const about = (n: NoteWithTags, studentId: string) =>
   n.students.some((s) => s.studentId === studentId) || n.mentions.some((m) => m.candidateIds.includes(studentId));
 
-// Every note, whatever its class: capture is class-less, and the class picker above only
-// drives the Students view. Each note shows its class, or "unassigned". The filters work on
+// Every note, whatever its class: capture is class-less. Each note shows its class, or "unassigned". The filters work on
 // the loaded list; the server's ?classId is deliberately unused, since a student filter has
 // no server equivalent and the count should update without a round trip.
 export default function NotesView({ classes }: { classes: ClassRow[] }) {
@@ -160,6 +162,8 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
   const [error, setError] = useState<string | null>(null);
   const [classFilter, setClassFilter] = useState("");
   const [studentFilter, setStudentFilter] = useState("");
+  // Fixed at mount: a heading that changed on a re-render past midnight would be no help.
+  const [today] = useState(() => todayLabel.format(new Date()));
 
   useEffect(() => {
     // Notes and the rosters load independently, so the list renders even if names do not.
@@ -189,6 +193,7 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
 
   return (
     <>
+      <PageTitle eyebrow={today}>Notes</PageTitle>
       <NoteForm
         onCreated={(note) => setNotes((prev) => [note, ...prev])}
         onReplaced={(gone, made) => setNotes((prev) => [...made, ...prev.filter((n) => !gone.includes(n.id))])}

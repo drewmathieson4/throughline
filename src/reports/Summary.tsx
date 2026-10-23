@@ -2,8 +2,9 @@ import { useState } from "react";
 import type { NoteKind } from "../../worker/db/schema";
 import type { Citation, CitedPoint, Coverage, Gap, GoalStatus, GradeSummary, SynthesisView, TaggedNoteResponse } from "../../worker/api-types";
 import { api, jsonInit, messageOf } from "../api";
-import { button, dateFormat, errorText, mmss, plural, subtleButton } from "../ui";
+import { dateFormat, errorText, mmss, plural } from "../ui";
 import { useRecorder } from "../useRecorder";
+import { Button } from "@/components/ui/button";
 
 // One student's structured summary: a short narrative of the period, then the highlights and
 // themes, each point with its evidence folded away until asked for, and last the gaps, so the
@@ -192,9 +193,9 @@ function GapItem({ gap, studentId, classId, onRecorded }: { gap: Gap; studentId:
       <p className="mt-0.5 text-gray-800">{gap.ask}</p>
       <div className="mt-1 flex flex-wrap items-center gap-2">
         {recorder.supported && (
-          <button type="button" className={subtleButton} disabled={saving} onClick={recorder.recording ? recorder.stop : record}>
+          <Button type="button" variant="outline" size="sm" disabled={saving} onClick={recorder.recording ? recorder.stop : record}>
             {saving ? "Saving…" : recorder.recording ? `Stop (${mmss(recorder.elapsedMs)})` : "Record answer"}
-          </button>
+          </Button>
         )}
         {saved && <span className="text-xs text-green-700">Saved as a voice note</span>}
         {error && <span className={errorText}>{error}</span>}
@@ -235,9 +236,9 @@ export default function Summary({
       {stale && (
         <div className="mt-2 flex flex-wrap items-center gap-2 rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900">
           {newNotes > 0 ? `${plural(newNotes, "new note")} since this was made.` : "The evidence has changed since this was made."}
-          <button type="button" className={`ml-auto ${button}`} disabled={regenerating} onClick={onRegenerate}>
+          <Button type="button" className="ml-auto" disabled={regenerating} onClick={onRegenerate}>
             {regenerating ? "Regenerating…" : "Regenerate"}
-          </button>
+          </Button>
         </div>
       )}
 

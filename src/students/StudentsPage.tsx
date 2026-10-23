@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link } from "react-router";
 import type { Student } from "../../worker/db/schema";
 import type { RosterStudent, StudentDetail as StudentDetailResponse } from "../../worker/api-types";
 import { api, jsonInit, messageOf } from "../api";
@@ -6,8 +7,11 @@ import NoteItem from "../NoteItem";
 import Grades from "./Grades";
 import ImportGrades from "./ImportGrades";
 import ImportRoster from "./ImportRoster";
-import { button, dateFormat, errorText, fieldLabel, input, subtleButton } from "../ui";
+import { dateFormat, errorText, fieldLabel, input } from "../ui";
 import { useAction } from "../useAction";
+import { Avatar } from "@/components/Avatar";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 
 // Local calendar date as YYYY-MM-DD, built from the parts rather than a locale format so the
 // server's date check cannot trip on an ICU quirk. Local, not UTC: a teacher marking a
@@ -67,15 +71,17 @@ function AddStudentForm({ classId, onAdded }: { classId: string; onAdded: () => 
         Last name
         <input className={input} value={last} onChange={(e) => setLast(e.target.value)} />
       </label>
-      <button type="submit" className={button} disabled={saving || !first.trim() || !last.trim()}>
+      <Button type="submit" disabled={saving || !first.trim() || !last.trim()}>
         {saving ? "Adding…" : "Add student"}
-      </button>
+      </Button>
       {error && <p className={`w-full ${errorText}`}>{error}</p>}
     </form>
   );
 }
 
-function StudentDetail({ id, onBack }: { id: string; onBack: () => void }) {
+// `back` is the link up to the student's class; the page has its own URL, so the browser's
+// back button works as well.
+export function StudentDetail({ id, back }: { id: string; back: ReactNode }) {
   const [data, setData] = useState<StudentDetailResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   // Non-null while the name is being edited.
@@ -91,16 +97,10 @@ function StudentDetail({ id, onBack }: { id: string; onBack: () => void }) {
       .catch((e) => setLoadError(messageOf(e)));
   }, [id]);
 
-  const back = (
-    <button type="button" onClick={onBack} className="text-sm text-gray-500 hover:underline">
-      ← All students
-    </button>
-  );
-
   // Keep the way back even when the load fails (student deleted elsewhere, network down).
   if (!data) {
     return (
-      <section className="mt-4">
+      <section>
         {back}
         <p className={`mt-2 ${loadError ? errorText : "text-sm text-gray-500"}`}>{loadError ?? "Loading…"}</p>
       </section>
@@ -109,7 +109,7 @@ function StudentDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
   const { student, notes, grades } = data;
   return (
-    <section className="mt-4">
+    <section>
       {back}
       {draft ? (
         <form
@@ -122,30 +122,31 @@ function StudentDetail({ id, onBack }: { id: string; onBack: () => void }) {
         >
           <input className={input} value={draft.first} onChange={(e) => setDraft({ ...draft, first: e.target.value })} aria-label="First name" />
           <input className={input} value={draft.last} onChange={(e) => setDraft({ ...draft, last: e.target.value })} aria-label="Last name" />
-          <button type="submit" className={button} disabled={busy || !draft.first.trim() || !draft.last.trim()}>
+          <Button type="submit" disabled={busy || !draft.first.trim() || !draft.last.trim()}>
             Save
-          </button>
-          <button type="button" className={subtleButton} onClick={() => setDraft(null)}>
+          </Button>
+          <Button type="button" variant="outline" onClick={() => setDraft(null)}>
             Cancel
-          </button>
+          </Button>
         </form>
       ) : (
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h2 className="text-xl font-semibold">
+          <Avatar id={student.id} name={`${student.firstName} ${student.lastName}`} size="lg" />
+          <h1 className="text-[30px] leading-tight font-extrabold tracking-[-0.03em] md:text-[34px]">
             {student.firstName} {student.lastName}
-          </h2>
-          {student.leftAt && <span className="rounded bg-gray-200 px-2 py-0.5 text-xs">left {student.leftAt}</span>}
-          <button type="button" className={subtleButton} disabled={busy} onClick={() => setDraft({ first: student.firstName, last: student.lastName })}>
+          </h1>
+          {student.leftAt && <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold">left {student.leftAt}</span>}
+          <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => setDraft({ first: student.firstName, last: student.lastName })}>
             Edit name
-          </button>
+          </Button>
           {student.leftAt ? (
-            <button type="button" className={subtleButton} disabled={busy} onClick={() => patch({ leftAt: null })}>
+            <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => patch({ leftAt: null })}>
               Reactivate
-            </button>
+            </Button>
           ) : (
-            <button type="button" className={subtleButton} disabled={busy} onClick={() => patch({ leftAt: today() })}>
+            <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => patch({ leftAt: today() })}>
               Mark as left
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -170,10 +171,9 @@ export default function StudentsPage({ classId, onClassesChanged }: { classId: s
   // costs no request.
   const [students, setStudents] = useState<RosterStudent[]>([]);
   const [includeLeft, setIncludeLeft] = useState(false);
-  const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Bumped after an add or on the way back from a detail page (which may have renamed or
-  // marked someone as left), so the effect below refetches the server-sorted list.
+  // Bumped after an add or an import so the effect below refetches the server-sorted list.
+  // Coming back from a student's page needs no bump: this page mounts afresh and fetches.
   const [version, setVersion] = useState(0);
   const refresh = () => setVersion((v) => v + 1);
 
@@ -186,18 +186,6 @@ export default function StudentsPage({ classId, onClassesChanged }: { classId: s
       .catch((e) => setError(messageOf(e)));
   }, [classId, version]);
 
-  if (selected) {
-    return (
-      <StudentDetail
-        id={selected}
-        onBack={() => {
-          setSelected(null);
-          refresh();
-        }}
-      />
-    );
-  }
-
   const shown = includeLeft ? students : students.filter((s) => !s.leftAt);
   return (
     <section>
@@ -205,9 +193,9 @@ export default function StudentsPage({ classId, onClassesChanged }: { classId: s
         <h2 className="text-lg font-medium">
           Students <span className="text-sm font-normal text-gray-500">({shown.length})</span>
         </h2>
-        <label className="flex items-center gap-1 text-sm text-gray-600">
-          <input type="checkbox" checked={includeLeft} onChange={(e) => setIncludeLeft(e.target.checked)} />
+        <label className="flex items-center gap-2.5 text-[13.5px] font-semibold text-secondary-foreground">
           Show students who left
+          <Switch checked={includeLeft} onCheckedChange={setIncludeLeft} />
         </label>
       </div>
       {error && <p className={`mt-2 ${errorText}`}>{error}</p>}
@@ -224,9 +212,10 @@ export default function StudentsPage({ classId, onClassesChanged }: { classId: s
           {shown.map((s) => (
             <tr key={s.id} className="hover:bg-gray-50">
               <td className="py-2">
-                <button type="button" onClick={() => setSelected(s.id)} className="text-left hover:underline">
+                <Link to={`/classes/${classId}/students/${s.id}`} className="flex items-center gap-2.5 font-semibold hover:underline">
+                  <Avatar id={s.id} name={`${s.firstName} ${s.lastName}`} size="sm" />
                   {s.lastName}, {s.firstName}
-                </button>
+                </Link>
               </td>
               <td className="py-2">
                 {s.noteCount}
@@ -243,7 +232,7 @@ export default function StudentsPage({ classId, onClassesChanged }: { classId: s
               <td colSpan={4} className="py-3 text-gray-500">
                 {students.length === 0
                   ? "No students yet. Add one below."
-                  : `All ${students.length} students have left. Tick the box above to show them.`}
+                  : `All ${students.length} students have left. Turn on "Show students who left" to see them.`}
               </td>
             </tr>
           )}

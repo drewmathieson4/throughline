@@ -1,1 +1,107 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/plus-jakarta-sans";
+
+/* No dark theme yet. Without this line Tailwind's `dark:` would follow the system setting and
+   restyle the shadcn components against light colours; with it, `dark:` waits for a `.dark`
+   class that nothing sets. A dark theme is a second set of the variables below under `.dark`. */
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Plus Jakarta Sans Variable", system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-mint: var(--mint);
+  --color-mint-foreground: var(--mint-foreground);
+  --color-mint-dot: var(--mint-dot);
+  --color-sunny: var(--sunny);
+  --color-sunny-foreground: var(--sunny-foreground);
+  --color-sunny-dot: var(--sunny-dot);
+  --color-coral: var(--coral);
+  --color-coral-foreground: var(--coral-foreground);
+  --color-coral-dot: var(--coral-dot);
+  --color-recording: var(--recording);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  --shadow-card: 0 1px 2px rgb(17 24 39 / 0.04), 0 8px 24px rgb(17 24 39 / 0.04);
+  --shadow-pop: 0 16px 40px rgb(17 24 39 / 0.14);
+  --shadow-toast: 0 12px 32px rgb(17 24 39 / 0.25);
+}
+
+/* White surfaces, cool greys, one cobalt. Status colours: mint is good or recent, sunny is
+   unsure or getting stale, coral is missing or quiet. Each has a soft fill, a readable ink
+   for text on that fill, and a stronger dot. */
+:root {
+  --background: #ffffff;
+  --foreground: #14161c;
+  --card: #ffffff;
+  --card-foreground: #14161c;
+  --popover: #ffffff;
+  --popover-foreground: #14161c;
+  --primary: #2b59ff;
+  --primary-foreground: #ffffff;
+  --secondary: #f2f4f7;
+  --secondary-foreground: #2f3442;
+  --muted: #f2f4f7;
+  --muted-foreground: #5b6170;
+  --accent: #e3e9ff;
+  --accent-foreground: #1e3eb3;
+  --destructive: #d92d20;
+  --border: #e6e8ee;
+  --input: #dde1e8;
+  --ring: #8fa8ff;
+  --mint: #ddf7ec;
+  --mint-foreground: #0f6b47;
+  --mint-dot: #20c997;
+  --sunny: #fff1c7;
+  --sunny-foreground: #6b4a00;
+  --sunny-dot: #f5b700;
+  --coral: #ffe4df;
+  --coral-foreground: #a3321f;
+  --coral-dot: #f0604d;
+  --recording: #d92d20;
+  --radius: 0.75rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans antialiased;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  /* Tailwind v4 dropped the pointer cursor on buttons; this app is mostly buttons. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}

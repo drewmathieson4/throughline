@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import type { MaterialRow } from "../../worker/api-types";
 import { DOCUMENT_TYPES, api, fileInit, messageOf } from "../api";
 import FilePicker from "../FilePicker";
-import { dateFormat, errorText, subtleButton } from "../ui";
+import { dateFormat, errorText } from "../ui";
 import { useAction } from "../useAction";
+import { Button } from "@/components/ui/button";
 
 // Class-level things: the course materials (syllabus, unit plan, grading policy) that tell
 // the reports what the course is for and how grades are calculated. Upload is one click and
@@ -47,9 +48,9 @@ export default function ClassPage({ classId }: { classId: string }) {
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="font-medium">{m.name}</span>
               <span className="text-xs text-gray-500">{dateFormat.format(new Date(m.createdAt))}</span>
-              <button type="button" className={`ml-auto ${subtleButton}`} disabled={removing} onClick={() => remove(m.id)}>
+              <Button type="button" variant="outline" size="sm" className="ml-auto" disabled={removing} onClick={() => remove(m.id)}>
                 Delete
-              </button>
+              </Button>
             </div>
             {m.summary ? <Summary summary={m.summary} /> : <p className="mt-1 text-xs text-gray-500">Stored, but the summary did not run.</p>}
           </li>

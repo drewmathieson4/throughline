@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import type { ClassRow } from "../../worker/db/schema";
 import type { SynthesisResult, SynthesisRosterRow, SynthesisView } from "../../worker/api-types";
 import { api, jsonInit, messageOf } from "../api";
-import { button, dateFormat, errorText, fieldLabel, input, plural, subtleButton } from "../ui";
+import { dateFormat, errorText, fieldLabel, input, plural } from "../ui";
 import Summary from "./Summary";
+import { Button } from "@/components/ui/button";
 
 // Reports: pick a period, see which students have a summary for it and whether it is still
 // current, and make the ones that are missing or out of date. Each summary is an Opus call,
@@ -170,12 +171,12 @@ export default function ReportsPage({ cls, active }: { cls: ClassRow; active: bo
           To
           <input type="date" className={input} value={range.to} onChange={(e) => setRange({ ...range, to: e.target.value })} />
         </label>
-        <button type="button" className={subtleButton} disabled={range.from === year.from && range.to === year.to} onClick={() => setRange(year)}>
+        <Button type="button" variant="outline" size="sm" disabled={range.from === year.from && range.to === year.to} onClick={() => setRange(year)}>
           Whole year
-        </button>
-        <button type="button" className={`ml-auto ${button}`} disabled={!valid || loading || classBusy || pending.length === 0} onClick={generateClass}>
+        </Button>
+        <Button type="button" className="ml-auto" disabled={!valid || loading || classBusy || pending.length === 0} onClick={generateClass}>
           {classBusy ? `Generating ${progress.done} of ${progress.total}…` : `Generate for class (${pending.length})`}
-        </button>
+        </Button>
       </div>
       {!valid && <p className={`mt-2 ${errorText}`}>Pick a start date on or before the end date.</p>}
       {progress && !classBusy && progress.failed > 0 && <p className={`mt-2 ${errorText}`}>{plural(progress.failed, "summary")} could not be made; try those again.</p>}
@@ -204,9 +205,9 @@ export default function ReportsPage({ cls, active }: { cls: ClassRow; active: bo
               <td className={`py-2 ${r.status === "stale" ? "text-amber-700" : "text-gray-600"}`}>{statusText(r)}</td>
               <td className="py-2 text-right">
                 {needsRun(r) && (
-                  <button type="button" className={subtleButton} disabled={running.has(r.studentId) || classBusy || loading} onClick={() => roster && generateOne(r.studentId, roster.range)}>
+                  <Button type="button" variant="outline" size="sm" disabled={running.has(r.studentId) || classBusy || loading} onClick={() => roster && generateOne(r.studentId, roster.range)}>
                     {running.has(r.studentId) ? "Generating…" : "Generate"}
-                  </button>
+                  </Button>
                 )}
               </td>
             </tr>
