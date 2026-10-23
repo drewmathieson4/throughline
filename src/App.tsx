@@ -151,7 +151,10 @@ function App() {
           {view === "notes" && <NotesView classes={classes} />}
           {view === "students" && <StudentsPage key={cls.id} classId={cls.id} onClassesChanged={loadClasses} />}
           {view === "class" && <ClassPage key={cls.id} classId={cls.id} />}
-          {view === "reports" && <ReportsPage key={cls.id} cls={cls} />}
+          {/* Hidden rather than unmounted so a Generate run survives a tab switch. */}
+          <div hidden={view !== "reports"}>
+            <ReportsPage key={cls.id} cls={cls} active={view === "reports"} />
+          </div>
         </>
       )}
     </main>

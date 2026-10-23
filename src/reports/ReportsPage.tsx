@@ -11,6 +11,7 @@ import Summary from "./Summary";
 // is the only warning, per the no-confirm rule.
 
 type Range = { from: string; to: string };
+const sameRange = (a: Range, b: Range) => a.from === b.from && a.to === b.to;
 
 // The class's term, or September to June of the school year we are in.
 function wholeYear(cls: ClassRow): Range {
@@ -33,9 +34,15 @@ function statusText(r: SynthesisRosterRow): string {
   return STATUS[r.status];
 }
 
-export default function ReportsPage({ cls }: { cls: ClassRow }) {
+// App keeps this page mounted while another tab is showing, so a class run keeps going and
+// its progress is still here on return. `active` is false while hidden: no roster fetches
+// then, and a fresh one on return, since notes may have changed meanwhile.
+export default function ReportsPage({ cls, active }: { cls: ClassRow; active: boolean }) {
   const [range, setRange] = useState<Range>(() => wholeYear(cls));
-  const [rows, setRows] = useState<SynthesisRosterRow[] | null>(null);
+  // The roster with the range it was loaded for. Generating uses that range, not the date
+  // boxes, so the students queued and the period they are generated for always match.
+  const [roster, setRoster] = useState<{ range: Range; rows: SynthesisRosterRow[] } | null>(null);
+  const rows = roster?.rows ?? null;
   const [error, setError] = useState<string | null>(null);
   // Bumped after anything that changes a status (a run, a recorded answer).
   const [version, setVersion] = useState(0);
@@ -49,14 +56,20 @@ export default function ReportsPage({ cls }: { cls: ClassRow }) {
   const valid = /^\d{4}-\d{2}-\d{2}$/.test(range.from) && /^\d{4}-\d{2}-\d{2}$/.test(range.to) && range.from <= range.to;
 
   useEffect(() => {
-    if (!valid) return;
+    if (!valid || !active) return;
+    // Typing a date fires a fetch per keystroke; only the newest may land.
+    let latest = true;
     api<SynthesisRosterRow[]>(`/api/syntheses?${new URLSearchParams({ classId: cls.id, ...range })}`)
       .then((r) => {
-        setRows(r);
+        if (!latest) return;
+        setRoster({ range, rows: r });
         setError(null);
       })
-      .catch((e) => setError(messageOf(e)));
-  }, [cls.id, range, valid, version]);
+      .catch((e) => latest && setError(messageOf(e)));
+    return () => {
+      latest = false;
+    };
+  }, [cls.id, range, valid, version, active]);
 
   const mark = (id: string, on: boolean) =>
     setRunning((prev) => {
@@ -67,20 +80,20 @@ export default function ReportsPage({ cls }: { cls: ClassRow }) {
     });
 
   // One summary. Throws on failure so the caller decides how to show it.
-  async function run(studentId: string): Promise<SynthesisResult> {
+  async function run(studentId: string, period: Range): Promise<SynthesisResult> {
     mark(studentId, true);
     try {
-      return await api<SynthesisResult>("/api/syntheses", jsonInit("POST", { studentId, ...range }));
+      return await api<SynthesisResult>("/api/syntheses", jsonInit("POST", { studentId, ...period }));
     } finally {
       mark(studentId, false);
     }
   }
 
   // A single student: make it and open it.
-  async function generateOne(studentId: string) {
+  async function generateOne(studentId: string, period: Range) {
     setError(null);
     try {
-      const made = await run(studentId);
+      const made = await run(studentId, period);
       setOpen({ studentId, synthesis: made });
     } catch (e) {
       setError(messageOf(e));
@@ -90,14 +103,16 @@ export default function ReportsPage({ cls }: { cls: ClassRow }) {
   }
 
   async function generateClass() {
-    const queue = (rows ?? []).filter(needsRun).map((r) => r.studentId);
+    if (!roster) return;
+    const period = roster.range;
+    const queue = roster.rows.filter(needsRun).map((r) => r.studentId);
     setError(null);
     setProgress({ done: 0, total: queue.length, failed: 0 });
     const worker = async () => {
       for (let id = queue.shift(); id; id = queue.shift()) {
         let failed = 0;
         try {
-          await run(id);
+          await run(id, period);
         } catch {
           failed = 1;
         }
@@ -132,7 +147,7 @@ export default function ReportsPage({ cls }: { cls: ClassRow }) {
           stale={row?.status === "stale" && row.synthesisId === open.synthesis.id}
           newNotes={row?.newNotes ?? 0}
           regenerating={running.has(open.studentId)}
-          onRegenerate={() => generateOne(open.studentId)}
+          onRegenerate={() => generateOne(open.studentId, { from: open.synthesis.periodStart, to: open.synthesis.periodEnd })}
           onRecorded={refresh}
         />
       </section>
@@ -140,6 +155,8 @@ export default function ReportsPage({ cls }: { cls: ClassRow }) {
   }
 
   const pending = (rows ?? []).filter(needsRun);
+  // Between a date change and its roster arriving, the table shows the old range.
+  const loading = !roster || !sameRange(roster.range, range);
   const classBusy = progress !== null && progress.done < progress.total;
   const year = wholeYear(cls);
   return (
@@ -156,7 +173,7 @@ export default function ReportsPage({ cls }: { cls: ClassRow }) {
         <button type="button" className={subtleButton} disabled={range.from === year.from && range.to === year.to} onClick={() => setRange(year)}>
           Whole year
         </button>
-        <button type="button" className={`ml-auto ${button}`} disabled={!valid || classBusy || pending.length === 0} onClick={generateClass}>
+        <button type="button" className={`ml-auto ${button}`} disabled={!valid || loading || classBusy || pending.length === 0} onClick={generateClass}>
           {classBusy ? `Generating ${progress.done} of ${progress.total}…` : `Generate for class (${pending.length})`}
         </button>
       </div>
@@ -187,7 +204,7 @@ export default function ReportsPage({ cls }: { cls: ClassRow }) {
               <td className={`py-2 ${r.status === "stale" ? "text-amber-700" : "text-gray-600"}`}>{statusText(r)}</td>
               <td className="py-2 text-right">
                 {needsRun(r) && (
-                  <button type="button" className={subtleButton} disabled={running.has(r.studentId) || classBusy} onClick={() => generateOne(r.studentId)}>
+                  <button type="button" className={subtleButton} disabled={running.has(r.studentId) || classBusy || loading} onClick={() => roster && generateOne(r.studentId, roster.range)}>
                     {running.has(r.studentId) ? "Generating…" : "Generate"}
                   </button>
                 )}
