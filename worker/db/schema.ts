@@ -4,6 +4,7 @@
 // integer 0/1 for booleans (SQLite has no boolean type).
 import { sql } from "drizzle-orm";
 import { sqliteTable, text, integer, real, primaryKey, index, uniqueIndex } from "drizzle-orm/sqlite-core";
+import type { Synthesis } from "../api-types";
 
 // JSON array of strings stored as text. SQLite has no array type; at this scale a JSON
 // column beats a join table, and Drizzle parses/serializes it for us (mode: "json").
@@ -136,19 +137,24 @@ export const gradeEntries = sqliteTable(
   (t) => [index("grade_entries_student_idx").on(t.studentId), uniqueIndex("grade_entries_student_assignment_idx").on(t.studentId, t.assignment)],
 );
 
-// One row per synthesis run. input_hash lets us skip a rerun when nothing changed.
+// One row per synthesis run: one student's structured summary for one date range. Every run
+// is kept; the newest for a range is the one shown. input_hash is a hash of everything the
+// model read, so an unchanged range is served again rather than paid for twice. version is
+// the prompt version (worker/synthesis-model.ts), part of that hash.
 export const syntheses = sqliteTable(
   "syntheses",
   {
     id: text("id").primaryKey(),
     studentId: text("student_id").notNull().references(() => students.id, { onDelete: "cascade" }),
+    periodStart: text("period_start").notNull(), // YYYY-MM-DD, inclusive
+    periodEnd: text("period_end").notNull(), // YYYY-MM-DD, inclusive
     version: integer("version").notNull(),
     inputHash: text("input_hash").notNull(),
     model: text("model").notNull(),
-    json: text("json").notNull(), // the validated synthesis object, serialized
+    json: text("json", { mode: "json" }).$type<Synthesis>().notNull(),
     createdAt: text("created_at").notNull(),
   },
-  (t) => [index("syntheses_student_idx").on(t.studentId)],
+  (t) => [index("syntheses_student_idx").on(t.studentId, t.periodStart, t.periodEnd)],
 );
 
 // Generated text and the teacher's edits are kept apart so we can measure how much gets changed.
@@ -174,3 +180,4 @@ export type NoteStudent = typeof noteStudents.$inferSelect;
 export type NoteMention = typeof noteMentions.$inferSelect;
 export type ClassMaterial = typeof classMaterials.$inferSelect;
 export type GradeEntry = typeof gradeEntries.$inferSelect;
+export type SynthesisRow = typeof syntheses.$inferSelect;

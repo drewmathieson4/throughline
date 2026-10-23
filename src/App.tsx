@@ -4,6 +4,7 @@ import type { ClassRow } from "../worker/db/schema";
 import { api, jsonInit, messageOf } from "./api";
 import ClassPage from "./class/ClassPage";
 import NotesView from "./notes/NotesView";
+import ReportsPage from "./reports/ReportsPage";
 import StudentsPage from "./students/StudentsPage";
 import { button, errorText, fieldLabel, input, subtleButton } from "./ui";
 import { useAction } from "./useAction";
@@ -53,6 +54,7 @@ const views = [
   ["notes", "Notes"],
   ["students", "Students"],
   ["class", "Class"],
+  ["reports", "Reports"],
 ] as const;
 type View = (typeof views)[number][0];
 
@@ -149,6 +151,7 @@ function App() {
           {view === "notes" && <NotesView classes={classes} />}
           {view === "students" && <StudentsPage key={cls.id} classId={cls.id} onClassesChanged={loadClasses} />}
           {view === "class" && <ClassPage key={cls.id} classId={cls.id} />}
+          {view === "reports" && <ReportsPage key={cls.id} cls={cls} />}
         </>
       )}
     </main>

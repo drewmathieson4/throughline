@@ -8,6 +8,7 @@ import grades from "./routes/grades";
 import materials from "./routes/materials";
 import notes from "./routes/notes";
 import students from "./routes/students";
+import syntheses from "./routes/syntheses";
 
 const app = new Hono<AppEnv>();
 
@@ -19,6 +20,7 @@ app.route("/api/grades", grades);
 app.route("/api/materials", materials);
 app.route("/api/notes", notes);
 app.route("/api/students", students);
+app.route("/api/syntheses", syntheses);
 
 app.notFound((c) => c.json({ error: "not found" }, 404));
 // Every /api error is { error: string }. Routes and middleware throw HTTPException for the

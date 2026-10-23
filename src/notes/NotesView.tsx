@@ -6,15 +6,10 @@ import { DOCUMENT_TYPES, api, fileInit, jsonInit, messageOf } from "../api";
 import FilePicker from "../FilePicker";
 import NoteItem from "../NoteItem";
 import Tags, { type Person } from "./Tags";
-import { button, errorText, input, plural, subtleButton } from "../ui";
+import { button, errorText, input, mmss, plural, subtleButton } from "../ui";
 import { useRecorder } from "../useRecorder";
 
 const MAX_RECORDING_MS = 5 * 60 * 1000;
-
-const mmss = (ms: number) => {
-  const s = Math.floor(ms / 1000);
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-};
 
 // A note needs no class: the teacher writes or records, and tagging works out the rest. An
 // uploaded document (an old progress report) becomes one note per student it is about.
