@@ -16,14 +16,13 @@ import { and, desc, eq, isNull, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "../db/schema";
 import type { Note, NoteStudent } from "../db/schema";
-import type { NoteWithTags, TaggedNoteResponse, TaggingStatus } from "../api";
+import type { NoteWithTags, TaggedNoteResponse, TaggingStatus } from "../api-types";
 import type { AppEnv, Db } from "../db/client";
-import { requireClass, requireNote, requireStudent, selectClasses, selectRoster } from "../db/queries";
+import { requireClass, requireNote, requireStudent, selectClasses, selectRoster } from "../db/helpers";
+import { notInFuture } from "../fields";
 import { validate } from "../validate";
 import { quoteLocator, tagNote, union, type TagResult } from "../tagging";
 import { transcribe } from "../transcribe";
-
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 // Shared by text and voice notes. A backstop, not a product limit: a five-minute clip
 // transcribes to roughly 5,000 characters. See DECISIONS.md.
@@ -47,7 +46,7 @@ const createNote = z.object({
   notedAt: z.iso
     .datetime({ offset: true })
     .transform((s) => new Date(s).toISOString())
-    .refine((s) => Date.parse(s) <= Date.now() + ONE_DAY_MS, "notedAt is in the future")
+    .refine(notInFuture, "notedAt is in the future")
     .optional(),
 });
 const addStudent = z.object({ studentId: z.uuid(), quotes: quotes.optional() });

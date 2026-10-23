@@ -1,22 +1,32 @@
 import { Hono } from "hono";
+import { asc } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "../db/schema";
-import { requireClass, selectRoster } from "../db/queries";
 import type { AppEnv } from "../db/client";
+import { dateField, nameField } from "../fields";
 import { validate } from "../validate";
 
-const classParam = z.object({ classId: z.uuid() });
+const createClass = z
+  .object({
+    name: nameField("name"),
+    termStart: dateField("termStart").optional(),
+    termEnd: dateField("termEnd").optional(),
+  })
+  .refine((c) => !c.termStart || !c.termEnd || c.termEnd >= c.termStart, "termEnd is before termStart");
 
 const classes = new Hono<AppEnv>();
 
 // GET /api/classes
-classes.get("/", async (c) => c.json(await c.var.db.select().from(schema.classes)));
+classes.get("/", async (c) => c.json(await c.var.db.select().from(schema.classes).orderBy(asc(schema.classes.createdAt))));
 
-// GET /api/classes/:classId/students → the roster, by last name
-classes.get("/:classId/students", validate("param", classParam), async (c) => {
-  const { classId } = c.req.valid("param");
-  await requireClass(c.var.db, classId);
-  return c.json(await selectRoster(c.var.db, classId));
+// POST /api/classes { name, termStart?, termEnd? } → 201 with the stored row
+classes.post("/", validate("json", createClass), async (c) => {
+  const row = await c.var.db
+    .insert(schema.classes)
+    .values({ id: crypto.randomUUID(), ...c.req.valid("json"), createdAt: new Date().toISOString() })
+    .returning()
+    .get();
+  return c.json(row, 201);
 });
 
 export default classes;

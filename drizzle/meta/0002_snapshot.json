@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "3b233b45-6d32-477e-ba8e-171d06b44a8a",
-  "prevId": "22ac5316-19a9-494b-871d-fe69a9491cc4",
+  "id": "b075bf34-abd6-4ce0-8486-c4df23cf2ae2",
+  "prevId": "3d2fbf6d-8318-4c2e-a754-04578e05e856",
   "tables": {
     "classes": {
       "name": "classes",
@@ -532,6 +532,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "left_at": {
+          "name": "left_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },

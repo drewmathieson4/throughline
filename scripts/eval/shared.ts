@@ -2,7 +2,7 @@
 // Every name here is invented; the eval roster is independent of the dev seed.
 import { readFileSync } from "node:fs";
 import { z } from "zod";
-import type { RosterStudent, TagClass } from "../../worker/tagging.ts";
+import type { RosterEntry, TagClass } from "../../worker/tagging.ts";
 
 const here = new URL(".", import.meta.url);
 export const ROSTER_PATH = new URL("roster.json", here);
@@ -12,7 +12,7 @@ export const Roster = z.object({
   classes: z.array(z.object({ id: z.string(), name: z.string() })) satisfies z.ZodType<TagClass[]>,
   students: z.array(
     z.object({ id: z.string(), classId: z.string(), firstName: z.string(), lastName: z.string(), aliases: z.array(z.string()) }),
-  ) satisfies z.ZodType<RosterStudent[]>,
+  ) satisfies z.ZodType<RosterEntry[]>,
 });
 export type Roster = z.infer<typeof Roster>;
 

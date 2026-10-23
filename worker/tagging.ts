@@ -14,7 +14,7 @@ export type Effort = "low" | "medium" | "high";
 
 // What the tagger sees about a student and a class. Structural (no schema import) so this
 // file has no relative imports and Node can run it from the eval scripts without a bundler.
-export type RosterStudent = { id: string; classId: string; firstName: string; lastName: string; aliases: string[] };
+export type RosterEntry = { id: string; classId: string; firstName: string; lastName: string; aliases: string[] };
 export type TagClass = { id: string; name: string };
 export type TaggedStudent = { studentId: string; classId: string; quotes: string[] };
 // A name the model saw but could not pin to one student. candidateIds may be several, and
@@ -73,12 +73,12 @@ function uniqueLabels<T>(items: T[], base: (item: T) => string): Map<string, T> 
   }
   return labels;
 }
-export const rosterLabels = (roster: RosterStudent[]) => uniqueLabels(roster, (s) => `${s.firstName} ${s.lastName}`);
+export const rosterLabels = (roster: RosterEntry[]) => uniqueLabels(roster, (s) => `${s.firstName} ${s.lastName}`);
 export const classLabels = (classes: TagClass[]) => uniqueLabels(classes, (c) => c.name);
 
 // The numbered roster as the model sees it, grouped under each class name. The eval's case
 // generator shows Opus the same text so the answer key follows the production prompt exactly.
-export function rosterLines(labels: Map<string, RosterStudent>, classes: TagClass[]): string {
+export function rosterLines(labels: Map<string, RosterEntry>, classes: TagClass[]): string {
   const entries = [...labels.entries()];
   const groups = [...[...classLabels(classes).entries()].map(([name, c]) => ({ name, id: c.id })), { id: "", name: "Other" }]
     .map((c) => ({ name: c.name, members: entries.filter(([, s]) => (c.id ? s.classId === c.id : !classes.some((k) => k.id === s.classId))) }))
@@ -93,7 +93,7 @@ export function rosterLines(labels: Map<string, RosterStudent>, classes: TagClas
     .join("\n\n");
 }
 
-export function buildUserMessage(labels: Map<string, RosterStudent>, classes: TagClass[], body: string): string {
+export function buildUserMessage(labels: Map<string, RosterEntry>, classes: TagClass[], body: string): string {
   // A closing tag inside the note would end the data region early; no teacher types one.
   const safeBody = body.replace(/<\/note>/gi, "");
   return `Roster:\n${rosterLines(labels, classes)}\n\nNote:\n<note>\n${safeBody}\n</note>`;
@@ -134,7 +134,7 @@ export function union(existing: string[], more: string[]): string[] {
 
 export async function tagNote(input: {
   body: string;
-  roster: RosterStudent[];
+  roster: RosterEntry[];
   classes: TagClass[];
   client: Anthropic;
   effort?: Effort;

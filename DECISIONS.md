@@ -46,6 +46,12 @@ One server-side limit for both kinds. It is a backstop against runaway input, no
 
 ## 2026-10-22 — Route tests fake the AI binding
 `getPlatformProxy` runs with `remoteBindings: false` and each voice test passes `{ ...env, AI: fake }`, where the fake returns a canned transcript or throws. The tests prove the route (type and size checks, empty-transcript rejection, what reaches Whisper, what is written) without network, cost, or a real model, which they could not prove anyway.
+## 2026-10-22 — A student who leaves is marked, not deleted
+`students.left_at` holds the date a student left the class; the active roster is `WHERE left_at IS NULL`. Deleting the row would cascade through `note_students` and strip the student from every note that mentioned them, destroying evidence the teacher may still need (a mid-year report, a transfer summary). A date beats a status enum because it answers "when" for free and costs the same null check. Reactivating is clearing the date, which covers the student who switches back. The roster endpoint returns everyone, departed or not; at a few dozen rows the client can hide them with a filter instead of a second request and a race guard around the toggle.
+
+## 2026-10-22 — View switching in React state, no router
+The app has a few views (notes, students, with roster import next) behind one class picker. A router package would add a dependency, URL design, and a second place where state lives, for no user-visible gain at this size. The selected class id is remembered in `localStorage` so a reload lands on the same class. Revisit if deep links to a student become a real need.
+
 
 ## 2026-10-22 — Tagging returns roster names, not ids, through a structured-output enum
 The tagger (Haiku 5.5) answers in a fixed JSON shape whose `student` field is an enum of the roster's display names, built per request. The model cannot invent a student or mistype an id; the Worker maps names back to ids and drops anything unmatched. We passed on free-text answers parsed with regex (fragile) and on asking for ids (opaque strings the model copies badly). The trade is that two students with the same full name need a suffix on the label, which `rosterLabels()` adds.

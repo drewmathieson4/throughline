@@ -5,6 +5,7 @@ import { HTTPException } from "hono/http-exception";
 import { withDb, type AppEnv } from "./db/client";
 import classes from "./routes/classes";
 import notes from "./routes/notes";
+import students from "./routes/students";
 
 const app = new Hono<AppEnv>();
 
@@ -13,6 +14,7 @@ app.use("/api/*", withDb);
 app.get("/api/health", (c) => c.json({ ok: true, time: new Date().toISOString() }));
 app.route("/api/classes", classes);
 app.route("/api/notes", notes);
+app.route("/api/students", students);
 
 app.notFound((c) => c.json({ error: "not found" }, 404));
 // Every /api error is { error: string }. Routes and middleware throw HTTPException for the

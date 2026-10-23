@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "22ac5316-19a9-494b-871d-fe69a9491cc4",
+  "id": "3d2fbf6d-8318-4c2e-a754-04578e05e856",
   "prevId": "febbb00f-a9cc-474e-889b-12fd11e29b4f",
   "tables": {
     "classes": {
@@ -130,82 +130,6 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "note_mentions": {
-      "name": "note_mentions",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "note_id": {
-          "name": "note_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "mention_text": {
-          "name": "mention_text",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "quotes": {
-          "name": "quotes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'[]'"
-        },
-        "candidate_ids": {
-          "name": "candidate_ids",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'[]'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "note_mentions_note_idx": {
-          "name": "note_mentions_note_idx",
-          "columns": [
-            "note_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "note_mentions_note_id_notes_id_fk": {
-          "name": "note_mentions_note_id_notes_id_fk",
-          "tableFrom": "note_mentions",
-          "tableTo": "notes",
-          "columnsFrom": [
-            "note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
     "note_students": {
       "name": "note_students",
       "columns": {
@@ -230,14 +154,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": 0
-        },
-        "quotes": {
-          "name": "quotes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'[]'"
         }
       },
       "indexes": {
@@ -512,14 +428,6 @@
           "notNull": true,
           "autoincrement": false
         },
-        "aliases": {
-          "name": "aliases",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'[]'"
-        },
         "pseudonym": {
           "name": "pseudonym",
           "type": "text",
@@ -532,6 +440,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "left_at": {
+          "name": "left_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },

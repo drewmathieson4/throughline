@@ -30,6 +30,9 @@ export const students = sqliteTable(
     // Reserved for the Phase 3 privacy layer: the name the model sees instead of the real one.
     pseudonym: text("pseudonym"),
     createdAt: text("created_at").notNull(),
+    // Set when the student leaves the class. The row and its note tags stay so the
+    // evidence survives; the active roster is WHERE left_at IS NULL.
+    leftAt: text("left_at"),
   },
   (t) => [index("students_class_idx").on(t.classId)],
 );

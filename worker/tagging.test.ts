@@ -1,13 +1,13 @@
 import { describe, expect, test, vi } from "vitest";
 import type Anthropic from "@anthropic-ai/sdk";
-import { buildUserMessage, locateQuote, rosterLabels, tagNote, TaggingError, union, type RosterStudent, type TagClass } from "./tagging";
+import { buildUserMessage, locateQuote, rosterLabels, tagNote, TaggingError, union, type RosterEntry, type TagClass } from "./tagging";
 
 // No network: the client is a stub whose parse() returns whatever a test hands it.
 const classes: TagClass[] = [
   { id: "c-p3", name: "Period 3" },
   { id: "c-b", name: "B Block" },
 ];
-const roster: RosterStudent[] = [
+const roster: RosterEntry[] = [
   { id: "s-avery", classId: "c-p3", firstName: "Avery", lastName: "Quill", aliases: [] },
   { id: "s-juniper", classId: "c-p3", firstName: "Juniper", lastName: "Vale", aliases: ["Juni"] },
   { id: "s-alex1", classId: "c-p3", firstName: "Alex", lastName: "Marsh", aliases: [] },
