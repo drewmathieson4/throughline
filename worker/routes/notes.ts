@@ -8,10 +8,10 @@ import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "../db/schema";
 import type { AppEnv, Db } from "../db/client";
+import { requireClass } from "../db/helpers";
+import { classIdQuery, notInFuture } from "../fields";
 import { validate } from "../validate";
 import { transcribe } from "../transcribe";
-
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 // Shared by text and voice notes. A backstop, not a product limit: a five-minute clip
 // transcribes to roughly 5,000 characters. See DECISIONS.md.
@@ -19,8 +19,6 @@ const MAX_BODY_CHARS = 50_000;
 
 // Well above what 5 minutes of 32 kbps speech produces (~1.2 MB), under Workers AI's input cap.
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
-
-const classQuery = z.object({ classId: z.uuid() });
 
 const createNote = z.object({
   classId: z.uuid(),
@@ -31,14 +29,9 @@ const createNote = z.object({
   notedAt: z.iso
     .datetime({ offset: true })
     .transform((s) => new Date(s).toISOString())
-    .refine((s) => Date.parse(s) <= Date.now() + ONE_DAY_MS, "notedAt is in the future")
+    .refine(notInFuture, "notedAt is in the future")
     .optional(),
 });
-
-async function requireClass(db: Db, classId: string) {
-  const row = await db.select({ id: schema.classes.id }).from(schema.classes).where(eq(schema.classes.id, classId)).get();
-  if (!row) throw new HTTPException(404, { message: "class not found" });
-}
 
 // Single write path for every note kind, so rows always get the same id/timestamp shape.
 function insertNote(db: Db, values: { classId: string; kind: schema.NoteKind; body: string; notedAt?: string }) {
@@ -53,7 +46,7 @@ function insertNote(db: Db, values: { classId: string; kind: schema.NoteKind; bo
 const notes = new Hono<AppEnv>();
 
 // GET /api/notes?classId=… → newest first
-notes.get("/", validate("query", classQuery), async (c) => {
+notes.get("/", validate("query", classIdQuery), async (c) => {
   const { classId } = c.req.valid("query");
   await requireClass(c.var.db, classId);
   const rows = await c.var.db
@@ -85,7 +78,7 @@ const audioLimit = bodyLimit({
 // note in one request, 201 with the stored row. notedAt is the save time: a clip is at most
 // five minutes long, so the gap from when the teacher started talking is not worth a
 // browser-supplied timestamp.
-notes.post("/voice", validate("query", classQuery), audioLimit, async (c) => {
+notes.post("/voice", validate("query", classIdQuery), audioLimit, async (c) => {
   const { classId } = c.req.valid("query");
 
   // The audio is never stored or served back, so any audio/* type is fine to hand to
