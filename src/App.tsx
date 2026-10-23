@@ -23,7 +23,8 @@ const mmss = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 
-function NoteForm({ classId, onCreated }: { classId: string; onCreated: (note: TaggedNoteResponse) => void }) {
+// A note needs no class: the teacher writes or records, and tagging works out the rest.
+function NoteForm({ onCreated }: { onCreated: (note: TaggedNoteResponse) => void }) {
   const [draft, setDraft] = useState("");
   // Which kind of note is being saved right now; text and voice saves never overlap.
   const [pending, setPending] = useState<"text" | "voice" | null>(null);
@@ -54,7 +55,7 @@ function NoteForm({ classId, onCreated }: { classId: string; onCreated: (note: T
   const recorder = useRecorder({
     maxMs: MAX_RECORDING_MS,
     onStop: async ({ audio, hitLimit: limited }) => {
-      const saved = await save("voice", `/api/notes/voice?classId=${classId}`, {
+      const saved = await save("voice", "/api/notes/voice", {
         method: "POST",
         headers: { "content-type": audio.type },
         body: audio,
@@ -79,7 +80,7 @@ function NoteForm({ classId, onCreated }: { classId: string; onCreated: (note: T
     const saved = await save("text", "/api/notes", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ classId, body: draft }),
+      body: JSON.stringify({ body: draft }),
     });
     if (saved) setDraft("");
   }
@@ -141,80 +142,99 @@ function NoteForm({ classId, onCreated }: { classId: string; onCreated: (note: T
   );
 }
 
+// Who a student id is, and which class, for display.
+type Person = { name: string; classId: string };
+
 // Read-only for now: suggested tags look tentative, confirmed ones solid, and a name the
-// tagger could not resolve is called out so the teacher knows it needs settling.
-function Tags({ note, names }: { note: NoteWithTags; names: Map<string, string> }) {
-  const nameOf = (id: string) => names.get(id) ?? "Unknown student";
+// tagger could not resolve is called out so the teacher knows it needs settling. A student's
+// class is shown only when it would otherwise be unclear: on a mention with candidates from
+// different classes, or on a tag whose student is not in the note's class.
+function Tags({ note, people, classNames }: { note: NoteWithTags; people: Map<string, Person>; classNames: Map<string, string> }) {
+  const label = (p: Person | undefined, withClass: boolean) => {
+    if (!p) return "Unknown student";
+    return withClass ? `${p.name} (${classNames.get(p.classId) ?? "class"})` : p.name;
+  };
   if (note.students.length === 0 && note.mentions.length === 0) {
-    return <p className="mt-1 text-xs text-gray-400">class note</p>;
+    // With a class and nobody named, the note is class-level context. Without a class it
+    // was simply not tagged (no key, a failed call, or nothing to find).
+    return <p className="mt-1 text-xs text-gray-400">{note.classId ? "class note" : "no students found"}</p>;
   }
+  // Show each student's class when it would otherwise be unclear: the note has no class and
+  // its students span more than one, or a student is outside the note's class.
+  const spans = new Set(note.students.map((s) => people.get(s.studentId)?.classId)).size > 1;
   return (
     <div className="mt-2 flex flex-col gap-1.5">
-      {note.students.map((s) => (
-        <div key={s.studentId}>
-          <span
-            className={
-              s.confirmed
-                ? "rounded-full bg-gray-900 px-2 py-0.5 text-xs text-white"
-                : "rounded-full border border-dashed border-gray-400 px-2 py-0.5 text-xs text-gray-700"
-            }
-            title={s.confirmed ? "Confirmed" : "Suggested"}
-          >
-            {nameOf(s.studentId)}
-          </span>
-          {s.quotes.length > 0 && (
-            <ul className="mt-0.5 ml-2 text-xs text-gray-500 italic">
-              {s.quotes.map((q) => (
-                <li key={q}>“{q}”</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ))}
-      {note.mentions.map((m) => (
-        <p key={m.id} className="text-xs text-amber-700">
-          Unsure who “{m.mentionText}” is
-          {m.candidateIds.length > 0 && `: ${m.candidateIds.map(nameOf).join(" or ")}`}
-        </p>
-      ))}
+      {note.students.map((s) => {
+        const p = people.get(s.studentId);
+        return (
+          <div key={s.studentId}>
+            <span
+              className={
+                s.confirmed
+                  ? "rounded-full bg-gray-900 px-2 py-0.5 text-xs text-white"
+                  : "rounded-full border border-dashed border-gray-400 px-2 py-0.5 text-xs text-gray-700"
+              }
+              title={s.confirmed ? "Confirmed" : "Suggested"}
+            >
+              {label(p, note.classId === null ? spans : p?.classId !== note.classId)}
+            </span>
+            {s.quotes.length > 0 && (
+              <ul className="mt-0.5 ml-2 text-xs text-gray-500 italic">
+                {s.quotes.map((q) => (
+                  <li key={q}>“{q}”</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      })}
+      {note.mentions.map((m) => {
+        const spansClasses = new Set(m.candidateIds.map((id) => people.get(id)?.classId)).size > 1;
+        return (
+          <p key={m.id} className="text-xs text-amber-700">
+            Unsure who “{m.mentionText}” is
+            {m.candidateIds.length > 0 && `: ${m.candidateIds.map((id) => label(people.get(id), spansClasses)).join(" or ")}`}
+          </p>
+        );
+      })}
     </div>
   );
 }
 
 function App() {
-  const [cls, setCls] = useState<ClassRow | null>(null);
-  const [names, setNames] = useState<Map<string, string>>(new Map());
+  const [classes, setClasses] = useState<ClassRow[] | null>(null); // null until loaded
+  const [people, setPeople] = useState<Map<string, Person>>(new Map());
   const [notes, setNotes] = useState<NoteWithTags[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Notes and the roster load independently, so the list renders even if names do not.
+    api<NoteWithTags[]>("/api/notes").then(setNotes).catch((e) => setError(messageOf(e)));
     (async () => {
       try {
-        const [first] = await api<ClassRow[]>("/api/classes");
-        if (!first) {
-          throw new Error(import.meta.env.DEV ? "No class found. Run `npm run db:seed:local`." : "No class set up yet.");
+        const list = await api<ClassRow[]>("/api/classes");
+        setClasses(list);
+        if (list.length === 0) {
+          throw new Error(import.meta.env.DEV ? "No classes found. Run `npm run db:seed:local`." : "No classes set up yet.");
         }
-        // Set the class first so the form still renders if the later requests fail. The roster
-        // loads on its own so the notes list renders even if it fails (names fall back).
-        setCls(first);
-        api<RosterStudent[]>(`/api/classes/${first.id}/students`)
-          .then((roster) => setNames(new Map(roster.map((s) => [s.id, `${s.firstName} ${s.lastName}`]))))
-          .catch((e) => setError(messageOf(e)));
-        setNotes(await api<NoteWithTags[]>(`/api/notes?classId=${first.id}`));
+        const rosters = await Promise.all(list.map((c) => api<RosterStudent[]>(`/api/classes/${c.id}/students`)));
+        setPeople(new Map(rosters.flat().map((s) => [s.id, { name: `${s.firstName} ${s.lastName}`, classId: s.classId }])));
       } catch (e) {
         setError(messageOf(e));
       }
     })();
   }, []);
 
+  const classNames = new Map((classes ?? []).map((c) => [c.id, c.name]));
+
   return (
     <main className="mx-auto max-w-2xl p-6">
       <h1 className="text-2xl font-semibold">Throughline</h1>
       <p className="mt-1 text-sm text-gray-500">
-        {cls ? cls.name : "Loading…"} · synthetic demo class, no real students
+        {classes === null ? "Loading…" : `${classes.length} ${classes.length === 1 ? "class" : "classes"}`} · synthetic demo, no real students
       </p>
 
-      {cls && <NoteForm classId={cls.id} onCreated={(note) => setNotes((prev) => [note, ...prev])} />}
+      <NoteForm onCreated={(note) => setNotes((prev) => [note, ...prev])} />
       {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
       <ul className="mt-6 divide-y divide-gray-200">
@@ -223,12 +243,15 @@ function App() {
             <p className="flex items-center gap-2 text-xs text-gray-500">
               <time dateTime={n.notedAt}>{dateFormat.format(new Date(n.notedAt))}</time>
               {n.kind === "voice" && <span className="rounded bg-gray-100 px-1.5 py-0.5 text-gray-700">voice</span>}
+              <span className={n.classId ? "rounded bg-gray-100 px-1.5 py-0.5 text-gray-700" : "text-gray-400"}>
+                {n.classId ? (classNames.get(n.classId) ?? "class") : "unassigned"}
+              </span>
             </p>
             <p className="mt-1 whitespace-pre-wrap">{n.body}</p>
-            <Tags note={n} names={names} />
+            <Tags note={n} people={people} classNames={classNames} />
           </li>
         ))}
-        {cls && notes.length === 0 && <li className="py-3 text-sm text-gray-500">No notes yet.</li>}
+        {notes.length === 0 && <li className="py-3 text-sm text-gray-500">No notes yet.</li>}
       </ul>
     </main>
   );

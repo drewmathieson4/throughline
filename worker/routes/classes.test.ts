@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, expect, test } from "vitest";
 import app from "../index";
-import { CLASS_ID, STUDENT, UNKNOWN_ID, testEnv } from "../test/db";
+import { CLASS_B_ID, CLASS_ID, STUDENT, UNKNOWN_ID, testEnv } from "../test/db";
 import type { RosterStudent } from "../api";
 
 let env: Env;
@@ -12,19 +12,29 @@ beforeAll(async () => {
 
 afterAll(() => dispose());
 
-test("GET /api/classes lists the seeded class", async () => {
+test("GET /api/classes lists the seeded classes", async () => {
   const res = await app.request("/api/classes", {}, env);
   expect(res.status).toBe(200);
-  expect(await res.json()).toEqual([expect.objectContaining({ id: CLASS_ID, name: "Period 3 Humanities" })]);
+  expect(await res.json()).toEqual([
+    expect.objectContaining({ id: CLASS_ID, name: "Period 3 Humanities" }),
+    expect.objectContaining({ id: CLASS_B_ID, name: "B Block Humanities" }),
+  ]);
 });
 
 test("GET /api/classes/:classId/students returns the roster by last name with aliases", async () => {
   const res = await app.request(`/api/classes/${CLASS_ID}/students`, {}, env);
   expect(res.status).toBe(200);
   const roster = (await res.json()) as RosterStudent[];
-  expect(roster).toHaveLength(10);
+  expect(roster).toHaveLength(9);
+  expect(roster.map((s) => s.id)).not.toContain(STUDENT.alexRuiz);
   expect(roster.map((s) => s.lastName)).toEqual([...roster.map((s) => s.lastName)].sort());
-  expect(roster.find((s) => s.id === STUDENT.juniper)).toEqual({ id: STUDENT.juniper, firstName: "Juniper", lastName: "Vale", aliases: ["Juni"] });
+  expect(roster.find((s) => s.id === STUDENT.juniper)).toEqual({
+    id: STUDENT.juniper,
+    classId: CLASS_ID,
+    firstName: "Juniper",
+    lastName: "Vale",
+    aliases: ["Juni"],
+  });
   expect(roster.find((s) => s.id === STUDENT.avery)?.aliases).toEqual([]);
 });
 

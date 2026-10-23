@@ -6,15 +6,18 @@ import { drizzle } from "drizzle-orm/d1";
 import { migrate } from "drizzle-orm/d1/migrator";
 import seed from "../../scripts/seed-dev.sql?raw";
 
-export const CLASS_ID = "11111111-1111-4111-8111-111111111111";
+export const CLASS_ID = "11111111-1111-4111-8111-111111111111"; // Period 3 Humanities, 9 students
+export const CLASS_B_ID = "11111111-1111-4111-8111-111111112222"; // B Block Humanities, 3 students
 export const UNKNOWN_ID = "99999999-9999-4999-8999-999999999999";
-// Seeded students, by first name (see scripts/seed-dev.sql).
+// Seeded students, by first name (see scripts/seed-dev.sql). Alex Ruiz, Nola, Cassius are in B Block.
 export const STUDENT = {
   avery: "22222222-2222-4222-8222-222222222201",
   rowan: "22222222-2222-4222-8222-222222222202",
   juniper: "22222222-2222-4222-8222-222222222204",
   alexMarsh: "22222222-2222-4222-8222-222222222209",
   alexRuiz: "22222222-2222-4222-8222-222222222210",
+  nola: "22222222-2222-4222-8222-222222222211",
+  cassius: "22222222-2222-4222-8222-222222222212",
 } as const;
 
 // Run a request whose failure path logs with console.error, without the noise in test output.

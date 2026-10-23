@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, expect, test, vi } from "vitest";
 import app from "../index";
-import { CLASS_ID, STUDENT, UNKNOWN_ID, quietErrors, testEnv } from "../test/db";
+import { CLASS_B_ID, CLASS_ID, STUDENT, UNKNOWN_ID, quietErrors, testEnv } from "../test/db";
 import { tagNote, type TagResult } from "../tagging";
 import type { NoteWithTags, TaggedNoteResponse as Created } from "../api";
 
@@ -31,7 +31,8 @@ const json = (body: unknown): RequestInit => ({
   body: typeof body === "string" ? body : JSON.stringify(body),
 });
 
-const getNotes = (classId: string) => app.request(`/api/notes?classId=${classId}`, {}, env);
+const getNotes = (classId?: string) => app.request(classId ? `/api/notes?classId=${classId}` : "/api/notes", {}, env);
+const listOf = async (classId?: string) => (await (await getNotes(classId)).json()) as NoteWithTags[];
 // A string body is sent verbatim so tests can post malformed JSON.
 const postNote = (body: unknown, e: Env = env) => app.request("/api/notes", json(body), e);
 
@@ -46,28 +47,43 @@ function fakeAi(text: string | Error) {
 }
 
 function postVoice(
-  classId: string,
+  classId: string | undefined,
   audio: BodyInit,
   opts: { ai?: ReturnType<typeof fakeAi>; type?: string; headers?: Record<string, string>; env?: Env } = {},
 ) {
   const ai = opts.ai ?? fakeAi("Transcribed.");
   return app.request(
-    `/api/notes/voice?classId=${classId}`,
+    classId ? `/api/notes/voice?classId=${classId}` : "/api/notes/voice",
     { method: "POST", headers: { "content-type": opts.type ?? "audio/webm;codecs=opus", ...opts.headers }, body: audio },
     { ...(opts.env ?? env), AI: ai as unknown as Ai },
   );
 }
 
-const result = (students: TagResult["students"], mentions: TagResult["mentions"] = []): TagResult => ({
-  students,
+// Seeded students' classes, so fixtures can name a student and get the class the tagger would attach.
+const CLASS_OF: Record<string, string> = {
+  [STUDENT.avery]: CLASS_ID,
+  [STUDENT.rowan]: CLASS_ID,
+  [STUDENT.juniper]: CLASS_ID,
+  [STUDENT.alexMarsh]: CLASS_ID,
+  [STUDENT.alexRuiz]: CLASS_B_ID,
+  [STUDENT.nola]: CLASS_B_ID,
+  [STUDENT.cassius]: CLASS_B_ID,
+};
+const result = (
+  students: { studentId: string; quotes: string[] }[],
+  mentions: TagResult["mentions"] = [],
+  mentionedClassId: string | null = null,
+): TagResult => ({
+  students: students.map((s) => ({ ...s, classId: CLASS_OF[s.studentId]! })),
   mentions,
+  mentionedClassId,
   usage: { inputTokens: 1, outputTokens: 1 },
 });
 
 const BODY = "Avery nailed the quiz. Juni asked for help again. Alex was late.";
 
-// Create a note whose tagger returns the given result; the default has one suggestion
-// for Avery, one for Juniper, and an open mention for "Alex".
+// Create a note (no class given) whose tagger returns the given result; the default has one
+// suggestion for Avery, one for Juniper (both Period 3), and an open mention for "Alex".
 async function createTagged(
   r: TagResult = result(
     [
@@ -76,26 +92,22 @@ async function createTagged(
     ],
     [{ mentionText: "Alex", quotes: ["Alex was late."], candidateIds: [STUDENT.alexMarsh, STUDENT.alexRuiz] }],
   ),
+  notedAt?: string,
 ): Promise<Created> {
   tagNoteMock.mockResolvedValueOnce(r);
-  const res = await postNote({ classId: CLASS_ID, body: BODY }, keyed);
+  const res = await postNote({ body: BODY, notedAt }, keyed);
   expect(res.status).toBe(201);
   return (await res.json()) as Created;
 }
 
-test("GET /api/notes requires a uuid classId", async () => {
-  expect((await app.request("/api/notes", {}, env)).status).toBe(400);
+test("GET /api/notes rejects a malformed classId and 404s an unknown one", async () => {
   expect((await getNotes("not-a-uuid")).status).toBe(400);
-});
-
-test("GET /api/notes returns 404 for an unknown class", async () => {
   expect((await getNotes(UNKNOWN_ID)).status).toBe(404);
 });
 
-test("GET /api/notes returns an empty list for the seeded class", async () => {
-  const res = await getNotes(CLASS_ID);
-  expect(res.status).toBe(200);
-  expect(await res.json()).toEqual([]);
+test("GET /api/notes returns an empty list with and without a class filter", async () => {
+  expect(await listOf()).toEqual([]);
+  expect(await listOf(CLASS_ID)).toEqual([]);
 });
 
 test("POST /api/notes stores a text note and GET lists it newest first", async () => {
@@ -109,8 +121,28 @@ test("POST /api/notes stores a text note and GET lists it newest first", async (
   expect(created).toMatchObject({ classId: CLASS_ID, kind: "text", body: "Newer note", students: [], mentions: [] });
   expect(created.id).toMatch(/^[0-9a-f-]{36}$/);
 
-  const list = (await (await getNotes(CLASS_ID)).json()) as NoteWithTags[];
-  expect(list.map((n) => n.body)).toEqual(["Newer note", "Older note"]);
+  expect((await listOf(CLASS_ID)).map((n) => n.body)).toEqual(["Newer note", "Older note"]);
+});
+
+test("POST /api/notes without a class saves it unassigned when nothing is inferable", async () => {
+  const unkeyed = await postNote({ body: BODY });
+  expect(unkeyed.status).toBe(201);
+  expect(await unkeyed.json()).toMatchObject({ classId: null, students: [], mentions: [], tagging: "failed" });
+  expect(tagNoteMock).not.toHaveBeenCalled();
+
+  const empty = await createTagged(result([]));
+  expect(empty).toMatchObject({ classId: null, tagging: "done" });
+  expect((await listOf()).map((n) => n.classId)).toEqual([null, null]);
+});
+
+test("GET /api/notes without a filter lists every note; with classId it filters", async () => {
+  // Explicit times: two notes saved in the same millisecond would otherwise sort arbitrarily.
+  await createTagged(undefined, "2026-10-01T09:00:00Z"); // Period 3 via Avery and Juniper
+  await createTagged(result([{ studentId: STUDENT.nola, quotes: [] }]), "2026-10-01T10:00:00Z"); // B Block
+  await createTagged(result([]), "2026-10-01T11:00:00Z"); // unassigned
+  expect((await listOf()).map((n) => n.classId)).toEqual([null, CLASS_B_ID, CLASS_ID]);
+  expect((await listOf(CLASS_B_ID)).map((n) => n.classId)).toEqual([CLASS_B_ID]);
+  expect(await listOf(CLASS_ID)).toHaveLength(1);
 });
 
 test("GET /api/notes lists tags for more than 100 notes (D1 binds at most 100 parameters)", async () => {
@@ -124,28 +156,26 @@ test("GET /api/notes lists tags for more than 100 notes (D1 binds at most 100 pa
     );
   }
   await env.DB.batch(stmts);
-  const res = await getNotes(CLASS_ID);
-  expect(res.status).toBe(200);
-  const list = (await res.json()) as NoteWithTags[];
+  const list = await listOf(CLASS_ID);
   expect(list).toHaveLength(101);
   expect(list.every((n) => n.students.length === 1)).toBe(true);
 });
 
 test("POST /api/notes rejects an empty body with a message", async () => {
-  const res = await postNote({ classId: CLASS_ID, body: "   " });
+  const res = await postNote({ body: "   " });
   expect(res.status).toBe(400);
   expect(await res.json()).toEqual({ error: "body is required" });
 });
 
 test("POST /api/notes rejects a body over 50,000 characters", async () => {
-  expect((await postNote({ classId: CLASS_ID, body: "x".repeat(50_000) })).status).toBe(201);
-  const res = await postNote({ classId: CLASS_ID, body: "x".repeat(50_001) });
+  expect((await postNote({ body: "x".repeat(50_000) })).status).toBe(201);
+  const res = await postNote({ body: "x".repeat(50_001) });
   expect(res.status).toBe(400);
   expect(await res.json()).toEqual({ error: "body is too long" });
 });
 
 test("POST /api/notes rejects a notedAt more than a day in the future", async () => {
-  const res = await postNote({ classId: CLASS_ID, body: "x", notedAt: "9999-12-31T00:00:00Z" });
+  const res = await postNote({ body: "x", notedAt: "9999-12-31T00:00:00Z" });
   expect(res.status).toBe(400);
   expect(await res.json()).toEqual({ error: "notedAt is in the future" });
 });
@@ -156,20 +186,14 @@ test("POST /api/notes rejects malformed JSON", async () => {
   expect(await res.json()).toEqual({ error: "Malformed JSON in request body" });
 });
 
-test("POST /api/notes returns 404 for an unknown class", async () => {
+test("POST /api/notes returns 404 for an unknown class when one is given", async () => {
   expect((await postNote({ classId: UNKNOWN_ID, body: "x" })).status).toBe(404);
 });
 
-test("POST /api/notes without an API key saves the note untagged", async () => {
-  const res = await postNote({ classId: CLASS_ID, body: BODY });
-  expect(res.status).toBe(201);
-  expect(await res.json()).toMatchObject({ students: [], mentions: [], tagging: "failed" });
-  expect(tagNoteMock).not.toHaveBeenCalled();
-});
-
-test("POST /api/notes stores suggestions as unconfirmed with quotes, and open mentions", async () => {
+test("POST /api/notes stores suggestions as unconfirmed with quotes, open mentions, and the inferred class", async () => {
   const created = await createTagged();
   expect(created.tagging).toBe("done");
+  expect(created.classId).toBe(CLASS_ID);
   expect(created.students).toEqual([
     { studentId: STUDENT.avery, confirmed: 0, quotes: ["Avery nailed the quiz."] },
     { studentId: STUDENT.juniper, confirmed: 0, quotes: ["Juni asked for help again."] },
@@ -177,25 +201,44 @@ test("POST /api/notes stores suggestions as unconfirmed with quotes, and open me
   expect(created.mentions).toEqual([
     expect.objectContaining({ mentionText: "Alex", quotes: ["Alex was late."], candidateIds: [STUDENT.alexMarsh, STUDENT.alexRuiz] }),
   ]);
-  // The tagger saw the class roster, aliases included.
+  // The tagger saw every student in every class, aliases included, and the class list.
   const call = tagNoteMock.mock.calls[0]![0];
   expect(call.body).toBe(BODY);
-  expect(call.roster).toHaveLength(10);
-  expect(call.roster.find((s) => s.id === STUDENT.juniper)?.aliases).toEqual(["Juni"]);
+  expect(call.roster).toHaveLength(12);
+  expect(call.roster.find((s) => s.id === STUDENT.juniper)).toMatchObject({ classId: CLASS_ID, aliases: ["Juni"] });
+  expect(call.roster.find((s) => s.id === STUDENT.alexRuiz)?.classId).toBe(CLASS_B_ID);
+  expect(call.classes.map((c) => c.name).sort()).toEqual(["B Block Humanities", "Period 3 Humanities"]);
 
-  const [listed] = (await (await getNotes(CLASS_ID)).json()) as NoteWithTags[];
-  expect(listed).toMatchObject({ students: created.students, mentions: created.mentions });
+  const [listed] = await listOf(CLASS_ID);
+  expect(listed).toMatchObject({ classId: CLASS_ID, students: created.students, mentions: created.mentions });
+});
+
+test("suggestions spanning two classes leave the note unassigned", async () => {
+  const created = await createTagged(result([{ studentId: STUDENT.avery, quotes: [] }, { studentId: STUDENT.nola, quotes: [] }]));
+  expect(created.classId).toBeNull();
+  expect(created.students).toHaveLength(2);
+});
+
+test("a class named in the note sets it when no student does, and never overrides students", async () => {
+  expect((await createTagged(result([], [], CLASS_B_ID))).classId).toBe(CLASS_B_ID);
+  expect((await createTagged(result([{ studentId: STUDENT.avery, quotes: [] }], [], CLASS_B_ID))).classId).toBe(CLASS_ID);
+});
+
+test("a class given on create is kept even when tags point elsewhere", async () => {
+  tagNoteMock.mockResolvedValueOnce(result([{ studentId: STUDENT.nola, quotes: [] }]));
+  const res = await postNote({ classId: CLASS_ID, body: BODY }, keyed);
+  expect(((await res.json()) as Created).classId).toBe(CLASS_ID);
 });
 
 test("POST /api/notes still saves the note when tagging throws", async () => {
   tagNoteMock.mockRejectedValueOnce(new Error("rate limited"));
-  const res = await quietErrors(() => postNote({ classId: CLASS_ID, body: BODY }, keyed));
+  const res = await quietErrors(() => postNote({ body: BODY }, keyed));
   expect(res.status).toBe(201);
-  expect(await res.json()).toMatchObject({ body: BODY, students: [], mentions: [], tagging: "failed" });
-  expect((await (await getNotes(CLASS_ID)).json()) as NoteWithTags[]).toHaveLength(1);
+  expect(await res.json()).toMatchObject({ body: BODY, classId: null, students: [], mentions: [], tagging: "failed" });
+  expect(await listOf()).toHaveLength(1);
 });
 
-test("POST /api/notes/:noteId/retag replaces suggestions and mentions but keeps confirmed tags", async () => {
+test("POST /api/notes/:noteId/retag replaces suggestions and mentions but keeps confirmed tags and the class", async () => {
   const note = await createTagged();
   expect((await app.request(`/api/notes/${note.id}/students/${STUDENT.avery}/confirm`, { method: "POST" }, env)).status).toBe(200);
 
@@ -209,11 +252,17 @@ test("POST /api/notes/:noteId/retag replaces suggestions and mentions but keeps 
   expect(res.status).toBe(200);
   const retagged = (await res.json()) as Created;
   expect(retagged.tagging).toBe("done");
+  expect(retagged.classId).toBe(CLASS_ID);
   expect(retagged.students).toEqual([
     { studentId: STUDENT.avery, confirmed: 1, quotes: ["Avery nailed the quiz.", "Alex was late."] },
     { studentId: STUDENT.rowan, confirmed: 0, quotes: [] },
   ]);
   expect(retagged.mentions).toEqual([]);
+
+  // A retag that finds nothing does not clear the class either.
+  tagNoteMock.mockResolvedValueOnce(result([]));
+  const again = (await (await app.request(`/api/notes/${note.id}/retag`, { method: "POST" }, keyed)).json()) as Created;
+  expect(again.classId).toBe(CLASS_ID);
 });
 
 test("POST /api/notes/:noteId/retag keeps existing suggestions when tagging fails", async () => {
@@ -232,8 +281,9 @@ test("POST /api/notes/:noteId/retag returns 404 for an unknown note and 400 for 
   expect((await app.request(`/api/notes/nope/retag`, { method: "POST" }, env)).status).toBe(400);
 });
 
-test("POST /api/notes/:noteId/students adds a confirmed tag with verified quotes", async () => {
+test("POST /api/notes/:noteId/students adds a confirmed tag with verified quotes and settles the class", async () => {
   const note = await createTagged(result([]));
+  expect(note.classId).toBeNull();
   const res = await app.request(
     `/api/notes/${note.id}/students`,
     json({ studentId: STUDENT.rowan, quotes: ["  alex was late.  ", "Alex was late."] }),
@@ -241,47 +291,43 @@ test("POST /api/notes/:noteId/students adds a confirmed tag with verified quotes
   );
   expect(res.status).toBe(201);
   const updated = (await res.json()) as NoteWithTags;
+  expect(updated.classId).toBe(CLASS_ID);
   expect(updated.students).toEqual([{ studentId: STUDENT.rowan, confirmed: 1, quotes: ["Alex was late."] }]);
 
   // Adding again merges quotes rather than failing on the primary key.
   const again = await app.request(`/api/notes/${note.id}/students`, json({ studentId: STUDENT.rowan, quotes: ["Avery nailed"] }), env);
   expect(again.status).toBe(201);
   expect(((await again.json()) as NoteWithTags).students[0]?.quotes).toEqual(["Alex was late.", "Avery nailed"]);
+
+  // A student from another class is allowed (the note spans classes); the class stays.
+  const other = await app.request(`/api/notes/${note.id}/students`, json({ studentId: STUDENT.nola }), env);
+  expect(other.status).toBe(201);
+  expect(((await other.json()) as NoteWithTags).classId).toBe(CLASS_ID);
 });
 
-test("POST /api/notes/:noteId/students rejects quotes not in the note, unknown and foreign students", async () => {
+test("POST /api/notes/:noteId/students rejects quotes not in the note and unknown students", async () => {
   const note = await createTagged(result([]));
   const bad = await app.request(`/api/notes/${note.id}/students`, json({ studentId: STUDENT.rowan, quotes: ["never said"] }), env);
   expect(bad.status).toBe(400);
   expect(((await bad.json()) as { error: string }).error).toMatch(/quote not found/);
-
   expect((await app.request(`/api/notes/${note.id}/students`, json({ studentId: UNKNOWN_ID }), env)).status).toBe(404);
-
-  const otherClass = "33333333-3333-4333-8333-333333333333";
-  const otherStudent = "44444444-4444-4444-8444-444444444444";
-  await env.DB.batch([
-    env.DB.prepare("INSERT INTO classes (id, name, created_at) VALUES (?, 'Other', '2026-09-01T08:00:00.000Z')").bind(otherClass),
-    env.DB.prepare(
-      "INSERT INTO students (id, class_id, first_name, last_name, created_at) VALUES (?, ?, 'Pat', 'Else', '2026-09-01T08:00:00.000Z')",
-    ).bind(otherStudent, otherClass),
-  ]);
-  const foreign = await app.request(`/api/notes/${note.id}/students`, json({ studentId: otherStudent }), env);
-  expect(foreign.status).toBe(400);
-  expect(await foreign.json()).toEqual({ error: "student is not in this class" });
-  await env.DB.prepare("DELETE FROM classes WHERE id = ?").bind(otherClass).run();
 });
 
-test("confirm flips the flag; delete removes the tag; both 404 when the tag is missing", async () => {
-  const note = await createTagged();
+test("confirm flips the flag and settles the class; delete removes the tag; both 404 when missing", async () => {
+  // Avery and Nola span two classes, so the note starts unassigned.
+  const note = await createTagged(result([{ studentId: STUDENT.avery, quotes: [] }, { studentId: STUDENT.nola, quotes: [] }]));
+  expect(note.classId).toBeNull();
   const path = `/api/notes/${note.id}/students/${STUDENT.avery}`;
 
   const confirmed = await app.request(`${path}/confirm`, { method: "POST" }, env);
   expect(confirmed.status).toBe(200);
-  expect(((await confirmed.json()) as NoteWithTags).students.find((s) => s.studentId === STUDENT.avery)?.confirmed).toBe(1);
+  const after = (await confirmed.json()) as NoteWithTags;
+  expect(after.classId).toBe(CLASS_ID);
+  expect(after.students.find((s) => s.studentId === STUDENT.avery)?.confirmed).toBe(1);
 
   expect((await app.request(path, { method: "DELETE" }, env)).status).toBe(204);
-  const [listed] = (await (await getNotes(CLASS_ID)).json()) as NoteWithTags[];
-  expect(listed!.students.map((s) => s.studentId)).toEqual([STUDENT.juniper]);
+  const [listed] = await listOf(CLASS_ID);
+  expect(listed!.students.map((s) => s.studentId)).toEqual([STUDENT.nola]);
 
   expect((await app.request(`${path}/confirm`, { method: "POST" }, env)).status).toBe(404);
   expect((await app.request(path, { method: "DELETE" }, env)).status).toBe(404);
@@ -289,23 +335,25 @@ test("confirm flips the flag; delete removes the tag; both 404 when the tag is m
   expect((await app.request(`/api/notes/${note.id}/students/nope/confirm`, { method: "POST" }, env)).status).toBe(400);
 });
 
-test("assigning a mention creates a confirmed tag with its quotes and closes the mention", async () => {
-  const note = await createTagged();
+test("assigning a mention creates a confirmed tag with its quotes, closes the mention, and settles the class", async () => {
+  const note = await createTagged(result([], [{ mentionText: "Alex", quotes: ["Alex was late."], candidateIds: [STUDENT.alexMarsh, STUDENT.alexRuiz] }]));
+  expect(note.classId).toBeNull();
   const mention = note.mentions[0]!;
   const res = await app.request(`/api/notes/${note.id}/mentions/${mention.id}/assign`, json({ studentId: STUDENT.alexRuiz }), env);
   expect(res.status).toBe(200);
   const updated = (await res.json()) as NoteWithTags;
+  expect(updated.classId).toBe(CLASS_B_ID);
   expect(updated.mentions).toEqual([]);
   expect(updated.students).toContainEqual({ studentId: STUDENT.alexRuiz, confirmed: 1, quotes: ["Alex was late."] });
 
   expect((await app.request(`/api/notes/${note.id}/mentions/${mention.id}/assign`, json({ studentId: STUDENT.alexRuiz }), env)).status).toBe(404);
 });
 
-test("assigning a mention to a student outside the class is rejected and keeps the mention", async () => {
+test("assigning a mention to an unknown student is rejected and keeps the mention", async () => {
   const note = await createTagged();
   const mention = note.mentions[0]!;
   expect((await app.request(`/api/notes/${note.id}/mentions/${mention.id}/assign`, json({ studentId: UNKNOWN_ID }), env)).status).toBe(404);
-  const [listed] = (await (await getNotes(CLASS_ID)).json()) as NoteWithTags[];
+  const [listed] = await listOf(CLASS_ID);
   expect(listed!.mentions).toHaveLength(1);
 });
 
@@ -314,18 +362,18 @@ test("dismissing a mention deletes it; a second dismiss is 404", async () => {
   const path = `/api/notes/${note.id}/mentions/${note.mentions[0]!.id}`;
   expect((await app.request(path, { method: "DELETE" }, env)).status).toBe(204);
   expect((await app.request(path, { method: "DELETE" }, env)).status).toBe(404);
-  const [listed] = (await (await getNotes(CLASS_ID)).json()) as NoteWithTags[];
+  const [listed] = await listOf(CLASS_ID);
   expect(listed!.mentions).toEqual([]);
   expect(listed!.students).toHaveLength(2);
 });
 
 // Voice notes (merged from main): transcription is faked; the route is otherwise the text path.
 
-test("POST /api/notes/voice transcribes the audio, stores a voice note, and tags it", async () => {
+test("POST /api/notes/voice transcribes the audio, stores a voice note, tags it, and infers the class", async () => {
   const bytes = new Uint8Array([1, 2, 3, 250, 251, 252]);
   const ai = fakeAi("  Avery finished the lab early.  ");
   tagNoteMock.mockResolvedValueOnce(result([{ studentId: STUDENT.avery, quotes: ["Avery finished the lab early."] }]));
-  const res = await postVoice(CLASS_ID, bytes, { ai, env: keyed });
+  const res = await postVoice(undefined, bytes, { ai, env: keyed });
   expect(res.status).toBe(201);
   const created = (await res.json()) as Created;
   expect(created).toMatchObject({ classId: CLASS_ID, kind: "voice", body: "Avery finished the lab early.", audioKey: null, tagging: "done" });
@@ -338,39 +386,39 @@ test("POST /api/notes/voice transcribes the audio, stores a voice note, and tags
   expect(model).toBe("@cf/openai/whisper-large-v3-turbo");
   expect(Uint8Array.fromBase64(input.audio)).toEqual(bytes);
 
-  const list = (await (await getNotes(CLASS_ID)).json()) as NoteWithTags[];
-  expect(list.map((n) => n.kind)).toEqual(["voice"]);
+  expect((await listOf()).map((n) => n.kind)).toEqual(["voice"]);
 });
 
-test("POST /api/notes/voice accepts Safari's audio/mp4", async () => {
-  const res = await postVoice(CLASS_ID, new Uint8Array([1]), { type: "audio/mp4" });
+test("POST /api/notes/voice accepts Safari's audio/mp4 and an explicit class", async () => {
+  const res = await postVoice(CLASS_B_ID, new Uint8Array([1]), { type: "audio/mp4" });
   expect(res.status).toBe(201);
+  expect(((await res.json()) as Created).classId).toBe(CLASS_B_ID);
 });
 
 test("POST /api/notes/voice rejects an empty transcript and writes nothing", async () => {
-  const res = await postVoice(CLASS_ID, new Uint8Array([1]), { ai: fakeAi("   ") });
+  const res = await postVoice(undefined, new Uint8Array([1]), { ai: fakeAi("   ") });
   expect(res.status).toBe(400);
   expect(await res.json()).toEqual({ error: "nothing was heard" });
-  expect(await (await getNotes(CLASS_ID)).json()).toEqual([]);
+  expect(await listOf()).toEqual([]);
 });
 
 test("POST /api/notes/voice rejects an over-long transcript and writes nothing", async () => {
-  const res = await postVoice(CLASS_ID, new Uint8Array([1]), { ai: fakeAi("x".repeat(50_001)) });
+  const res = await postVoice(undefined, new Uint8Array([1]), { ai: fakeAi("x".repeat(50_001)) });
   expect(res.status).toBe(400);
   expect(await res.json()).toEqual({ error: "transcript is too long" });
-  expect(await (await getNotes(CLASS_ID)).json()).toEqual([]);
+  expect(await listOf()).toEqual([]);
 });
 
 test("POST /api/notes/voice rejects an empty body without calling Whisper", async () => {
   const ai = fakeAi("x");
-  const res = await postVoice(CLASS_ID, new Uint8Array(0), { ai });
+  const res = await postVoice(undefined, new Uint8Array(0), { ai });
   expect(res.status).toBe(400);
   expect(await res.json()).toEqual({ error: "nothing was heard" });
   expect(ai.run).not.toHaveBeenCalled();
 });
 
 test("POST /api/notes/voice rejects a non-audio content type", async () => {
-  const res = await postVoice(CLASS_ID, "hello", { type: "text/plain" });
+  const res = await postVoice(undefined, "hello", { type: "text/plain" });
   expect(res.status).toBe(400);
   expect(await res.json()).toEqual({ error: "unsupported audio type" });
 });
@@ -378,13 +426,13 @@ test("POST /api/notes/voice rejects a non-audio content type", async () => {
 test("POST /api/notes/voice rejects an oversized recording", async () => {
   const ai = fakeAi("x");
   const tooBig = new Uint8Array(10 * 1024 * 1024 + 1);
-  const res = await postVoice(CLASS_ID, tooBig, { ai });
+  const res = await postVoice(undefined, tooBig, { ai });
   expect(res.status).toBe(413);
   expect(await res.json()).toEqual({ error: "recording is too large" });
   expect(ai.run).not.toHaveBeenCalled();
 
   // A lying content-length is caught before the body is read.
-  const declared = await postVoice(CLASS_ID, new Uint8Array([1]), { ai, headers: { "content-length": "99999999" } });
+  const declared = await postVoice(undefined, new Uint8Array([1]), { ai, headers: { "content-length": "99999999" } });
   expect(declared.status).toBe(413);
 });
 
@@ -396,8 +444,8 @@ test("POST /api/notes/voice returns 404 for an unknown class without calling Whi
 });
 
 test("POST /api/notes/voice returns 502 when Whisper fails and writes nothing", async () => {
-  const res = await quietErrors(() => postVoice(CLASS_ID, new Uint8Array([1]), { ai: fakeAi(new Error("model unavailable")) }));
+  const res = await quietErrors(() => postVoice(undefined, new Uint8Array([1]), { ai: fakeAi(new Error("model unavailable")) }));
   expect(res.status).toBe(502);
   expect(await res.json()).toEqual({ error: "transcription failed" });
-  expect(await (await getNotes(CLASS_ID)).json()).toEqual([]);
+  expect(await listOf()).toEqual([]);
 });

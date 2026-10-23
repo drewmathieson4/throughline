@@ -35,7 +35,9 @@ export const students = sqliteTable(
 );
 
 // A note is anything the teacher captured. kind tells us where it came from.
-// A note with no rows in note_students is class-level context (a project, a hard unit).
+// A note is written without a class; tagging sets class_id from the students it finds (or
+// from a class named in the text). Null means not yet assigned. A note with a class and no
+// rows in note_students is class-level context (a project, a hard unit).
 export const noteKinds = ["text", "voice", "student_form", "progress_report"] as const;
 export type NoteKind = (typeof noteKinds)[number];
 
@@ -43,7 +45,7 @@ export const notes = sqliteTable(
   "notes",
   {
     id: text("id").primaryKey(),
-    classId: text("class_id").notNull().references(() => classes.id, { onDelete: "cascade" }),
+    classId: text("class_id").references(() => classes.id, { onDelete: "cascade" }),
     kind: text("kind", { enum: noteKinds }).notNull(),
     body: text("body").notNull(),
     audioKey: text("audio_key"), // R2 object key, Phase 2

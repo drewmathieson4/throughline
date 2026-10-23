@@ -1,14 +1,108 @@
-[
-  { "id": "e-avery", "firstName": "Avery", "lastName": "Quill", "aliases": [] },
-  { "id": "e-rowan", "firstName": "Rowan", "lastName": "Pell", "aliases": ["Ro"] },
-  { "id": "e-ronan", "firstName": "Ronan", "lastName": "Pike", "aliases": [] },
-  { "id": "e-sable", "firstName": "Sable", "lastName": "Thorncroft", "aliases": [] },
-  { "id": "e-juniper", "firstName": "Juniper", "lastName": "Vale", "aliases": ["Juni"] },
-  { "id": "e-marlowe", "firstName": "Marlowe", "lastName": "Finchley", "aliases": ["Marlo"] },
-  { "id": "e-ember", "firstName": "Ember", "lastName": "Castellane", "aliases": ["Em"] },
-  { "id": "e-linden", "firstName": "Linden", "lastName": "Oakhurst-Reyes", "aliases": [] },
-  { "id": "e-wren", "firstName": "Wren", "lastName": "Ashby", "aliases": [] },
-  { "id": "e-alex-marsh", "firstName": "Alex", "lastName": "Marsh", "aliases": [] },
-  { "id": "e-alex-ruiz", "firstName": "Alex", "lastName": "Ruiz", "aliases": [] },
-  { "id": "e-theo", "firstName": "Theo", "lastName": "Brightwater", "aliases": ["Teddy"] }
-]
+{
+  "classes": [
+    {
+      "id": "e-class-p3",
+      "name": "Period 3 Humanities"
+    },
+    {
+      "id": "e-class-b",
+      "name": "B Block Humanities"
+    }
+  ],
+  "students": [
+    {
+      "id": "e-avery",
+      "classId": "e-class-p3",
+      "firstName": "Avery",
+      "lastName": "Quill",
+      "aliases": []
+    },
+    {
+      "id": "e-rowan",
+      "classId": "e-class-p3",
+      "firstName": "Rowan",
+      "lastName": "Pell",
+      "aliases": [
+        "Ro"
+      ]
+    },
+    {
+      "id": "e-ronan",
+      "classId": "e-class-p3",
+      "firstName": "Ronan",
+      "lastName": "Pike",
+      "aliases": []
+    },
+    {
+      "id": "e-sable",
+      "classId": "e-class-p3",
+      "firstName": "Sable",
+      "lastName": "Thorncroft",
+      "aliases": []
+    },
+    {
+      "id": "e-juniper",
+      "classId": "e-class-p3",
+      "firstName": "Juniper",
+      "lastName": "Vale",
+      "aliases": [
+        "Juni"
+      ]
+    },
+    {
+      "id": "e-marlowe",
+      "classId": "e-class-p3",
+      "firstName": "Marlowe",
+      "lastName": "Finchley",
+      "aliases": [
+        "Marlo"
+      ]
+    },
+    {
+      "id": "e-ember",
+      "classId": "e-class-p3",
+      "firstName": "Ember",
+      "lastName": "Castellane",
+      "aliases": [
+        "Em"
+      ]
+    },
+    {
+      "id": "e-linden",
+      "classId": "e-class-p3",
+      "firstName": "Linden",
+      "lastName": "Oakhurst-Reyes",
+      "aliases": []
+    },
+    {
+      "id": "e-wren",
+      "classId": "e-class-p3",
+      "firstName": "Wren",
+      "lastName": "Ashby",
+      "aliases": []
+    },
+    {
+      "id": "e-alex-marsh",
+      "classId": "e-class-p3",
+      "firstName": "Alex",
+      "lastName": "Marsh",
+      "aliases": []
+    },
+    {
+      "id": "e-alex-ruiz",
+      "classId": "e-class-b",
+      "firstName": "Alex",
+      "lastName": "Ruiz",
+      "aliases": []
+    },
+    {
+      "id": "e-theo",
+      "classId": "e-class-b",
+      "firstName": "Theo",
+      "lastName": "Brightwater",
+      "aliases": [
+        "Teddy"
+      ]
+    }
+  ]
+}

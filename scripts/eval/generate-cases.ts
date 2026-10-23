@@ -23,8 +23,9 @@ const perCategory = Number(args.per);
 const wanted = args.category ? [args.category] : Object.keys(CATEGORIES);
 for (const c of wanted) if (!CATEGORIES[c]) throw new Error(`unknown category ${c}; known: ${Object.keys(CATEGORIES).join(", ")}`);
 
-const roster = loadRoster();
+const { students: roster, classes } = loadRoster();
 const labels = rosterLabels(roster);
+const ClassName = z.enum(classes.map((c) => c.name) as [string, ...string[]]);
 const Label = z.enum([...labels.keys()] as [string, ...string[]]);
 const Output = z.object({
   cases: z.array(
@@ -42,12 +43,13 @@ const Output = z.object({
           candidates: z.array(Label).min(2),
         }),
       ),
+      class_mentioned: ClassName.nullable().describe("A class the note names in any way (as a whole, as a setting, or to locate a student), or null; never inferred from the students"),
       rationale: z.string().describe("One or two sentences on why this is the right answer and what makes the case hard"),
     }),
   ),
 });
 
-const rosterText = rosterLines(labels);
+const rosterText = rosterLines(labels, classes);
 
 const generatorSystem = `You write test cases for a note-tagging system used by one teacher. The system's own instructions are below, between the markers; your cases must be answered by exactly those rules, because the answer key you produce is what the system is scored against.
 
@@ -110,6 +112,7 @@ async function generate(category: string): Promise<Case[]> {
       expected: {
         students: c.expected_students.map((s) => ({ label: s.label, quotes: s.quotes })),
         mentions: c.expected_mentions.map((m) => ({ nameAsWritten: m.name_as_written, candidates: m.candidates })),
+        classMentioned: c.class_mentioned,
       },
       rationale: c.rationale,
     });

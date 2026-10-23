@@ -12,7 +12,7 @@
 import { parseArgs } from "node:util";
 import { writeFileSync } from "node:fs";
 import Anthropic from "@anthropic-ai/sdk";
-import { collapse, tagNote, rosterLabels, type Effort, type TagResult } from "../../worker/tagging.ts";
+import { classLabels, collapse, tagNote, rosterLabels, type Effort, type TagResult } from "../../worker/tagging.ts";
 import { loadCases, loadRoster, messageOf, pool, type Case } from "./shared.ts";
 
 const BAR = 0.9;
@@ -31,8 +31,9 @@ const { values: args } = parseArgs({
 const effort = args.effort as Effort;
 if (!["low", "medium", "high"].includes(effort)) throw new Error(`--effort must be low, medium, or high`);
 
-const roster = loadRoster();
+const { students: roster, classes } = loadRoster();
 const idByLabel = new Map([...rosterLabels(roster).entries()].map(([label, s]) => [label, s.id]));
+const classByLabel = classLabels(classes);
 const labelById = new Map([...idByLabel.entries()].map(([label, id]) => [id, label]));
 let cases = loadCases();
 if (args.category) cases = cases.filter((c) => c.category === args.category);
@@ -79,6 +80,7 @@ type Scored = {
   menFP: number;
   menFN: number;
   quoteScores: number[];
+  classOk: boolean; // mentioned class (or its absence) matched the key
   missingQuotes: number; // correct tags that came back with no quotes at all
   expectedIds: string[];
   gotIds: string[];
@@ -125,10 +127,13 @@ function score(c: Case, result: TagResult, ms: number): Scored {
   );
   const gotMen = new Set(result.mentions.map((m) => candidateKey(m.candidateIds)));
   const menTP = [...expMen].filter((n) => gotMen.has(n)).length;
+  const expectedClass = c.expected.classMentioned ? (classByLabel.get(c.expected.classMentioned)?.id ?? null) : null;
+  const classOk = result.mentionedClassId === expectedClass;
   return {
     id: c.id,
     category: c.category,
-    ok: tagFP === 0 && tagFN === 0 && menTP === expMen.size && gotMen.size === expMen.size,
+    ok: tagFP === 0 && tagFN === 0 && menTP === expMen.size && gotMen.size === expMen.size && classOk,
+    classOk,
     tagTP,
     tagFP,
     tagFN,
@@ -153,13 +158,13 @@ let outputTokens = 0;
 await pool(cases, CONCURRENCY, async (c) => {
   const t = Date.now();
   try {
-    const result = await tagNote({ body: c.note, roster, client, effort });
+    const result = await tagNote({ body: c.note, roster, classes, client, effort });
     inputTokens += result.usage.inputTokens;
     outputTokens += result.usage.outputTokens;
     scored.push(score(c, result, Date.now() - t));
   } catch (err) {
     scored.push({
-      ...score(c, { students: [], mentions: [], usage: { inputTokens: 0, outputTokens: 0 } }, Date.now() - t),
+      ...score(c, { students: [], mentions: [], mentionedClassId: null, usage: { inputTokens: 0, outputTokens: 0 } }, Date.now() - t),
       ok: false,
       error: messageOf(err),
     });
@@ -181,6 +186,7 @@ function summarize(rows: Scored[]) {
     tagR: ratio(sum((r) => r.tagTP), sum((r) => r.tagTP + r.tagFN)),
     menP: ratio(sum((r) => r.menTP), sum((r) => r.menTP + r.menFP)),
     menR: ratio(sum((r) => r.menTP), sum((r) => r.menTP + r.menFN)),
+    classAcc: rows.filter((r) => r.classOk).length / rows.length,
     quoteMean: quotes.length ? quotes.reduce((a, b) => a + b, 0) / quotes.length : 1,
     quoteGood: quotes.length ? quotes.filter((q) => q >= 0.5).length / quotes.length : 1,
     missingQuotes: sum((r) => r.missingQuotes),
@@ -200,6 +206,7 @@ const table = [...byCategory.entries()].map(([category, rows]) => {
     "tag R": pct(s.tagR),
     "mention P": pct(s.menP),
     "mention R": pct(s.menR),
+    class: pct(s.classAcc),
     "quote mean": s.quoteMean.toFixed(2),
     "quote>=.5": pct(s.quoteGood),
   };
@@ -209,10 +216,16 @@ console.table(table);
 const names = (ids: string[]) => (ids.length ? ids.map((id) => labelById.get(id) ?? id).join(", ") : "(none)");
 const failures = scored.filter((r) => !r.ok);
 for (const f of failures) {
+  const c = cases.find((k) => k.id === f.id)!;
   console.log(`\n✗ ${f.id}${f.error ? ` ERROR ${f.error}` : ""}`);
-  console.log(`  note:     ${f.result ? cases.find((c) => c.id === f.id)!.note.slice(0, 160).replace(/\n/g, " ") : ""}`);
+  console.log(`  note:     ${c.note.slice(0, 160).replace(/\n/g, " ")}`);
   console.log(`  expected: ${names(f.expectedIds)}${f.expectedMentions.length ? ` | mentions: ${f.expectedMentions.join(", ")}` : ""}`);
   console.log(`  got:      ${names(f.gotIds)}${f.gotMentions.length ? ` | mentions: ${f.gotMentions.join(", ")}` : ""}`);
+  if (!f.classOk) {
+    const expectedClass = c.expected.classMentioned ?? "(none)";
+    const gotClass = classes.find((k) => k.id === f.result?.mentionedClassId)?.name ?? "(none)";
+    console.log(`  class:    expected ${expectedClass}, got ${gotClass}`);
+  }
 }
 
 const overall = summarize(scored);
@@ -220,7 +233,7 @@ const cost = (inputTokens * PRICE.input + outputTokens * PRICE.output) / 1e6;
 const avgMs = scored.reduce((a, r) => a + r.ms, 0) / scored.length;
 console.log(
   `\n${overall.passed}/${overall.cases} cases fully correct · effort=${effort} · ` +
-    `tags P ${pct(overall.tagP)} R ${pct(overall.tagR)} · mentions P ${pct(overall.menP)} R ${pct(overall.menR)} · ` +
+    `tags P ${pct(overall.tagP)} R ${pct(overall.tagR)} · mentions P ${pct(overall.menP)} R ${pct(overall.menR)} · class ${pct(overall.classAcc)} · ` +
     `quote coverage mean ${overall.quoteMean.toFixed(2)} (${pct(overall.quoteGood)} ≥ 0.5), ${overall.missingQuotes} correct tags with no quotes · ` +
     `${overall.errors} errors · ~${Math.round(avgMs)} ms/note · $${cost.toFixed(4)}`,
 );

@@ -2,6 +2,9 @@
 // arrive as JSON; voice notes arrive as raw audio, are transcribed, and are stored as the
 // transcript (the audio is discarded). Both kinds are tagged the same way.
 //
+// A note needs no class. Tagging looks across every class; the note's class is set from the
+// students it finds (when they agree) or from a class named in the text. See DECISIONS.md.
+//
 // Tagging runs inside the create request (one Haiku call, roughly 1 to 3 s) so the response
 // already carries the suggestions. A failed call never loses the note: it is saved first and
 // comes back with `tagging: "failed"`; POST /:noteId/retag tries again.
@@ -9,13 +12,13 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { bodyLimit } from "hono/body-limit";
 import Anthropic from "@anthropic-ai/sdk";
-import { and, desc, eq, type SQL } from "drizzle-orm";
+import { and, desc, eq, isNull, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "../db/schema";
 import type { Note, NoteStudent } from "../db/schema";
 import type { NoteWithTags, TaggedNoteResponse, TaggingStatus } from "../api";
 import type { AppEnv, Db } from "../db/client";
-import { requireClass, requireClassmate, requireNote, selectRoster } from "../db/queries";
+import { requireClass, requireNote, requireStudent, selectClasses, selectRoster } from "../db/queries";
 import { validate } from "../validate";
 import { quoteLocator, tagNote, union, type TagResult } from "../tagging";
 import { transcribe } from "../transcribe";
@@ -29,14 +32,14 @@ const MAX_BODY_CHARS = 50_000;
 // Well above what 5 minutes of 32 kbps speech produces (~1.2 MB), under Workers AI's input cap.
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 
-const classQuery = z.object({ classId: z.uuid() });
+const classQuery = z.object({ classId: z.uuid().optional() });
 const noteParam = z.object({ noteId: z.uuid() });
 const noteStudentParam = z.object({ noteId: z.uuid(), studentId: z.uuid() });
 const mentionParam = z.object({ noteId: z.uuid(), mentionId: z.uuid() });
 const quotes = z.array(z.string().trim().min(1).max(2000)).max(50);
 
 const createNote = z.object({
-  classId: z.uuid(),
+  classId: z.uuid().optional(),
   body: z.string().trim().min(1, "body is required").max(MAX_BODY_CHARS, "body is too long"),
   // When the observation happened; defaults to now. Re-serialized so every stored
   // value has the same shape and ORDER BY noted_at sorts chronologically. Bounded so a
@@ -57,14 +60,24 @@ const mentionKey = (noteId: string, mentionId: string) =>
   and(eq(schema.noteMentions.id, mentionId), eq(schema.noteMentions.noteId, noteId));
 
 // Single write path for every note kind, so rows always get the same id/timestamp shape.
-function insertNote(db: Db, values: { classId: string; kind: schema.NoteKind; body: string; notedAt?: string }) {
+// A classId, when given, has already been checked with requireClass by the route.
+function insertNote(db: Db, values: { classId?: string; kind: schema.NoteKind; body: string; notedAt?: string }) {
   const now = new Date().toISOString();
   return db
     .insert(schema.notes)
-    .values({ id: crypto.randomUUID(), ...values, notedAt: values.notedAt ?? now, createdAt: now })
+    .values({ id: crypto.randomUUID(), ...values, classId: values.classId ?? null, notedAt: values.notedAt ?? now, createdAt: now })
     .returning()
     .get();
 }
+
+// A teacher's action on a student settles the note's class when it had none: the statement
+// copies that student's class onto the note, and only if the note still has no class, so it
+// is safe to batch with the tag write and safe against two actions racing.
+const settleClassFrom = (db: Db, noteId: string, studentId: string) =>
+  db
+    .update(schema.notes)
+    .set({ classId: sql`(select class_id from ${schema.students} where ${schema.students.id} = ${studentId})` })
+    .where(and(eq(schema.notes.id, noteId), isNull(schema.notes.classId)));
 
 // Quotes the teacher supplies must be in the note too, same rule as the AI's.
 function verifyQuotes(body: string, input: string[] | undefined): string[] {
@@ -81,7 +94,7 @@ function verifyQuotes(body: string, input: string[] | undefined): string[] {
 // `where` is the same condition on the notes table that selected them; filtering through a
 // join keeps each query to one bound parameter however many notes there are (D1 caps a
 // statement at 100), and the two reads go in one round trip.
-async function attachTags(db: Db, where: SQL, rows: Note[]): Promise<NoteWithTags[]> {
+async function attachTags(db: Db, where: SQL | undefined, rows: Note[]): Promise<NoteWithTags[]> {
   const [students, mentions] = await db.batch([
     db
       .select({ row: schema.noteStudents })
@@ -119,26 +132,38 @@ function tagStatement(db: Db, existing: NoteStudent | undefined, noteId: string,
 const existingTag = (db: Db, noteId: string, studentId: string) =>
   db.select().from(schema.noteStudents).where(tagKey(noteId, studentId)).get();
 
-// Ask the model which students the note is about. null when it could not be asked or did
-// not answer usably; the caller decides what that means for existing rows.
+// Ask the model which students the note is about, across every class. null when it could not
+// be asked or did not answer usably; the caller decides what that means for existing rows.
 async function suggestTags(db: Db, apiKey: string | undefined, note: Note): Promise<TagResult | null> {
   if (!apiKey) {
     console.warn("ANTHROPIC_API_KEY is not set; note saved without tags", note.id);
     return null;
   }
-  const roster = await selectRoster(db, note.classId);
+  const [roster, classes] = await db.batch([selectRoster(db), selectClasses(db)]);
   try {
-    return await tagNote({ body: note.body, roster, client: new Anthropic({ apiKey }) });
+    return await tagNote({ body: note.body, roster, classes, client: new Anthropic({ apiKey }) });
   } catch (err) {
     console.error("tagging failed for note", note.id, err);
     return null;
   }
 }
 
+// The class a fresh suggestion settles for an unassigned note: the one class every suggested
+// student is in, else a class the note named, else none. Students spanning two classes leave
+// the note unassigned for the teacher.
+function inferClass(result: TagResult): string | null {
+  const classes = union([], result.students.map((s) => s.classId));
+  if (classes.length === 1) return classes[0]!;
+  if (classes.length === 0) return result.mentionedClassId;
+  return null;
+}
+
 // Swap the note's unconfirmed suggestions and open mentions for the model's latest, in one
-// atomic batch. Confirmed rows survive and only gain quotes. On a fresh note there is nothing
-// to swap out, so create and retag are the same operation.
-async function storeTags(db: Db, note: Note, result: TagResult) {
+// atomic batch, and settle the note's class if it had none. Confirmed rows survive and only
+// gain quotes. On a fresh note there is nothing to swap out, so create and retag are the
+// same operation. Returns the note as it now stands.
+async function storeTags(db: Db, note: Note, result: TagResult): Promise<Note> {
+  const classId = note.classId ?? inferClass(result);
   const confirmed = await db
     .select()
     .from(schema.noteStudents)
@@ -148,6 +173,10 @@ async function storeTags(db: Db, note: Note, result: TagResult) {
   await db.batch([
     db.delete(schema.noteStudents).where(and(eq(schema.noteStudents.noteId, note.id), eq(schema.noteStudents.confirmed, 0))),
     db.delete(schema.noteMentions).where(eq(schema.noteMentions.noteId, note.id)),
+    // Only an unassigned note gets a class here; a set class is never touched.
+    ...(!note.classId && classId
+      ? [db.update(schema.notes).set({ classId }).where(and(eq(schema.notes.id, note.id), isNull(schema.notes.classId)))]
+      : []),
     ...result.students.map((s) => tagStatement(db, confirmedById.get(s.studentId), note.id, s.studentId, s.quotes, false)),
     ...result.mentions.map((m) =>
       db.insert(schema.noteMentions).values({
@@ -160,6 +189,7 @@ async function storeTags(db: Db, note: Note, result: TagResult) {
       }),
     ),
   ]);
+  return { ...note, classId };
 }
 
 // Suggest and store. "failed" means the note's tags are untouched: either the model could not
@@ -169,7 +199,7 @@ async function runTagging(db: Db, apiKey: string | undefined, note: Note): Promi
   let tagging: TaggingStatus = "failed";
   if (result) {
     try {
-      await storeTags(db, note, result);
+      note = await storeTags(db, note, result);
       tagging = "done";
     } catch (err) {
       console.error("storing tags failed for note", note.id, err);
@@ -180,24 +210,25 @@ async function runTagging(db: Db, apiKey: string | undefined, note: Note): Promi
 
 const notes = new Hono<AppEnv>();
 
-// GET /api/notes?classId=… → newest first, each with its students and open mentions
+// GET /api/notes[?classId=…] → newest first, each with its students and open mentions.
+// Without a filter every note comes back, unassigned ones included (single-teacher scale).
 notes.get("/", validate("query", classQuery), async (c) => {
   const { classId } = c.req.valid("query");
-  await requireClass(c.var.db, classId);
-  const inClass = eq(schema.notes.classId, classId);
+  if (classId) await requireClass(c.var.db, classId);
+  const where = classId ? eq(schema.notes.classId, classId) : undefined;
   const rows = await c.var.db
     .select()
     .from(schema.notes)
-    .where(inClass)
+    .where(where)
     .orderBy(desc(schema.notes.notedAt), desc(schema.notes.createdAt));
-  return c.json(await attachTags(c.var.db, inClass, rows));
+  return c.json(await attachTags(c.var.db, where, rows));
 });
 
-// POST /api/notes { classId, body, notedAt? } → 201 with the stored note, its tags, and
+// POST /api/notes { body, notedAt?, classId? } → 201 with the stored note, its tags, and
 // whether tagging ran: { ...note, students, mentions, tagging: "done" | "failed" }
 notes.post("/", validate("json", createNote), async (c) => {
   const { classId, body, notedAt } = c.req.valid("json");
-  await requireClass(c.var.db, classId);
+  if (classId) await requireClass(c.var.db, classId);
   const note = await insertNote(c.var.db, { classId, kind: "text", body, notedAt });
   return c.json(await runTagging(c.var.db, c.env.ANTHROPIC_API_KEY, note), 201);
 });
@@ -211,7 +242,7 @@ const audioLimit = bodyLimit({
   },
 });
 
-// POST /api/notes/voice?classId=… with a raw audio body → transcribes, stores a voice note,
+// POST /api/notes/voice[?classId=…] with a raw audio body → transcribes, stores a voice note,
 // and tags it, all in one request; 201 with the same shape as a text note. notedAt is the
 // save time: a clip is at most five minutes long, so the gap from when the teacher started
 // talking is not worth a browser-supplied timestamp.
@@ -223,7 +254,7 @@ notes.post("/voice", validate("query", classQuery), audioLimit, async (c) => {
   const mediaType = (c.req.header("content-type") ?? "").trim().toLowerCase();
   if (!mediaType.startsWith("audio/")) throw new HTTPException(400, { message: "unsupported audio type" });
 
-  await requireClass(c.var.db, classId);
+  if (classId) await requireClass(c.var.db, classId);
   const audio = await c.req.arrayBuffer();
   if (audio.byteLength === 0) throw new HTTPException(400, { message: "nothing was heard" });
 
@@ -255,19 +286,25 @@ notes.post("/:noteId/retag", validate("param", noteParam), async (c) => {
 notes.post("/:noteId/students", validate("param", noteParam), validate("json", addStudent), async (c) => {
   const note = await requireNote(c.var.db, c.req.valid("param").noteId);
   const { studentId, quotes } = c.req.valid("json");
-  await requireClassmate(c.var.db, note, studentId);
+  await requireStudent(c.var.db, studentId);
   const existing = await existingTag(c.var.db, note.id, studentId);
-  await tagStatement(c.var.db, existing, note.id, studentId, verifyQuotes(note.body, quotes), true);
-  return c.json(await withTags(c.var.db, note), 201);
+  await c.var.db.batch([
+    tagStatement(c.var.db, existing, note.id, studentId, verifyQuotes(note.body, quotes), true),
+    settleClassFrom(c.var.db, note.id, studentId),
+  ]);
+  return c.json(await withTags(c.var.db, await requireNote(c.var.db, note.id)), 201);
 });
 
 // POST /api/notes/:noteId/students/:studentId/confirm → the teacher approves a suggestion
 notes.post("/:noteId/students/:studentId/confirm", validate("param", noteStudentParam), async (c) => {
   const { noteId, studentId } = c.req.valid("param");
-  const note = await requireNote(c.var.db, noteId);
-  const updated = await c.var.db.update(schema.noteStudents).set({ confirmed: 1 }).where(tagKey(noteId, studentId)).returning().get();
-  if (!updated) throw new HTTPException(404, { message: "tag not found" });
-  return c.json(await withTags(c.var.db, note));
+  await requireNote(c.var.db, noteId);
+  const [updated] = await c.var.db.batch([
+    c.var.db.update(schema.noteStudents).set({ confirmed: 1 }).where(tagKey(noteId, studentId)).returning(),
+    settleClassFrom(c.var.db, noteId, studentId),
+  ]);
+  if (updated.length === 0) throw new HTTPException(404, { message: "tag not found" });
+  return c.json(await withTags(c.var.db, await requireNote(c.var.db, noteId)));
 });
 
 // DELETE /api/notes/:noteId/students/:studentId → remove a tag, suggested or confirmed
@@ -288,16 +325,17 @@ notes.post(
   async (c) => {
     const { noteId, mentionId } = c.req.valid("param");
     const { studentId } = c.req.valid("json");
-    const note = await requireNote(c.var.db, noteId);
+    await requireNote(c.var.db, noteId);
     const mention = await c.var.db.select().from(schema.noteMentions).where(mentionKey(noteId, mentionId)).get();
     if (!mention) throw new HTTPException(404, { message: "mention not found" });
-    await requireClassmate(c.var.db, note, studentId);
+    await requireStudent(c.var.db, studentId);
     const existing = await existingTag(c.var.db, noteId, studentId);
     await c.var.db.batch([
       tagStatement(c.var.db, existing, noteId, studentId, mention.quotes, true),
       c.var.db.delete(schema.noteMentions).where(mentionKey(noteId, mentionId)),
+      settleClassFrom(c.var.db, noteId, studentId),
     ]);
-    return c.json(await withTags(c.var.db, note));
+    return c.json(await withTags(c.var.db, await requireNote(c.var.db, noteId)));
   },
 );
 

@@ -1,11 +1,11 @@
-// Lookups more than one route needs. The require* guards throw the 404/400 that
-// app.onError turns into { error }, so routes read as one guard per rule.
+// Lookups more than one route needs. The require* guards throw the 404 that app.onError
+// turns into { error }, so routes read as one guard per rule.
 import { HTTPException } from "hono/http-exception";
-import { and, asc, eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import * as schema from "./schema";
 import type { Note } from "./schema";
 import type { Db } from "./client";
-import type { RosterStudent } from "../tagging";
+import type { RosterStudent, TagClass } from "../tagging";
 
 export async function requireClass(db: Db, classId: string) {
   const row = await db.select({ id: schema.classes.id }).from(schema.classes).where(eq(schema.classes.id, classId)).get();
@@ -18,27 +18,31 @@ export async function requireNote(db: Db, noteId: string): Promise<Note> {
   return row;
 }
 
-// A student the teacher names must exist and be in the note's class.
-export async function requireClassmate(db: Db, note: Note, studentId: string) {
-  const row = await db
-    .select({ classId: schema.students.classId })
-    .from(schema.students)
-    .where(and(eq(schema.students.id, studentId)))
-    .get();
+// A student the teacher names must exist. Any class is allowed: a note may span classes.
+export async function requireStudent(db: Db, studentId: string) {
+  const row = await db.select({ id: schema.students.id }).from(schema.students).where(eq(schema.students.id, studentId)).get();
   if (!row) throw new HTTPException(404, { message: "student not found" });
-  if (row.classId !== note.classId) throw new HTTPException(400, { message: "student is not in this class" });
 }
 
-// What the tagger (and the roster endpoint) sees about each student in a class.
-export function selectRoster(db: Db, classId: string): Promise<RosterStudent[]> {
+// What the tagger (and the roster endpoint) sees about each student: one class, or every
+// class when none is given. Returns the query, not a promise, so callers can db.batch() it.
+export function selectRoster(db: Db, classId?: string) {
   return db
     .select({
       id: schema.students.id,
+      classId: schema.students.classId,
       firstName: schema.students.firstName,
       lastName: schema.students.lastName,
       aliases: schema.students.aliases,
-    })
+    } satisfies Record<keyof RosterStudent, unknown>)
     .from(schema.students)
-    .where(eq(schema.students.classId, classId))
+    .where(classId ? eq(schema.students.classId, classId) : undefined)
     .orderBy(asc(schema.students.lastName), asc(schema.students.firstName));
+}
+
+export function selectClasses(db: Db) {
+  return db
+    .select({ id: schema.classes.id, name: schema.classes.name } satisfies Record<keyof TagClass, unknown>)
+    .from(schema.classes)
+    .orderBy(asc(schema.classes.name));
 }
