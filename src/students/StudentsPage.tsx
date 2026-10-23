@@ -4,7 +4,7 @@ import type { RosterStudent, StudentDetail as StudentDetailResponse } from "../.
 import { api, jsonInit, messageOf } from "../api";
 import NoteItem from "../NoteItem";
 import ImportRoster from "./ImportRoster";
-import { button, errorText, fieldLabel, input, subtleButton } from "../ui";
+import { button, dateFormat, errorText, fieldLabel, input, subtleButton } from "../ui";
 import { useAction } from "../useAction";
 
 // Local calendar date as YYYY-MM-DD, built from the parts rather than a locale format so the
@@ -14,6 +14,29 @@ function today() {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// How long since a student was last written about: green within a week, amber within a
+// month, red older or never. Scannable, so the quiet students stand out.
+function freshness(at: Date | null) {
+  if (!at) return { dot: "bg-red-500", label: "no notes yet" };
+  const days = (Date.now() - at.getTime()) / DAY_MS;
+  if (days <= 7) return { dot: "bg-green-500", label: "within the last week" };
+  if (days <= 30) return { dot: "bg-amber-400", label: "within the last month" };
+  return { dot: "bg-red-500", label: "over a month ago" };
+}
+
+function LastNote({ at }: { at: string | null }) {
+  const date = at ? new Date(at) : null;
+  const { dot, label } = freshness(date);
+  return (
+    <span className="flex items-center gap-1.5" title={`Last note: ${label}`}>
+      <span aria-hidden className={`inline-block h-2 w-2 rounded-full ${dot}`} />
+      {date ? dateFormat.format(date) : "never"}
+    </span>
+  );
 }
 
 function AddStudentForm({ classId, onAdded }: { classId: string; onAdded: () => void }) {
@@ -193,6 +216,7 @@ export default function StudentsPage({ classId, onClassesChanged }: { classId: s
           <tr>
             <th className="py-1 font-medium">Name</th>
             <th className="py-1 font-medium">Tagged notes</th>
+            <th className="py-1 font-medium">Last note</th>
             <th className="py-1 font-medium">Status</th>
           </tr>
         </thead>
@@ -208,12 +232,15 @@ export default function StudentsPage({ classId, onClassesChanged }: { classId: s
                 {s.noteCount}
                 {s.pendingCount > 0 && <span className="text-gray-500"> (+{s.pendingCount} pending)</span>}
               </td>
+              <td className="py-2">
+                <LastNote at={s.lastNotedAt} />
+              </td>
               <td className="py-2 text-gray-500">{s.leftAt ? `left ${s.leftAt}` : ""}</td>
             </tr>
           ))}
           {shown.length === 0 && (
             <tr>
-              <td colSpan={3} className="py-3 text-gray-500">
+              <td colSpan={4} className="py-3 text-gray-500">
                 {students.length === 0
                   ? "No students yet. Add one below."
                   : `All ${students.length} students have left. Tick the box above to show them.`}

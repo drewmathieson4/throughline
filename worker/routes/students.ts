@@ -133,21 +133,25 @@ const byName = new Intl.Collator("en");
 // GET /api/students?classId=… → the whole roster, departed students included (left_at set),
 // ordered by last name then first name. noteCount is teacher-confirmed tags only;
 // pendingCount is AI suggestions awaiting confirmation, kept separate so the number the
-// teacher reads for report-readiness is never inflated. The client decides whether to show
-// who has left.
+// teacher reads for report-readiness is never inflated. lastNotedAt counts suggested and
+// confirmed tags alike: either way a note named the student. The client decides whether to
+// show who has left.
 students.get("/", validate("query", classIdQuery), async (c) => {
   const { classId } = c.req.valid("query");
   await requireClass(c.var.db, classId);
   const s = schema.students;
   const ns = schema.noteStudents;
+  const n = schema.notes;
   const rows = await c.var.db
     .select({
       ...getTableColumns(s),
       noteCount: sql<number>`count(CASE WHEN ${ns.confirmed} = 1 THEN 1 END)`.mapWith(Number),
       pendingCount: sql<number>`count(CASE WHEN ${ns.confirmed} = 0 THEN 1 END)`.mapWith(Number),
+      lastNotedAt: sql<string | null>`max(${n.notedAt})`,
     })
     .from(s)
     .leftJoin(ns, eq(ns.studentId, s.id))
+    .leftJoin(n, eq(n.id, ns.noteId))
     .where(eq(s.classId, classId))
     .groupBy(s.id);
   rows.sort((a, b) => byName.compare(a.lastName, b.lastName) || byName.compare(a.firstName, b.firstName));

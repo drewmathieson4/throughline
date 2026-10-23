@@ -6,3 +6,4 @@ export const fieldLabel = "flex flex-col text-xs text-gray-600";
 export const errorText = "text-sm text-red-600";
 
 export const dateTimeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+export const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });

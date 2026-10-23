@@ -20,7 +20,7 @@ const patch = (id: string, body: unknown) => db.request(`/api/students/${id}`, j
 const patchJson = (id: string, body: unknown) => db.json<Student>(`/api/students/${id}`, jsonInit("PATCH", body));
 const get = (id: string) => db.request(`/api/students/${id}`);
 
-test("GET /api/students lists the roster by last name, counting confirmed and pending tags apart", async () => {
+test("GET /api/students lists the roster by last name, counting confirmed and pending tags apart, with the newest note's date", async () => {
   await db.env.DB.batch([
     db.insertNote(NOTE_ID(1), SEED_CLASS_ID, "2026-10-01T00:00:00.000Z"),
     db.insertNote(NOTE_ID(2), SEED_CLASS_ID, "2026-10-02T00:00:00.000Z"),
@@ -34,8 +34,9 @@ test("GET /api/students lists the roster by last name, counting confirmed and pe
   const rows = (await res.json()) as RosterStudent[];
   expect(rows).toHaveLength(PERIOD_3_COUNT);
   expect(rows.map((r) => r.lastName)).toEqual([...rows.map((r) => r.lastName)].sort());
-  expect(rows.find((r) => r.id === STUDENT.avery)).toMatchObject({ noteCount: 1, pendingCount: 2 });
-  expect(rows.filter((r) => r.noteCount === 0 && r.pendingCount === 0)).toHaveLength(PERIOD_3_COUNT - 1);
+  // The newest note is a suggestion: lastNotedAt counts those too.
+  expect(rows.find((r) => r.id === STUDENT.avery)).toMatchObject({ noteCount: 1, pendingCount: 2, lastNotedAt: "2026-10-03T00:00:00.000Z" });
+  expect(rows.filter((r) => r.noteCount === 0 && r.pendingCount === 0 && r.lastNotedAt === null)).toHaveLength(PERIOD_3_COUNT - 1);
 });
 
 test("GET /api/students sorts by last name ignoring case and accents", async () => {
