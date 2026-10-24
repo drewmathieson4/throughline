@@ -131,11 +131,11 @@ export default function Tags({ note, compact = false }: { note: NoteWithTags; co
         <div className="flex flex-wrap items-center gap-2">
           {untagged &&
             (compact ? (
-              <p className="text-[13.5px] text-muted-foreground">{note.classId ? "No one named, so it's kept as a class note." : "No students found in this note."}</p>
+              <p className="text-[13.5px] text-muted-foreground">{note.classId ? "Class note" : "No students found"}</p>
             ) : (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold text-secondary-foreground">
                 {note.classId && <Users className="size-3.5" aria-hidden />}
-                {note.classId ? "Class note · context for everyone" : "No students found"}
+                {note.classId ? "Class note" : "No students found"}
               </span>
             ))}
           <button

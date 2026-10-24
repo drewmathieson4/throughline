@@ -43,7 +43,6 @@ export default function ReportsView({ classes }: { classes: ClassRow[] }) {
       <section>
         <PageTitle>Reports</PageTitle>
         <p className="mt-2 text-[15px] text-muted-foreground">
-          Reports are made per class.{" "}
           <Link to="/classes" className="font-bold text-accent-foreground hover:underline">
             Create a class
           </Link>{" "}

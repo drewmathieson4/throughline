@@ -18,10 +18,10 @@ import { Label } from "@/components/ui/label";
 export type ImportResult = { kind: "roster"; result: RosterImportResult } | { kind: "grades"; result: GradeImportResult };
 type Choice = "student" | "roster" | "grades";
 
-const items: { key: Choice; label: string; hint: string; icon: LucideIcon; tile: string }[] = [
-  { key: "student", label: "Add a student", hint: "Type a first and last name", icon: UserPlus, tile: "bg-accent text-accent-foreground" },
-  { key: "roster", label: "Import roster", hint: "CSV or spreadsheet, any layout", icon: Table, tile: "bg-mint text-mint-foreground" },
-  { key: "grades", label: "Import grade book", hint: "Scores are matched to students", icon: ChartNoAxesColumn, tile: "bg-coral text-coral-foreground" },
+const items: { key: Choice; label: string; icon: LucideIcon; tile: string }[] = [
+  { key: "student", label: "Add a student", icon: UserPlus, tile: "bg-accent text-accent-foreground" },
+  { key: "roster", label: "Import roster", icon: Table, tile: "bg-mint text-mint-foreground" },
+  { key: "grades", label: "Import grade book", icon: ChartNoAxesColumn, tile: "bg-coral text-coral-foreground" },
 ];
 
 // The class page's one Add menu and the window each item opens. An import closes its window
@@ -44,16 +44,13 @@ export default function AddMenu({ classId, onClassesChanged, onResult }: { class
             <ChevronDown className="size-4" aria-hidden />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-72 p-1.5">
-          {items.map(({ key, label, hint, icon: Icon, tile }) => (
+        <DropdownMenuContent align="end" className="w-60 p-1.5">
+          {items.map(({ key, label, icon: Icon, tile }) => (
             <DropdownMenuItem key={key} onSelect={() => setOpen(key)} className="gap-3 p-2.5">
               <span className={`inline-flex size-9 flex-none items-center justify-center rounded-[11px] ${tile}`}>
                 <Icon className="size-4" aria-hidden />
               </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-bold text-foreground">{label}</span>
-                <span className="block text-[12.5px] text-muted-foreground">{hint}</span>
-              </span>
+              <span className="min-w-0 flex-1 text-sm font-bold text-foreground">{label}</span>
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>

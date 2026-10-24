@@ -108,8 +108,7 @@ export default function ClassesPage({ classes, onCreated }: { classes: ClassRow[
 
   return (
     <section>
-      <PageTitle eyebrow={none ? undefined : `${classes.length} ${classes.length === 1 ? "class" : "classes"}`}>Classes</PageTitle>
-      {none && <p className="mt-2 text-[15px] text-muted-foreground">Create your first class, then add its students and course materials.</p>}
+      <PageTitle>Classes</PageTitle>
       <div className="mt-5 grid gap-3.5 md:grid-cols-2">
         {classes.map((c) => (
           <ClassCard key={c.id} cls={c} />

@@ -129,7 +129,7 @@ export default function StudentPage({ cls, id }: { cls: ClassRow; id: string }) 
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : theirs.length === 0 ? (
         <p className="rounded-2xl bg-muted px-4 py-5 text-sm text-muted-foreground">
-          No notes tagged to {student.firstName} yet. Mention {student.firstName} in a note and it shows up here.
+          No notes about {student.firstName} yet.
         </p>
       ) : (
         <ol>

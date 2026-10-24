@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils";
 
 const STATUS: Record<SynthesisRosterRow["status"], { text: string; style: string }> = {
   current: { text: "Up to date", style: "bg-mint text-mint-foreground" },
-  stale: { text: "Out of date", style: "bg-sunny text-sunny-foreground" },
-  none: { text: "Not yet", style: "bg-secondary text-secondary-foreground" },
+  stale: { text: "New evidence", style: "bg-sunny text-sunny-foreground" },
+  none: { text: "No summary", style: "bg-secondary text-secondary-foreground" },
   empty: { text: "No evidence", style: "bg-muted text-muted-foreground" },
 };
 

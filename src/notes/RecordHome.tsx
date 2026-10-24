@@ -78,15 +78,11 @@ export default function RecordHome({ capture, notes, needsCount, onOpenNeeds }: 
             </div>
           )}
         </div>
-        {idle && (
-          <p className="text-center text-[15.5px] font-semibold text-white/90">
-            {recorder.supported ? "Tap and talk. Name students as you go." : "This browser can't record. Type a note below."}
-          </p>
-        )}
+        {idle && !recorder.supported && <p className="text-center text-[15.5px] font-semibold text-white/90">This browser can't record. Type a note below.</p>}
         {recording && (
           <div className="flex flex-col items-center gap-2.5">
             <SoundBars stream={recorder.stream} barClassName="bg-white/80" />
-            <p className="text-[13.5px] font-semibold text-white/90">Up to {mmss(MAX_RECORDING_MS)} · saves the moment you stop</p>
+            <p className="text-[13.5px] font-semibold text-white/90">Up to {mmss(MAX_RECORDING_MS)}</p>
             <button type="button" onClick={recorder.cancel} className="min-h-10 rounded-full border border-white/50 px-[18px] text-sm font-bold">
               Discard
             </button>

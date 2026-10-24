@@ -49,7 +49,7 @@ export default function GradesCard({ grades: g }: { grades: GradeSummary }) {
           </h2>
           <p className="mt-1.5 text-[44px] leading-none font-extrabold tracking-[-0.04em]">{g.count > 0 ? pct(g.overall) : "No scores yet"}</p>
           <p className="mt-1.5 text-[13px] text-muted-foreground">
-            {g.weighted ? "Weighted as the syllabus says · " : ""}
+            {g.weighted ? "Weighted · " : ""}
             {plural(g.count, "score")}
           </p>
         </div>

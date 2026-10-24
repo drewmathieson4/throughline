@@ -43,7 +43,7 @@ export default function ReportsControls({
 
   return (
     <>
-      <PageTitle eyebrow="The brief for each student's report, built from your notes and grades">Reports</PageTitle>
+      <PageTitle>Reports</PageTitle>
       <nav aria-label="Class" className={chipRow}>
         {classes.map((c) => (
           <Link
@@ -78,33 +78,19 @@ export default function ReportsControls({
         >
           Whole year
         </button>
-      </div>
-      {!validRange(range) && <p className={cn("mt-2", errorText)}>Pick a start date on or before the end date.</p>}
-
-      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-[22px] bg-accent px-[18px] py-4">
-        <div className="min-w-[200px] flex-1">
-          <p className="text-[15px] font-extrabold text-accent-foreground">
-            {busy ? `Generating ${busyRun.done} of ${busyRun.total}` : pending > 0 ? `${plural(pending, "student")} need${pending === 1 ? "s" : ""} a summary` : "Every summary is up to date"}
-          </p>
-          <p className="mt-0.5 text-[13px] text-secondary-foreground">
-            {busy
-              ? "Keep working; this carries on if you switch tabs."
-              : pending > 0
-                ? `New or out-of-date summaries for ${cls.name}, for the period above.`
-                : "They go out of date when you add notes or grades."}
-          </p>
-          {busy && (
-            <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-white/80" role="progressbar" aria-label="Summaries made" aria-valuemin={0} aria-valuemax={busyRun.total} aria-valuenow={busyRun.done}>
-              <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${Math.round((busyRun.done / busyRun.total) * 100)}%` }} />
-            </div>
-          )}
-          {!busy && run && run.failed > 0 && <p className={cn("mt-1.5", errorText)}>{plural(run.failed, "summary")} could not be made; try those again.</p>}
-        </div>
-        <Button type="button" disabled={!validRange(range) || !ready || busy || pending === 0} onClick={onGenerateClass}>
+        <span className="flex-1" />
+        <Button type="button" className="min-h-11" disabled={!validRange(range) || !ready || busy || pending === 0} onClick={onGenerateClass}>
           <Sparkles aria-hidden />
-          {busy ? "Generating…" : `Generate for class (${pending})`}
+          {busy ? `Generating ${busyRun.done} of ${busyRun.total}…` : `Generate for class (${pending})`}
         </Button>
       </div>
+      {!validRange(range) && <p className={cn("mt-2", errorText)}>Pick a start date on or before the end date.</p>}
+      {busy && (
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-accent" role="progressbar" aria-label="Summaries made" aria-valuemin={0} aria-valuemax={busyRun.total} aria-valuenow={busyRun.done}>
+          <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${Math.round((busyRun.done / busyRun.total) * 100)}%` }} />
+        </div>
+      )}
+      {!busy && run && run.failed > 0 && <p className={cn("mt-2", errorText)}>{plural(run.failed, "summary")} could not be made; try those again.</p>}
     </>
   );
 }

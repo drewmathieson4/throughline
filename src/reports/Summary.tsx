@@ -222,7 +222,6 @@ function GapItem({ gap, studentId, classId, onRecorded }: { gap: Gap; studentId:
 
 export default function Summary({
   synthesis,
-  firstName,
   classId,
   stale,
   newNotes,
@@ -231,7 +230,6 @@ export default function Summary({
   onRecorded,
 }: {
   synthesis: SynthesisView;
-  firstName: string;
   classId: string;
   stale: boolean;
   newNotes: number;
@@ -291,7 +289,6 @@ export default function Summary({
       {s.gaps.length > 0 && (
         <section className="mt-[26px] rounded-[20px] border-2 border-ring/50 bg-field p-[18px]">
           <h3 className="text-base font-extrabold">Where more context would help</h3>
-          <p className="mt-1 text-[13px] text-muted-foreground">Answer out loud. It's saved as a voice note about {firstName}; then regenerate.</p>
           <ul>
             {s.gaps.map((g, i) => (
               <GapItem key={i} gap={g} studentId={synthesis.studentId} classId={classId} onRecorded={onRecorded} />

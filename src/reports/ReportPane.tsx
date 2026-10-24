@@ -69,7 +69,6 @@ export default function ReportPane({
       {shown ? (
         <Summary
           synthesis={shown}
-          firstName={row.firstName}
           classId={classId}
           stale={row.status === "stale"}
           newNotes={row.newNotes}
@@ -87,22 +86,17 @@ export default function ReportPane({
           {running ? (
             <>
               <p className="mt-3 text-base font-extrabold">Generating…</p>
-              <p className="mt-1 text-[13.5px] text-muted-foreground">This takes about 30 seconds. You can keep working.</p>
             </>
           ) : needsRun(row) ? (
             <>
               <p className="mt-3 text-base font-extrabold">No summary yet</p>
-              <p className="mt-1 text-[13.5px] text-muted-foreground">Built from your notes and grades about {row.firstName} in this period.</p>
               <Button type="button" className="mt-4" disabled={disabled} onClick={() => onGenerate(range)}>
                 <Sparkles aria-hidden />
                 Generate
               </Button>
             </>
           ) : (
-            <>
-              <p className="mt-3 text-base font-extrabold">No evidence in this period</p>
-              <p className="mt-1 text-[13.5px] text-muted-foreground">Record a note about {row.firstName}, or pick a longer period.</p>
-            </>
+            <p className="mt-3 text-base font-extrabold">No evidence in this period</p>
           )}
         </div>
       )}

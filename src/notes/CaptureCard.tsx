@@ -36,7 +36,7 @@ export default function CaptureCard({ capture }: { capture: Capture }) {
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void saveDraft();
           }}
-          placeholder="What did you notice today? Name students and they're tagged for you."
+          placeholder="What did you notice today?"
           className="mt-2.5 field-sizing-fixed resize-y rounded-[14px] bg-field text-[15px] leading-normal md:text-[15px]"
         />
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -85,7 +85,7 @@ function RecordDialog({ capture }: { capture: Capture }) {
               Recording
             </DialogTitle>
             <p className={cn("mt-2.5 text-5xl font-extrabold tracking-[-0.03em] tabular-nums", nearLimit && "text-sunny-foreground")}>{mmss(elapsedMs)}</p>
-            <p className="mt-0.5 text-[13px] text-muted-foreground">of {mmss(MAX_RECORDING_MS)} · say students' names as you go</p>
+            <p className="mt-0.5 text-[13px] text-muted-foreground">of {mmss(MAX_RECORDING_MS)}</p>
             <SoundBars stream={recorder.stream} className="mt-4 h-14" barClassName="bg-coral-dot/60" />
             <button
               type="button"
@@ -95,8 +95,7 @@ function RecordDialog({ capture }: { capture: Capture }) {
             >
               <span className="size-7 rounded-lg bg-white" />
             </button>
-            <p className="mt-3.5 text-[13.5px] text-secondary-foreground">Tap to stop. It saves straight away.</p>
-            <Button type="button" variant="ghost" onClick={recorder.cancel} className="mt-2.5 text-muted-foreground">
+            <Button type="button" variant="ghost" onClick={recorder.cancel} className="mt-4 block mx-auto text-muted-foreground">
               Discard
             </Button>
           </>
@@ -104,7 +103,6 @@ function RecordDialog({ capture }: { capture: Capture }) {
           <div role="status" className="pt-6 pb-3">
             <span className="inline-block size-11 animate-spin rounded-full border-4 border-accent border-t-primary" aria-hidden />
             <DialogTitle className="mt-4 text-lg font-extrabold">Transcribing and tagging…</DialogTitle>
-            <p className="mt-1 text-[13.5px] text-muted-foreground">Usually a few seconds</p>
           </div>
         )}
       </DialogContent>

@@ -40,10 +40,7 @@ export default function Materials({ classId, materials, setMaterials, error: loa
         <span className="inline-flex size-11 flex-none items-center justify-center rounded-full bg-accent text-accent-foreground">
           <Upload className="size-5" aria-hidden />
         </span>
-        <span>
-          <span className="block text-[15px] font-bold">{uploading ? "Reading…" : "Upload a syllabus or course document"}</span>
-          <span className="mt-0.5 block text-[13px] font-normal text-muted-foreground">Reports use its goals and grading weights</span>
-        </span>
+        <span className="text-[15px] font-bold">{uploading ? "Reading…" : "Upload a syllabus or course document"}</span>
       </FilePicker>
       {error && <p className={errorText}>{error}</p>}
       {materials?.map((m) => (
@@ -64,7 +61,7 @@ export default function Materials({ classId, materials, setMaterials, error: loa
         </article>
       ))}
       {materials?.length === 0 && (
-        <p className="mt-1 text-center text-sm text-muted-foreground">No course materials yet. Upload the syllabus so reports can speak to the course's goals and grading.</p>
+        <p className="mt-1 text-center text-sm text-muted-foreground">No course materials yet.</p>
       )}
 
       <Panel open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)} title={`Delete ${deleting?.name ?? ""}?`}>

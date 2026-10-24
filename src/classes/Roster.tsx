@@ -30,11 +30,6 @@ export default function Roster({ classId }: { classId: string }) {
         {shown.length === 0 ? (
           <div className="px-5 py-8 text-center">
             <p className="text-[15px] font-bold">{students.length === 0 ? "No students yet" : "Everyone has left"}</p>
-            <p className="mt-1.5 text-[13.5px] text-muted-foreground">
-              {students.length === 0
-                ? "Import a roster from a spreadsheet, or add students one at a time from Add."
-                : `All ${plural(students.length, "student")} have left. Turn on "Show students who left" to see them.`}
-            </p>
           </div>
         ) : (
           <ul>

@@ -19,8 +19,6 @@ import StudentPicker from "./StudentPicker";
 import Tags from "./Tags";
 import { useCapture, type SavedNote } from "./useCapture";
 
-const todayLabel = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" });
-
 const chip = "inline-flex min-h-9 flex-none items-center gap-1.5 rounded-full border px-3.5 text-[13.5px] font-semibold";
 
 // Tagged, or a candidate for a name the tagger could not settle ("Alex" with two Alexes).
@@ -45,8 +43,6 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
   // The phone's Saved sheet, and the note to fade in on the feed.
   const [saved, setSaved] = useState<SavedNote | null>(null);
   const [freshId, setFreshId] = useState<string | null>(null);
-  // Fixed at mount: a heading that changed on a re-render past midnight would be no help.
-  const [today] = useState(() => todayLabel.format(new Date()));
 
   const capture = useCapture({
     onSaved: (s) => {
@@ -115,7 +111,7 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
           <BackLink to="/notes">Record</BackLink>
         </div>
       )}
-      <PageTitle eyebrow={today}>Notes</PageTitle>
+      <PageTitle>Notes</PageTitle>
       {isLaptop && <CaptureCard capture={capture} />}
       {error && <p className={`mt-4 ${errorText}`}>{error}</p>}
 
