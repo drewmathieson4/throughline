@@ -60,7 +60,7 @@ grades.post("/import", validate("json", importBody), async (c) => {
   const { classId, grid } = c.req.valid("json");
   const db = c.var.db;
   await requireClass(db, classId);
-  const [roster, materials] = await db.batch([selectRoster(db, classId), selectMaterialSummaries(db, classId)]);
+  const [roster, materials] = await db.batch([selectRoster(db, [classId]), selectMaterialSummaries(db, classId)]);
 
   const parsed = parseGradebook(grid);
   const empty: GradeImportResult = { shape: parsed.shape, students: 0, assignments: 0, entries: 0, missing: 0, skipped: [], guessedMax: [] };

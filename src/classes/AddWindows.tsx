@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { ChartNoAxesColumn, ChevronDown, Plus, Table, UserPlus, type LucideIcon } from "lucide-react";
+import { ChartNoAxesColumn, ChevronDown, FileText, Plus, Table, UserPlus, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import type { GradeImportResult, RosterImportResult } from "../../worker/api-types";
 import { api, jsonInit } from "../api";
@@ -9,19 +9,21 @@ import ImportRoster from "../students/ImportRoster";
 import { gradesHeadline, rosterHeadline } from "../students/importText";
 import { errorText } from "../ui";
 import { useAction } from "../useAction";
+import ImportDocument, { type DocumentImport } from "./ImportDocument";
 import { Panel } from "@/components/Panel";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export type ImportResult = { kind: "roster"; result: RosterImportResult } | { kind: "grades"; result: GradeImportResult };
-type Choice = "student" | "roster" | "grades";
+export type ImportResult = { kind: "roster"; result: RosterImportResult } | { kind: "grades"; result: GradeImportResult } | ({ kind: "document" } & DocumentImport);
+type Choice = "student" | "roster" | "grades" | "document";
 
 const items: { key: Choice; label: string; icon: LucideIcon; tile: string }[] = [
   { key: "student", label: "Add a student", icon: UserPlus, tile: "bg-accent text-accent-foreground" },
   { key: "roster", label: "Import roster", icon: Table, tile: "bg-mint text-mint-foreground" },
   { key: "grades", label: "Import grade book", icon: ChartNoAxesColumn, tile: "bg-coral text-coral-foreground" },
+  { key: "document", label: "Import contextual documents", icon: FileText, tile: "bg-sky text-sky-foreground" },
 ];
 
 // The class page's one Add menu and the window each item opens. An import closes its window
@@ -79,6 +81,15 @@ export default function AddMenu({ classId, onClassesChanged, onResult }: { class
             toast.success(gradesHeadline(result));
             setOpen(null);
             onResult({ kind: "grades", result });
+          }}
+        />
+      </Panel>
+      <Panel open={open === "document"} onOpenChange={close} title="Import contextual documents">
+        <ImportDocument
+          classId={classId}
+          onImported={(imported) => {
+            setOpen(null);
+            onResult({ kind: "document", ...imported });
           }}
         />
       </Panel>

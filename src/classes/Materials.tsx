@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Check, FileText, Upload } from "lucide-react";
+import { Check, FileText } from "lucide-react";
 import { toast } from "sonner";
 import type { MaterialRow } from "../../worker/api-types";
-import { DOCUMENT_TYPES, api, fileInit } from "../api";
-import FilePicker from "../FilePicker";
+import { api } from "../api";
 import { caption, dateFormat, errorText } from "../ui";
 import { useAction } from "../useAction";
 import type { useMaterials } from "./useMaterials";
@@ -12,36 +11,19 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 // Class-level things: the course materials (syllabus, unit plan, grading policy) that tell
-// the reports what the course is for and how grades are calculated. Upload is one pick and
-// the summary appears; delete asks once, since only a fresh upload brings it back.
-export default function Materials({ classId, materials, setMaterials, error: loadError }: { classId: string } & ReturnType<typeof useMaterials>) {
+// the reports what the course is for and how grades are calculated. They arrive through the
+// Add menu's contextual documents; delete asks once, since only a fresh import brings it back.
+export default function Materials({ materials, setMaterials, error: loadError }: ReturnType<typeof useMaterials>) {
   const [deleting, setDeleting] = useState<MaterialRow | null>(null);
-  const { run: upload, busy: uploading, error: uploadError } = useAction(async (file: File) => {
-    const query = new URLSearchParams({ classId, name: file.name });
-    const row = await api<MaterialRow>(`/api/materials?${query}`, fileInit(file));
-    setMaterials((prev) => [row, ...(prev ?? [])]);
-    toast.success(row.summary ? `Read ${row.name}` : `Stored ${row.name}; the summary did not run`);
-  });
   const { run: remove, busy: removing, error: removeError } = useAction(async (m: MaterialRow) => {
     await api(`/api/materials/${m.id}`, { method: "DELETE" });
     setMaterials((prev) => prev?.filter((x) => x.id !== m.id) ?? null);
     toast(`Deleted ${m.name}`);
   });
-  const error = loadError ?? uploadError ?? removeError;
+  const error = loadError ?? removeError;
 
   return (
     <div className="mt-4 flex flex-col gap-3.5">
-      <FilePicker
-        accept={DOCUMENT_TYPES}
-        disabled={uploading}
-        onFile={upload}
-        className="h-auto w-full justify-start gap-3.5 rounded-[22px] border-2 border-dashed border-dashed-line bg-transparent px-[18px] py-4 text-left whitespace-normal text-foreground hover:bg-accent/40"
-      >
-        <span className="inline-flex size-11 flex-none items-center justify-center rounded-full bg-accent text-accent-foreground">
-          <Upload className="size-5" aria-hidden />
-        </span>
-        <span className="text-[15px] font-bold">{uploading ? "Reading…" : "Upload a syllabus or course document"}</span>
-      </FilePicker>
       {error && <p className={errorText}>{error}</p>}
       {materials?.map((m) => (
         <article key={m.id} className="rounded-[22px] border border-border bg-card p-[18px]">
@@ -65,7 +47,7 @@ export default function Materials({ classId, materials, setMaterials, error: loa
       )}
 
       <Panel open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)} title={`Delete ${deleting?.name ?? ""}?`}>
-        <p className="mt-2 text-sm text-secondary-foreground">Reports stop using its goals and grading weights. Upload it again to bring it back.</p>
+        <p className="mt-2 text-sm text-secondary-foreground">Reports stop using its goals and grading weights.</p>
         <div className="mt-5 flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={() => setDeleting(null)}>
             Cancel

@@ -1,6 +1,4 @@
-import { Mic, Paperclip } from "lucide-react";
-import { DOCUMENT_TYPES } from "../api";
-import FilePicker from "../FilePicker";
+import { Mic } from "lucide-react";
 import { mmss } from "../ui";
 import { useElapsed } from "../useRecorder";
 import { Button } from "@/components/ui/button";
@@ -10,8 +8,8 @@ import { cn } from "@/lib/utils";
 import SoundBars from "./SoundBars";
 import { MAX_RECORDING_MS, type Capture } from "./useCapture";
 
-// The laptop's way in: type, upload a document, or record. A note needs no class: tagging
-// works out who it is about.
+// The laptop's way in: type or record. A note needs no class: tagging works out who it is
+// about. Documents come in through a class's Add menu.
 export default function CaptureCard({ capture }: { capture: Capture }) {
   const { pending, recorder, draft, setDraft, saveDraft } = capture;
   const busy = pending !== null || recorder.recording;
@@ -40,10 +38,6 @@ export default function CaptureCard({ capture }: { capture: Capture }) {
           className="mt-2.5 field-sizing-fixed resize-y rounded-[14px] bg-field text-[15px] leading-normal md:text-[15px]"
         />
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <FilePicker accept={DOCUMENT_TYPES} disabled={busy} onFile={capture.upload} className="px-4">
-            <Paperclip className="size-4" aria-hidden />
-            {pending === "document" ? "Reading and tagging…" : "Upload a document"}
-          </FilePicker>
           <span className="flex-1" />
           {recorder.supported && (
             <Button type="button" variant="soft" disabled={busy} onClick={capture.record}>

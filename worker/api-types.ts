@@ -23,10 +23,27 @@ export type NoteWithTags = Note & {
 export type TaggingStatus = "done" | "failed";
 // What POST /api/notes, POST /api/notes/voice, and POST /api/notes/:id/retag return.
 export type TaggedNoteResponse = NoteWithTags & { tagging: TaggingStatus };
-// What POST /api/notes/document returns: one note per student the document was about (a
-// note with an open mention for a name it could not settle). Empty when it named nobody.
-// replaced: ids of the notes an earlier upload of the same file made, now gone.
-export type DocumentImportResult = { name: string; notes: NoteWithTags[]; replaced: string[] };
+// What a contextual document is: about the course (stored as course material), about
+// students (one note per student), or both.
+export type DocumentKind = "course" | "students" | "both";
+// What POST /api/documents returns. materials: one row per picked class when the document
+// is about the course. notes: one per student it was about, plus a note with an open
+// mention for each name it could not settle. replaced: ids of the notes an earlier import
+// of the same file into these classes made, now gone (its materials go too). splitFailed:
+// a document of both kinds whose students could not be read out; the material was kept.
+export type DocumentImportResult = {
+  name: string;
+  kind: DocumentKind;
+  classIds: string[];
+  materials: MaterialRow[];
+  notes: NoteWithTags[];
+  replaced: string[];
+  splitFailed?: true;
+};
+// The steps of an import, in the order they start; summarise and split run side by side.
+export type DocumentStep = "read" | "sort" | "summarise" | "split" | "save";
+// One line of the import's stream: a step starting or ending, then the outcome.
+export type DocumentProgress = { step: DocumentStep; done?: true } | { status: 200 | 201; result: DocumentImportResult } | { status: number; error: string };
 
 // Roster import. The browser sends the pasted or uploaded spreadsheet as a grid of cells; the
 // Worker finds the students in it and adds them, splitting them across classes when the

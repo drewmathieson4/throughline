@@ -1,7 +1,7 @@
 // Lookups shared by several route files. The require* guards throw the 404 that
 // app.onError turns into { error }, so routes read as one guard per rule.
 import { HTTPException } from "hono/http-exception";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import * as schema from "./schema";
 import type { Note } from "./schema";
 import type { Db } from "./client";
@@ -26,9 +26,9 @@ export async function requireStudent(db: Db, studentId: string) {
   if (!row) throw notFound("student");
 }
 
-// What the tagger sees about each student: one class, or every class when none is given.
-// Returns the query, not a promise, so callers can db.batch() it.
-export function selectRoster(db: Db, classId?: string) {
+// What the tagger sees about each student: the given classes, or every class when none are
+// given. Returns the query, not a promise, so callers can db.batch() it.
+export function selectRoster(db: Db, classIds?: string[]) {
   return db
     .select({
       id: schema.students.id,
@@ -38,7 +38,7 @@ export function selectRoster(db: Db, classId?: string) {
       aliases: schema.students.aliases,
     } satisfies Record<keyof RosterEntry, unknown>)
     .from(schema.students)
-    .where(classId ? eq(schema.students.classId, classId) : undefined)
+    .where(classIds ? inArray(schema.students.classId, classIds) : undefined)
     .orderBy(asc(schema.students.lastName), asc(schema.students.firstName));
 }
 

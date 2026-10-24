@@ -8,6 +8,7 @@ import { RosterSummary } from "../students/ImportRoster";
 import StudentPage from "../students/StudentPage";
 import { caption } from "../ui";
 import AddMenu, { type ImportResult } from "./AddWindows";
+import { DocumentSummary } from "./ImportDocument";
 import Materials from "./Materials";
 import Roster from "./Roster";
 import { termLabel } from "./term";
@@ -40,6 +41,13 @@ function ClassPage({ cls, onClassesChanged }: { cls: ClassRow; onClassesChanged:
   const [tab, setTab] = useState("students");
   const [result, setResult] = useState<ImportResult | null>(null);
   const active = roster.filter((s) => s.classId === cls.id && !s.leftAt).length;
+  // A document lands on the tab it went to, and may have added or replaced materials.
+  const onResult = (r: ImportResult) => {
+    setResult(r);
+    setTab(r.kind === "document" && r.result.kind === "course" ? "materials" : "students");
+    if (r.kind === "document") materials.reload();
+  };
+  const card = result && <ResultCard result={result} classId={cls.id} onDismiss={() => setResult(null)} onResult={onResult} />;
 
   return (
     <section>
@@ -50,14 +58,7 @@ function ClassPage({ cls, onClassesChanged }: { cls: ClassRow; onClassesChanged:
           <h1 className={titleText}>{cls.name}</h1>
           <p className="mt-1 text-[13.5px] text-muted-foreground">{termLabel(cls)}</p>
         </div>
-        <AddMenu
-          classId={cls.id}
-          onClassesChanged={onClassesChanged}
-          onResult={(r) => {
-            setResult(r);
-            setTab("students");
-          }}
-        />
+        <AddMenu classId={cls.id} onClassesChanged={onClassesChanged} onResult={onResult} />
       </div>
       <Tabs value={tab} onValueChange={setTab} className="mt-[22px]">
         <TabsList className="h-auto bg-track p-1">
@@ -69,25 +70,31 @@ function ClassPage({ cls, onClassesChanged }: { cls: ClassRow; onClassesChanged:
           </TabsTrigger>
         </TabsList>
         <TabsContent value="students">
-          {result && <ResultCard result={result} classId={cls.id} onDismiss={() => setResult(null)} />}
+          {card}
           <Roster classId={cls.id} />
         </TabsContent>
         <TabsContent value="materials">
-          <Materials classId={cls.id} {...materials} />
+          {result?.kind === "document" && card}
+          <Materials {...materials} />
         </TabsContent>
       </Tabs>
     </section>
   );
 }
 
-// What the last import did, in full, until the teacher dismisses it or leaves the class.
-function ResultCard({ result, classId, onDismiss }: { result: ImportResult; classId: string; onDismiss: () => void }) {
+const CAPTIONS: Record<ImportResult["kind"], string> = { roster: "Roster import", grades: "Grade book import", document: "Document import" };
+
+// What the last import did, in full, until the teacher dismisses it or leaves the class. A
+// document's card shows on Materials too, and its switch hands the new result back up.
+function ResultCard({ result, classId, onDismiss, onResult }: { result: ImportResult; classId: string; onDismiss: () => void; onResult: (r: ImportResult) => void }) {
   return (
     <section role="status" className="mt-4 rounded-[22px] border border-border bg-card p-4 pr-3 text-sm shadow-card">
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <p className={`mb-1 ${caption}`}>{result.kind === "roster" ? "Roster import" : "Grade book import"}</p>
-          {result.kind === "roster" ? <RosterSummary result={result.result} classId={classId} /> : <GradesSummary result={result.result} />}
+          <p className={`mb-1 ${caption}`}>{CAPTIONS[result.kind]}</p>
+          {result.kind === "roster" && <RosterSummary result={result.result} classId={classId} />}
+          {result.kind === "grades" && <GradesSummary result={result.result} />}
+          {result.kind === "document" && <DocumentSummary imported={result} onImported={(imported) => onResult({ kind: "document", ...imported })} />}
         </div>
         <button type="button" onClick={onDismiss} aria-label="Dismiss" className="inline-flex size-9 flex-none items-center justify-center rounded-full text-muted-foreground hover:bg-muted">
           <X className="size-4" aria-hidden />

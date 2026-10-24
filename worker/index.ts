@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { withDb, type AppEnv } from "./db/client";
 import classes from "./routes/classes";
+import documents from "./routes/documents";
 import grades from "./routes/grades";
 import materials from "./routes/materials";
 import notes from "./routes/notes";
@@ -16,6 +17,7 @@ app.use("/api/*", withDb);
 
 app.get("/api/health", (c) => c.json({ ok: true, time: new Date().toISOString() }));
 app.route("/api/classes", classes);
+app.route("/api/documents", documents);
 app.route("/api/grades", grades);
 app.route("/api/materials", materials);
 app.route("/api/notes", notes);

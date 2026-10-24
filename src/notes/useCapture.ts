@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import type { DocumentImportResult, NoteWithTags, TaggedNoteResponse } from "../../worker/api-types";
+import type { NoteWithTags, TaggedNoteResponse } from "../../worker/api-types";
 import { api, fileInit, jsonInit, messageOf } from "../api";
-import { mmss, plural } from "../ui";
+import { mmss } from "../ui";
 import { useRecorder } from "../useRecorder";
 import { useNotes, type Person } from "./notesStore";
 
@@ -26,13 +26,13 @@ function savedMessage({ note, failed }: SavedNote, people: Map<string, Person>) 
   return note.classId ? `${saved} as a class note` : `${saved} · no students named`;
 }
 
-// Text, voice and document saves for the Notes screen. They never overlap, so `pending` says
-// which one is running. A voice note is saved the moment the recording stops: there is no
+// Text and voice saves for the Notes screen. They never overlap, so `pending` says which one
+// is running. A voice note is saved the moment the recording stops: there is no
 // review step. onSaved returns true when the caller shows the result itself (the phone's
 // Saved sheet); otherwise a toast says what happened.
 export function useCapture({ onSaved }: { onSaved: (saved: SavedNote) => boolean }) {
   const { add, people } = useNotes();
-  const [pending, setPending] = useState<"text" | "voice" | "document" | null>(null);
+  const [pending, setPending] = useState<"text" | "voice" | null>(null);
 
   // Runs one save. False means it failed and a toast said why.
   async function run(kind: NonNullable<typeof pending>, fn: () => Promise<void>) {
@@ -81,23 +81,7 @@ export function useCapture({ onSaved }: { onSaved: (saved: SavedNote) => boolean
     if (await save("text", "/api/notes", jsonInit("POST", { body: draft }))) setDraft("");
   }
 
-  // An uploaded document (an old progress report) becomes one note per student it is about.
-  const upload = (file: File) =>
-    run("document", async () => {
-      const query = new URLSearchParams({ name: file.name });
-      // The file's own date is the fallback for notes from a document that states none.
-      if (file.lastModified > 0 && file.lastModified <= Date.now()) query.set("modified", new Date(file.lastModified).toISOString());
-      const result = await api<DocumentImportResult>(`/api/notes/document?${query}`, fileInit(file));
-      add(result.notes, result.replaced);
-      const unsure = result.notes.filter((n) => n.mentions.length > 0).length;
-      const made =
-        result.notes.length === 0
-          ? `No students from your roster were named in ${result.name}.`
-          : `Made ${plural(result.notes.length, "note")} from ${result.name}${unsure > 0 ? `, ${plural(unsure, "name")} unsure` : ""}.`;
-      toast.success(result.replaced.length > 0 ? `${made} Replaced ${plural(result.replaced.length, "note")} made from it earlier.` : made);
-    });
-
-  return { pending, recorder, record, draft, setDraft, saveDraft, upload };
+  return { pending, recorder, record, draft, setDraft, saveDraft };
 }
 
 export type Capture = ReturnType<typeof useCapture>;
