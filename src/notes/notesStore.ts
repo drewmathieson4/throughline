@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
 import type { NoteWithTags, RosterStudent } from "../../worker/api-types";
+import type { Outcome, QueuedNote } from "../offline/queue";
 import type { Colour } from "@/lib/avatar";
 
 // Who a student id is, for chips, toasts and the picker. Students who left keep their name on
@@ -31,7 +32,11 @@ export type NotesStore = {
   colourOf: (classId: string | null | undefined) => Colour;
   /** Notes with a name the tagger could not settle: the "Needs you" count. */
   needsCount: number;
-  /** New notes join the top; `replaced` are ids a re-uploaded document made earlier. */
+  /** Captured notes still on the device, waiting for a connection. */
+  waiting: number;
+  /** Hand a captured note to the offline queue; resolves when it is sent, refused, or left waiting. */
+  queueNote: (note: QueuedNote) => Promise<Outcome>;
+  /** New notes join the list in notedAt order; `replaced` are ids a re-uploaded document made earlier. */
   add: (made: NoteWithTags[], replaced?: string[]) => void;
   /** Swap in a note as the server now has it (after tagging, untagging, settling). */
   update: (note: NoteWithTags) => void;

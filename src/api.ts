@@ -1,10 +1,20 @@
 import type { UploadExtension } from "../worker/api-types";
 
+// The server answered and said no. A fetch that never reached it rejects with a TypeError
+// instead, which is how the offline queue tells "try later" from "this note was refused".
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
 // Every /api error response is { error: string }; surface that message when present.
 export async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((data as { error?: string }).error ?? `${url} → ${res.status}`);
+  if (!res.ok) throw new ApiError((data as { error?: string }).error ?? `${url} → ${res.status}`, res.status);
   return data as T;
 }
 

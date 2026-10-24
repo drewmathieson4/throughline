@@ -13,3 +13,11 @@ createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </StrictMode>,
 )
+
+// The service worker (public/sw.js) lets the app open with no signal. Production only: in dev
+// Vite serves unbundled, unhashed modules that a cache would serve stale.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((e) => console.error('service worker not registered', e))
+  })
+}

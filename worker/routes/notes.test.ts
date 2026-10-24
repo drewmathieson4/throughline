@@ -22,11 +22,12 @@ const postNote = (body: unknown, env?: Env) => app.request("/api/notes", jsonIni
 function postVoice(
   classId: string | undefined,
   audio: BodyInit,
-  opts: { ai?: ReturnType<typeof fakeAi>; type?: string; headers?: Record<string, string>; env?: Env } = {},
+  opts: { ai?: ReturnType<typeof fakeAi>; type?: string; headers?: Record<string, string>; env?: Env; query?: Record<string, string> } = {},
 ) {
   const ai = opts.ai ?? fakeAi("Transcribed.");
+  const query = new URLSearchParams({ ...(classId && { classId }), ...opts.query });
   return app.request(
-    classId ? `/api/notes/voice?classId=${classId}` : "/api/notes/voice",
+    query.size > 0 ? `/api/notes/voice?${query}` : "/api/notes/voice",
     { method: "POST", headers: { "content-type": opts.type ?? "audio/webm;codecs=opus", ...opts.headers }, body: audio },
     { ...(opts.env ?? db.env), AI: ai as unknown as Ai },
   );
@@ -150,6 +151,40 @@ test("POST /api/notes rejects a notedAt more than a day in the future", async ()
   const res = await postNote({ body: "x", notedAt: "9999-12-31T00:00:00Z" });
   expect(res.status).toBe(400);
   expect(await res.json()).toEqual({ error: "notedAt is in the future" });
+});
+
+// The id the browser mints for a captured note, so a resend finds it.
+const CLIENT_ID = "55555555-5555-4555-8555-555555555501";
+
+test("POST /api/notes with a seen clientId returns the stored note with a 200 and tags nothing", async () => {
+  const created = await createTagged(undefined, "2026-10-01T09:00:00Z");
+  expect(created.clientId).toBeNull();
+  tagNoteMock.mockReset();
+  tagNoteMock.mockResolvedValue(result([{ studentId: STUDENT.avery, quotes: ["Avery nailed the quiz."] }]));
+
+  const first = await postNote({ body: BODY, notedAt: "2026-10-02T09:00:00Z", clientId: CLIENT_ID }, keyed());
+  expect(first.status).toBe(201);
+  const stored = (await first.json()) as Created;
+  expect(stored).toMatchObject({ clientId: CLIENT_ID, notedAt: "2026-10-02T09:00:00.000Z" });
+
+  // A resend after a lost response, even with a different body, changes nothing.
+  const again = await postNote({ body: "Something else", clientId: CLIENT_ID }, keyed());
+  expect(again.status).toBe(200);
+  expect(await again.json()).toEqual({ ...stored, tagging: "done" });
+  expect(tagNoteMock).toHaveBeenCalledTimes(1);
+  expect((await listOf()).map((n) => n.id)).toEqual([stored.id, created.id]);
+});
+
+test("two sends of one clientId at once make one note", async () => {
+  const sends = await Promise.all([postNote({ body: "x", clientId: CLIENT_ID }), postNote({ body: "x", clientId: CLIENT_ID })]);
+  expect(sends.map((r) => r.status).sort()).toEqual([200, 201]);
+  const [a, b] = (await Promise.all(sends.map((r) => r.json()))) as Created[];
+  expect(a!.id).toBe(b!.id);
+  expect(await listOf()).toHaveLength(1);
+});
+
+test("POST /api/notes rejects a clientId that is not a UUID", async () => {
+  expect((await postNote({ body: "x", clientId: "abc" })).status).toBe(400);
 });
 
 test("POST /api/notes rejects malformed JSON", async () => {
@@ -351,6 +386,32 @@ test("POST /api/notes/voice accepts Safari's audio/mp4 and an explicit class", a
   const res = await postVoice(CLASS_B_ID, new Uint8Array([1]), { type: "audio/mp4" });
   expect(res.status).toBe(201);
   expect(((await res.json()) as Created).classId).toBe(CLASS_B_ID);
+});
+
+test("POST /api/notes/voice dates the note from notedAt, and a seen clientId skips Whisper and tagging", async () => {
+  const ai = fakeAi("Avery finished the lab early.");
+  tagNoteMock.mockReset();
+  tagNoteMock.mockResolvedValue(result([{ studentId: STUDENT.avery, quotes: ["Avery finished the lab early."] }]));
+  const query = { notedAt: "2026-10-02T09:00:00+01:00", clientId: CLIENT_ID };
+  const first = await postVoice(undefined, new Uint8Array([1]), { ai, env: keyed(), query });
+  expect(first.status).toBe(201);
+  const stored = (await first.json()) as Created;
+  expect(stored).toMatchObject({ kind: "voice", notedAt: "2026-10-02T08:00:00.000Z", clientId: CLIENT_ID });
+
+  const again = await postVoice(undefined, new Uint8Array([1]), { ai, env: keyed(), query });
+  expect(again.status).toBe(200);
+  expect(await again.json()).toEqual({ ...stored, tagging: "done" });
+  expect(ai.run).toHaveBeenCalledTimes(1);
+  expect(tagNoteMock).toHaveBeenCalledTimes(1);
+  expect(await listOf()).toHaveLength(1);
+});
+
+test("POST /api/notes/voice rejects a notedAt in the future without calling Whisper", async () => {
+  const ai = fakeAi("x");
+  const res = await postVoice(undefined, new Uint8Array([1]), { ai, query: { notedAt: "9999-12-31T00:00:00Z" } });
+  expect(res.status).toBe(400);
+  expect(await res.json()).toEqual({ error: "notedAt is in the future" });
+  expect(ai.run).not.toHaveBeenCalled();
 });
 
 test("POST /api/notes/voice rejects an empty transcript and writes nothing", async () => {

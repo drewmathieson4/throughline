@@ -57,6 +57,13 @@
       "when": 1792788036119,
       "tag": "0007_loud_vertigo",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1792881991089,
+      "tag": "0008_dark_xorn",
+      "breakpoints": true
     }
   ]
 }

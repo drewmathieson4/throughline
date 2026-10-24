@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useMatch, useNavigate } from "react-router";
-import { AlertCircle, ChevronDown, Mic } from "lucide-react";
+import { AlertCircle, ChevronDown, CloudUpload, Mic } from "lucide-react";
 // Type-only imports: nothing from the Worker ends up in the browser bundle.
 import type { ClassRow } from "../../worker/db/schema";
 import type { NoteWithTags } from "../../worker/api-types";
 import NoteItem from "../NoteItem";
-import { chipOff, chipOn, chipRow, errorText } from "../ui";
+import { chipOff, chipOn, chipRow, errorText, waitingToUpload } from "../ui";
 import { BackLink, PageTitle } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { useIsLaptop } from "@/lib/useIsLaptop";
@@ -35,7 +35,7 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
   const onFeed = useMatch("/notes/feed") !== null;
   const home = !isLaptop && !onFeed;
   const navigate = useNavigate();
-  const { notes, error, people, roster, classNames, needsCount, colourOf } = useNotes();
+  const { notes, error, people, roster, classNames, needsCount, waiting, colourOf } = useNotes();
   const [needsOnly, setNeedsOnly] = useState(false);
   const [classFilter, setClassFilter] = useState("");
   const [studentFilter, setStudentFilter] = useState("");
@@ -60,6 +60,7 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
           capture={capture}
           notes={notes ?? []}
           needsCount={needsCount}
+          waiting={waiting}
           onOpenNeeds={() => {
             setNeedsOnly(true);
             navigate("/notes/feed");
@@ -113,6 +114,12 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
       )}
       <PageTitle>Notes</PageTitle>
       {isLaptop && <CaptureCard capture={capture} />}
+      {waiting > 0 && (
+        <p role="status" className="mt-4 inline-flex min-h-[30px] items-center gap-1.5 rounded-full bg-accent px-3 text-[13px] font-bold text-accent-foreground">
+          <CloudUpload className="size-4" aria-hidden />
+          {waitingToUpload(waiting)}
+        </p>
+      )}
       {error && <p className={`mt-4 ${errorText}`}>{error}</p>}
 
       <div className={chipRow}>

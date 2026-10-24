@@ -20,6 +20,8 @@ export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" :
 export const pct = (n: number) => `${Math.round(n)}%`;
 // "1 needs you", "3 need you": notes with a name to settle.
 export const needsYou = (n: number) => `${n} ${n === 1 ? "needs" : "need"} you`;
+// Captured notes still on the device, in the offline queue.
+export const waitingToUpload = (n: number) => `${plural(n, "note")} waiting to upload`;
 
 // A recording's length as m:ss.
 export const mmss = (ms: number) => {

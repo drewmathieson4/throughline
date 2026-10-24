@@ -8,6 +8,10 @@
 // Tagging runs inside the create request (one Haiku call, roughly 1 to 3 s) so the response
 // already carries the suggestions. A failed call never loses the note: it is saved first and
 // comes back with `tagging: "failed"`; POST /:noteId/retag tries again.
+//
+// Text and voice notes may carry a clientId the browser minted when the note was captured.
+// A second send with the same id (the offline queue flushing again, or a retry after a lost
+// response) gets the stored note back with a 200 and makes no Whisper or Haiku call.
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import Anthropic from "@anthropic-ai/sdk";
@@ -34,12 +38,14 @@ const noteStudentParam = z.object({ noteId: z.uuid(), studentId: z.uuid() });
 const mentionParam = z.object({ noteId: z.uuid(), mentionId: z.uuid() });
 const quotes = z.array(z.string().trim().min(1).max(2000)).max(50);
 
+// When the observation happened (defaults to now), and the browser's id for a captured note.
+const captured = { notedAt: pastDatetime("notedAt").optional(), clientId: z.uuid().optional() };
 const createNote = z.object({
   classId: z.uuid().optional(),
   body: z.string().trim().min(1, "body is required").max(MAX_BODY_CHARS, "body is too long"),
-  // When the observation happened; defaults to now.
-  notedAt: pastDatetime("notedAt").optional(),
+  ...captured,
 });
+const voiceQuery = classQuery.extend(captured);
 const addStudent = z.object({ studentId: z.uuid(), quotes: quotes.optional() });
 const assignMention = z.object({ studentId: z.uuid() });
 
@@ -49,7 +55,6 @@ const tagKey = (noteId: string, studentId: string) =>
 const mentionKey = (noteId: string, mentionId: string) =>
   and(eq(schema.noteMentions.id, mentionId), eq(schema.noteMentions.noteId, noteId));
 
-const insertNote = (db: Db, values: NoteValues) => db.insert(schema.notes).values(noteRow(values)).returning().get();
 
 // A teacher's action on a student settles the note's class when it had none: the statement
 // copies that student's class onto the note, and only if the note still has no class, so it
@@ -97,6 +102,14 @@ async function attachTags(db: Db, where: SQL | undefined, rows: Note[]): Promise
 }
 
 const withTags = async (db: Db, note: Note) => (await attachTags(db, eq(schema.notes.id, note.id), [note]))[0]!;
+
+// The note an earlier send with this clientId stored, as it stands now. Its tagging ran (or
+// failed) on that first send; "done" here only says this request did not fail.
+async function sentBefore(db: Db, clientId: string | undefined): Promise<TaggedNoteResponse | undefined> {
+  if (!clientId) return undefined;
+  const note = await db.select().from(schema.notes).where(eq(schema.notes.clientId, clientId)).get();
+  return note && { ...(await withTags(db, note)), tagging: "done" };
+}
 
 // The statement that puts a student on a note: a new row, or new quotes folded into the one
 // that exists.
@@ -170,6 +183,15 @@ async function runTagging(db: Db, apiKey: string | undefined, note: Note): Promi
   return { ...(await withTags(db, note)), tagging };
 }
 
+// Store and tag a captured note: 201. Two sends of one clientId that both got past
+// sentBefore meet at the unique index; the later one writes nothing and returns the first
+// one's note: 200.
+async function saveCaptured(db: Db, apiKey: string | undefined, values: NoteValues): Promise<[TaggedNoteResponse, 200 | 201]> {
+  const note = await db.insert(schema.notes).values(noteRow(values)).onConflictDoNothing({ target: schema.notes.clientId }).returning().get();
+  if (note) return [await runTagging(db, apiKey, note), 201];
+  return [(await sentBefore(db, values.clientId))!, 200];
+}
+
 const notes = new Hono<AppEnv>();
 
 // GET /api/notes[?classId=…] → newest first, each with its students and open mentions.
@@ -186,29 +208,35 @@ notes.get("/", validate("query", classQuery), async (c) => {
   return c.json(await attachTags(c.var.db, where, rows));
 });
 
-// POST /api/notes { body, notedAt?, classId? } → 201 with the stored note, its tags, and
-// whether tagging ran: { ...note, students, mentions, tagging: "done" | "failed" }
+// POST /api/notes { body, notedAt?, classId?, clientId? } → 201 with the stored note, its
+// tags, and whether tagging ran: { ...note, students, mentions, tagging: "done" | "failed" };
+// 200 with the same shape when the clientId was sent before.
 notes.post("/", validate("json", createNote), async (c) => {
-  const { classId, body, notedAt } = c.req.valid("json");
+  const { classId, body, notedAt, clientId } = c.req.valid("json");
+  const repeat = await sentBefore(c.var.db, clientId);
+  if (repeat) return c.json(repeat, 200);
   if (classId) await requireClass(c.var.db, classId);
-  const note = await insertNote(c.var.db, { classId, kind: "text", body, notedAt });
-  return c.json(await runTagging(c.var.db, c.env.ANTHROPIC_API_KEY, note), 201);
+  const [note, status] = await saveCaptured(c.var.db, c.env.ANTHROPIC_API_KEY, { classId, kind: "text", body, notedAt, clientId });
+  return c.json(note, status);
 });
 
 const audioLimit = limitBody(MAX_AUDIO_BYTES, "recording is too large");
 
-// POST /api/notes/voice[?classId=…] with a raw audio body → transcribes, stores a voice note,
-// and tags it, all in one request; 201 with the same shape as a text note. notedAt is the
-// save time: a clip is at most five minutes long, so the gap from when the teacher started
-// talking is not worth a browser-supplied timestamp.
-notes.post("/voice", validate("query", classQuery), audioLimit, async (c) => {
-  const { classId } = c.req.valid("query");
+// POST /api/notes/voice[?classId=&notedAt=&clientId=] with a raw audio body → transcribes,
+// stores a voice note, and tags it, all in one request; 201 with the same shape as a text
+// note, 200 when the clientId was sent before. notedAt is when the recording started, sent
+// by the browser: a recording made offline can upload hours later, so the upload time would
+// be wrong. Without it the note is dated now.
+notes.post("/voice", validate("query", voiceQuery), audioLimit, async (c) => {
+  const { classId, notedAt, clientId } = c.req.valid("query");
 
   // The audio is never stored or served back, so any audio/* type is fine to hand to
   // Whisper; the check only turns a wrong upload into a clear error.
   const mediaType = (c.req.header("content-type") ?? "").trim().toLowerCase();
   if (!mediaType.startsWith("audio/")) throw new HTTPException(400, { message: "unsupported audio type" });
 
+  const repeat = await sentBefore(c.var.db, clientId);
+  if (repeat) return c.json(repeat, 200);
   if (classId) await requireClass(c.var.db, classId);
   const audio = await c.req.arrayBuffer();
   if (audio.byteLength === 0) throw new HTTPException(400, { message: "nothing was heard" });
@@ -224,8 +252,8 @@ notes.post("/voice", validate("query", classQuery), audioLimit, async (c) => {
   // Only reachable by uploading a long audio file; the browser stops at five minutes.
   if (text.length > MAX_BODY_CHARS) throw new HTTPException(400, { message: "transcript is too long" });
 
-  const note = await insertNote(c.var.db, { classId, kind: "voice", body: text });
-  return c.json(await runTagging(c.var.db, c.env.ANTHROPIC_API_KEY, note), 201);
+  const [note, status] = await saveCaptured(c.var.db, c.env.ANTHROPIC_API_KEY, { classId, kind: "voice", body: text, notedAt, clientId });
+  return c.json(note, status);
 });
 
 // POST /api/notes/:noteId/retag → tag a note that has no tags and no open mentions, the state

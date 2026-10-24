@@ -24,8 +24,8 @@ export type Recorder = {
   cancel: () => void;
 };
 
-/** hitLimit is true when the time limit ended the recording rather than the teacher. */
-export type Recording = { audio: Blob; hitLimit: boolean };
+/** hitLimit is true when the time limit ended the recording rather than the teacher. startedAt (Date.now()) dates the note. */
+export type Recording = { audio: Blob; hitLimit: boolean; startedAt: number };
 
 export function useRecorder({ maxMs, onStop }: { maxMs: number; onStop: (rec: Recording) => void }): Recorder {
   // Set for the length of a recording; recording, stream and startedAt all derive from it.
@@ -87,7 +87,7 @@ export function useRecorder({ maxMs, onStop }: { maxMs: number; onStop: (rec: Re
       const discarded = discardRef.current;
       discardRef.current = false;
       if (discarded || elapsed < MIN_MS) return;
-      onStopRef.current({ audio: new Blob(chunks, { type: rec.mimeType }), hitLimit: elapsed >= maxMs });
+      onStopRef.current({ audio: new Blob(chunks, { type: rec.mimeType }), hitLimit: elapsed >= maxMs, startedAt });
     };
 
     recorderRef.current = rec;

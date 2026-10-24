@@ -57,8 +57,12 @@ export const notes = sqliteTable(
     sourceName: text("source_name"),
     notedAt: text("noted_at").notNull(), // when the observation happened
     createdAt: text("created_at").notNull(), // when the row was written
+    // Minted by the browser when a text or voice note is captured, so a resend of the same
+    // note (the offline queue, or a retry after a lost response) finds it instead of making
+    // a second one. Null for notes from other sources; SQLite lets nulls repeat in a unique index.
+    clientId: text("client_id"),
   },
-  (t) => [index("notes_class_idx").on(t.classId), index("notes_noted_at_idx").on(t.notedAt)],
+  (t) => [index("notes_class_idx").on(t.classId), index("notes_noted_at_idx").on(t.notedAt), uniqueIndex("notes_client_id_idx").on(t.clientId)],
 );
 
 // One note can be about several students. A row is a live tag the moment it is written,

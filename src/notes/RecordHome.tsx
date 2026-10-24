@@ -1,7 +1,7 @@
 import { Link } from "react-router";
-import { AlertCircle, ArrowUp, ChevronRight, MessageSquareText, Mic } from "lucide-react";
+import { AlertCircle, ArrowUp, ChevronRight, CloudUpload, MessageSquareText, Mic } from "lucide-react";
 import type { NoteWithTags } from "../../worker/api-types";
-import { mmss, needsYou } from "../ui";
+import { mmss, needsYou, waitingToUpload } from "../ui";
 import { useElapsed } from "../useRecorder";
 import { LogoWave } from "@/components/page";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ import { MAX_RECORDING_MS, type Capture } from "./useCapture";
 // The phone's Notes home: one giant button, Shazam-style. The screen is cobalt, red while
 // recording; the result slides up as the Saved sheet (NotesView). The colour runs up under the
 // status bar, and the padding clears it at the top and the fixed tab bar at the bottom.
-export default function RecordHome({ capture, notes, needsCount, onOpenNeeds }: { capture: Capture; notes: NoteWithTags[]; needsCount: number; onOpenNeeds: () => void }) {
+export default function RecordHome({ capture, notes, needsCount, waiting, onOpenNeeds }: { capture: Capture; notes: NoteWithTags[]; needsCount: number; waiting: number; onOpenNeeds: () => void }) {
   const { recorder, pending, draft, setDraft } = capture;
   const elapsedMs = useElapsed(recorder.startedAt);
   const recording = recorder.recording;
@@ -92,6 +92,12 @@ export default function RecordHome({ capture, notes, needsCount, onOpenNeeds }: 
 
       {idle && (
         <div className="flex flex-col gap-2.5">
+          {waiting > 0 && (
+            <p role="status" className="inline-flex min-h-[30px] items-center gap-1.5 self-center rounded-full bg-white/20 px-3 text-[13px] font-bold">
+              <CloudUpload className="size-4" aria-hidden />
+              {waitingToUpload(waiting)}
+            </p>
+          )}
           <form
             onSubmit={(e) => {
               e.preventDefault();

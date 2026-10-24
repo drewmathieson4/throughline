@@ -10,7 +10,7 @@ import type { OpenMention } from "./tagging";
 export const MAX_BODY_CHARS = 50_000;
 
 // A classId, when given, has already been checked with requireClass by the route.
-export type NoteValues = { classId?: string | null; kind: schema.NoteKind; body: string; notedAt?: string; sourceName?: string };
+export type NoteValues = { classId?: string | null; kind: schema.NoteKind; body: string; notedAt?: string; sourceName?: string; clientId?: string };
 export function noteRow(values: NoteValues, now = new Date().toISOString()): Note {
   return {
     id: crypto.randomUUID(),
@@ -21,6 +21,7 @@ export function noteRow(values: NoteValues, now = new Date().toISOString()): Not
     sourceName: values.sourceName ?? null,
     notedAt: values.notedAt ?? now,
     createdAt: now,
+    clientId: values.clientId ?? null,
   };
 }
 

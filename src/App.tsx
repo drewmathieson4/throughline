@@ -4,6 +4,7 @@ import { Link, NavLink, Navigate, Route, Routes, useMatch } from "react-router";
 // Type-only imports: nothing from the Worker ends up in the browser bundle.
 import type { ClassRow } from "../worker/db/schema";
 import { api, messageOf } from "./api";
+import { useOnline } from "./offline/useOnline";
 import ClassesPage from "./classes/ClassesPage";
 import ClassView, { StudentView } from "./classes/ClassView";
 import { NotesProvider } from "./notes/NotesProvider";
@@ -113,10 +114,21 @@ function App() {
   const [classes, setClasses] = useState<ClassRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const loadClasses = () => api<ClassRow[]>("/api/classes").then(setClasses).catch((e) => setError(messageOf(e)));
+  const online = useOnline();
+
+  const loadClasses = () =>
+    api<ClassRow[]>("/api/classes")
+      .then((c) => {
+        setClasses(c);
+        setError(null);
+      })
+      .catch((e) => setError(messageOf(e)));
+  // Loads again when the connection comes back. Until the classes arrive offline (or fail to
+  // load), the pages open with none, so Notes can still capture into the offline queue.
   useEffect(() => {
-    loadClasses();
-  }, []);
+    if (online) loadClasses();
+  }, [online]);
+  const shown = classes ?? (online && !error ? null : NO_CLASSES);
 
   // Reports is wider, for the roster and the open report side by side.
   const onReports = useMatch("/reports/*") !== null;
@@ -140,16 +152,16 @@ function App() {
               )}
             >
               {error && <p className={`mb-4 ${errorText}`}>{error}</p>}
-              {classes === null ? (
-                !error && <p className="text-sm text-muted-foreground">Loading…</p>
+              {shown === null ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
               ) : (
                 <Routes>
                   <Route path="/" element={<Navigate to="/notes" replace />} />
-                  <Route path="/notes/*" element={<NotesView classes={classes} />} />
-                  <Route path="/classes" element={<ClassesPage classes={classes} onCreated={(c) => setClasses((prev) => [...(prev ?? []), c])} />} />
-                  <Route path="/classes/:classId" element={<ClassView classes={classes} onClassesChanged={loadClasses} />} />
-                  <Route path="/classes/:classId/students/:studentId" element={<StudentView classes={classes} />} />
-                  <Route path="/reports/:classId?/:studentId?" element={<ReportsView classes={classes} />} />
+                  <Route path="/notes/*" element={<NotesView classes={shown} />} />
+                  <Route path="/classes" element={<ClassesPage classes={shown} onCreated={(c) => setClasses((prev) => [...(prev ?? []), c])} />} />
+                  <Route path="/classes/:classId" element={<ClassView classes={shown} onClassesChanged={loadClasses} />} />
+                  <Route path="/classes/:classId/students/:studentId" element={<StudentView classes={shown} />} />
+                  <Route path="/reports/:classId?/:studentId?" element={<ReportsView classes={shown} />} />
                   <Route path="*" element={<Navigate to="/notes" replace />} />
                 </Routes>
               )}
