@@ -1,48 +1,41 @@
-import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { AlertCircle, ArrowUp, ChevronRight, MessageSquareText, Mic } from "lucide-react";
 import type { NoteWithTags } from "../../worker/api-types";
-import { mmss } from "../ui";
+import { mmss, needsYou } from "../ui";
+import { useElapsed } from "../useRecorder";
+import { LogoWave } from "@/components/page";
 import { cn } from "@/lib/utils";
 import SoundBars from "./SoundBars";
 import { MAX_RECORDING_MS, type Capture } from "./useCapture";
 
 // The phone's Notes home: one giant button, Shazam-style. The screen is cobalt, red while
 // recording; the result slides up as the Saved sheet (NotesView). The bottom padding clears
-// the fixed tab bar (58px plus the larger of 20px and the home-indicator inset).
+// the fixed tab bar.
 export default function RecordHome({ capture, notes, needsCount, onOpenNeeds }: { capture: Capture; notes: NoteWithTags[]; needsCount: number; onOpenNeeds: () => void }) {
-  const { recorder, pending } = capture;
-  const [draft, setDraft] = useState("");
+  const { recorder, pending, draft, setDraft } = capture;
+  const elapsedMs = useElapsed(recorder.startedAt);
   const recording = recorder.recording;
   const saving = pending === "voice";
   const idle = !recording && !saving;
   const latest = notes[0];
 
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    if (pending || !draft.trim()) return;
-    if (await capture.saveText(draft)) setDraft("");
-  }
-
   return (
     <section
       aria-label="Record a note"
       className={cn(
-        "flex min-h-svh flex-col px-[18px] pt-[18px] pb-[calc(74px+max(20px,env(safe-area-inset-bottom)))] text-white transition-colors duration-300",
+        "flex min-h-svh flex-col px-[18px] pt-[18px] pb-[calc(var(--tabbar-h)+16px)] text-white transition-colors duration-300",
         recording ? "bg-recording" : "bg-primary",
       )}
     >
       <div className="flex items-center gap-2.5">
         <span className="inline-flex size-8 items-center justify-center rounded-[10px] bg-white/20">
-          <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M3 15c3 0 3-6 6-6s3 6 6 6 3-6 6-6" />
-          </svg>
+          <LogoWave className="size-4" strokeWidth={2.4} />
         </span>
         <span className="flex-1 text-[17px] font-extrabold tracking-[-0.02em]">Throughline</span>
         {needsCount > 0 && (
           <button type="button" onClick={onOpenNeeds} className="inline-flex min-h-[34px] items-center gap-1.5 rounded-full bg-sunny-dot px-3 text-[13px] font-extrabold text-sunny-ink">
             <AlertCircle className="size-4" aria-hidden />
-            {needsCount} {needsCount === 1 ? "needs" : "need"} you
+            {needsYou(needsCount)}
           </button>
         )}
       </div>
@@ -69,7 +62,7 @@ export default function RecordHome({ capture, notes, needsCount, onOpenNeeds }: 
               aria-label="Stop and save"
               className="relative flex size-[254px] flex-col items-center justify-center gap-3.5 rounded-full bg-white text-recording shadow-lift"
             >
-              <span className="text-[54px] leading-none font-extrabold tracking-[-0.03em] tabular-nums">{mmss(recorder.elapsedMs)}</span>
+              <span className="text-[54px] leading-none font-extrabold tracking-[-0.03em] tabular-nums">{mmss(elapsedMs)}</span>
               <span className="size-[30px] rounded-lg bg-recording" />
               <span className="text-base font-extrabold">Tap to stop</span>
             </button>
@@ -103,7 +96,12 @@ export default function RecordHome({ capture, notes, needsCount, onOpenNeeds }: 
 
       {idle && (
         <div className="flex flex-col gap-2.5">
-          <form onSubmit={submit} className="flex min-h-[50px] items-center rounded-full bg-white/20 pr-[5px] pl-[18px] focus-within:ring-3 focus-within:ring-white/60">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void capture.saveDraft();
+            }}
+            className="flex min-h-[50px] items-center rounded-full bg-white/20 pr-[5px] pl-[18px] focus-within:ring-3 focus-within:ring-white/60">
             <input
               aria-label="Type a note instead"
               placeholder="Or type a note…"

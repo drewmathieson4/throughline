@@ -5,12 +5,15 @@ import { useSyncExternalStore } from "react";
 // things, not just look different (the phone's Record screen, a sheet versus a dialog).
 const LAPTOP = "(min-width: 768px)";
 
+// One query for every caller, made on first use rather than at import.
+let query: MediaQueryList | undefined;
+const laptop = () => (query ??= window.matchMedia(LAPTOP));
+
 const subscribe = (onChange: () => void) => {
-  const query = window.matchMedia(LAPTOP);
-  query.addEventListener("change", onChange);
-  return () => query.removeEventListener("change", onChange);
+  laptop().addEventListener("change", onChange);
+  return () => laptop().removeEventListener("change", onChange);
 };
 
 export function useIsLaptop() {
-  return useSyncExternalStore(subscribe, () => window.matchMedia(LAPTOP).matches);
+  return useSyncExternalStore(subscribe, () => laptop().matches);
 }

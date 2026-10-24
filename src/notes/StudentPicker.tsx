@@ -2,11 +2,9 @@ import { useState } from "react";
 import { Check, Search, Users } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { Panel } from "@/components/Panel";
-import { useNotes } from "./notesStore";
+import { useNotes, type Pickable } from "./notesStore";
 import { useIsLaptop } from "@/lib/useIsLaptop";
 import { cn } from "@/lib/utils";
-
-export type Pickable = { id: string; name: string; classId: string; className: string };
 
 type Props = {
   open: boolean;
@@ -63,7 +61,7 @@ export default function StudentPicker({ open, onOpenChange, title, students, sel
         )}
         {shown.map((s) => (
           <button key={s.id} type="button" onClick={() => pick(s.id)} aria-pressed={s.id === selected} className={cn(row, s.id === selected && "bg-accent")}>
-            <Avatar colour={colourOf(s.classId)} name={s.name} className="size-9 text-xs" />
+            <Avatar colour={colourOf(s.classId)} name={s.name} size={36} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[15px] font-bold">{s.name}</span>
               <span className="block truncate text-[12.5px] text-muted-foreground">{s.className}</span>

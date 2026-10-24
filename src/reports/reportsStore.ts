@@ -2,14 +2,10 @@ import { createContext, useContext } from "react";
 // Type-only imports: nothing from the Worker ends up in the browser bundle.
 import type { ClassRow } from "../../worker/db/schema";
 import type { SynthesisResult, SynthesisRosterRow } from "../../worker/api-types";
-import { dateFormat } from "../ui";
 
 export type Range = { from: string; to: string };
 export const sameRange = (a: Range, b: Range) => a.from === b.from && a.to === b.to;
 export const validRange = (r: Range) => /^\d{4}-\d{2}-\d{2}$/.test(r.from) && /^\d{4}-\d{2}-\d{2}$/.test(r.to) && r.from <= r.to;
-
-// A calendar day (YYYY-MM-DD) read as local midnight, so it shows as that day.
-export const day = (iso: string) => dateFormat.format(new Date(`${iso.slice(0, 10)}T00:00:00`));
 
 export const needsRun = (r: SynthesisRosterRow) => r.status === "none" || r.status === "stale";
 

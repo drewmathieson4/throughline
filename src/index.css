@@ -46,6 +46,9 @@
   --color-sunny-ink: var(--sunny-ink);
   --color-field: var(--field);
   --color-recording: var(--recording);
+  --color-track: var(--track);
+  --color-chevron: var(--chevron);
+  --color-dashed-line: var(--dashed-line);
   --color-tint-highlight: var(--tint-highlight);
   --color-tint-strength: var(--tint-strength);
   --color-tint-grow: var(--tint-grow);
@@ -96,7 +99,8 @@
    for text on that fill, and a stronger dot. Sky marks a note from a document; the paler
    sunny pair is the "Who is…?" banner, so it reads as a question rather than a warning.
    The four pale tints are the report's sections: highlights, strengths, areas to grow,
-   change over the period. */
+   change over the period. Track is a tab bar's groove, chevron a row's "open" arrow, and
+   dashed-line the outline of an add-something tile. */
 :root {
   --background: #ffffff;
   --foreground: #14161c;
@@ -132,11 +136,17 @@
   --sunny-ink: #5c3d00;
   --field: #f8f9fb;
   --recording: #d92d20;
+  --track: #eef0f4;
+  --chevron: #9aa1ae;
+  --dashed-line: #c9d0dc;
   --tint-highlight: #f3f6ff;
   --tint-strength: #f0fbf6;
   --tint-grow: #fff8ec;
   --tint-change: #f1f7ff;
   --radius: 0.75rem;
+  /* The phone's fixed tab bar: 58px of tabs over the larger of 20px and the home-indicator
+     inset. Whatever sits above it clears this. */
+  --tabbar-h: calc(58px + max(20px, env(safe-area-inset-bottom)));
 }
 
 @layer base {

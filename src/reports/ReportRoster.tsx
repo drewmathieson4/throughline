@@ -66,7 +66,7 @@ export default function ReportRoster({
         return (
           <li key={r.studentId} className={cn("flex items-center gap-2 border-b border-muted py-2 pr-2.5 pl-2 last:border-b-0", selected && "bg-accent")}>
             <Link to={`/reports/${classId}/${r.studentId}`} aria-current={selected ? "page" : undefined} className="flex min-h-12 min-w-0 flex-1 items-center gap-2.5 rounded-xl px-1.5 hover:bg-muted/60">
-              <Avatar colour={colour} name={name} className="size-9 text-xs" />
+              <Avatar colour={colour} name={name} size={36} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[14.5px] font-bold">{name}</span>
                 <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">

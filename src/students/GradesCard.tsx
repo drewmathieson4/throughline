@@ -1,21 +1,16 @@
 import { useState } from "react";
 import { ChevronDown, MoveRight, TrendingDown, TrendingUp } from "lucide-react";
 import type { GradeSummary, GradeTrend, Standout } from "../../worker/api-types";
-import { dateFormat, plural } from "../ui";
+import { calendarDay, caption, pct, plural } from "../ui";
 import { cn } from "@/lib/utils";
 
-const pct = (n: number) => `${Math.round(n)}%`;
 const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-// A due date is a calendar day; read it as local midnight so it shows as that day.
-const day = (iso: string) => dateFormat.format(new Date(`${iso}T00:00:00`));
 
 const trendLook: Record<GradeTrend["label"], { icon: typeof TrendingUp; pill: string }> = {
   rising: { icon: TrendingUp, pill: "bg-mint text-mint-foreground" },
   slipping: { icon: TrendingDown, pill: "bg-coral text-coral-foreground" },
   steady: { icon: MoveRight, pill: "bg-secondary text-secondary-foreground" },
 };
-
-const caption = "text-xs font-extrabold tracking-[.06em] text-muted-foreground uppercase";
 
 function StandoutLine({ label, s }: { label: string; s: Standout }) {
   return (
@@ -101,7 +96,7 @@ export default function GradesCard({ grades: g }: { grades: GradeSummary }) {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold">{e.assignment}</p>
                     <p className="mt-px text-[12.5px] text-muted-foreground">
-                      {[e.category, e.dueDate && `due ${day(e.dueDate)}`].filter(Boolean).join(" · ")}
+                      {[e.category, e.dueDate && `due ${calendarDay(e.dueDate)}`].filter(Boolean).join(" · ")}
                     </p>
                   </div>
                   {e.score === null ? (

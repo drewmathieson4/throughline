@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import type { ClassRow, Student } from "../../worker/db/schema";
 import type { NoteWithTags, StudentDetail } from "../../worker/api-types";
 import { api, jsonInit, messageOf } from "../api";
-import { calendarDay } from "../classes/term";
+import { shortDay } from "../classes/term";
 import FreshPill from "../classes/FreshPill";
 import NoteItem from "../NoteItem";
 import { kinds, noteWhen } from "../noteKinds";
@@ -16,7 +16,7 @@ import { errorText } from "../ui";
 import { useAction } from "../useAction";
 import GradesCard from "./GradesCard";
 import { Avatar } from "@/components/Avatar";
-import { BackLink } from "@/components/page";
+import { BackLink, titleText } from "@/components/page";
 import { Panel } from "@/components/Panel";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -84,14 +84,14 @@ export default function StudentPage({ cls, id }: { cls: ClassRow; id: string }) 
     <section aria-labelledby="student-name">
       {back}
       <div className="mt-2.5 flex flex-wrap items-center gap-4">
-        <Avatar colour={colourOf(student.classId)} name={name} size="lg" className="size-[72px] text-[22px]" />
+        <Avatar colour={colourOf(student.classId)} name={name} size={72} />
         <div className="min-w-[180px] flex-1">
-          <h1 id="student-name" className="text-[30px] leading-[1.1] font-extrabold tracking-[-0.03em] md:text-[34px]">
+          <h1 id="student-name" className={cn(titleText, "leading-[1.1]")}>
             {name}
           </h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <FreshPill lastNotedAt={theirs[0]?.notedAt ?? null} prefix="Last note: " />
-            {student.leftAt && <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-bold text-secondary-foreground">Left {calendarDay(student.leftAt)}</span>}
+            {student.leftAt && <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-bold text-secondary-foreground">Left {shortDay(student.leftAt)}</span>}
           </div>
         </div>
         <div className="flex gap-2">

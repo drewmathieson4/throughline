@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { useNotes } from "../notes/notesStore";
 import { errorText, plural } from "../ui";
 import FreshPill from "./FreshPill";
-import { calendarDay } from "./term";
+import { shortDay } from "./term";
 import { Avatar } from "@/components/Avatar";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -47,13 +47,13 @@ export default function Roster({ classId }: { classId: string }) {
                       {s.firstName} {s.lastName}
                     </span>
                     <span className="mt-0.5 block text-[12.5px] text-muted-foreground">
-                      {s.leftAt && `Left ${calendarDay(s.leftAt)} · `}
+                      {s.leftAt && `Left ${shortDay(s.leftAt)} · `}
                       {plural(s.noteCount, "note")}
                       {s.unsureCount > 0 && <span className="font-bold text-sunny-foreground"> · {s.unsureCount} unsure</span>}
                     </span>
                   </span>
                   <FreshPill lastNotedAt={s.lastNotedAt} />
-                  <ChevronRight className="size-4 flex-none text-[#9AA1AE]" aria-hidden />
+                  <ChevronRight className="size-4 flex-none text-chevron" aria-hidden />
                 </Link>
               </li>
             ))}

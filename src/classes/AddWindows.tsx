@@ -66,8 +66,9 @@ export default function AddMenu({ classId, onClassesChanged, onResult }: { class
         <ImportRoster
           classId={classId}
           onImported={(result) => {
-            refreshRoster();
+            // New classes reload the class list, and with it every roster; otherwise just the rosters.
             if (result.classes.some((k) => k.created)) onClassesChanged();
+            else refreshRoster();
             toast.success(rosterHeadline(result));
             setOpen(null);
             onResult({ kind: "roster", result });

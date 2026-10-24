@@ -61,7 +61,7 @@ export function useCapture({ onSaved }: { onSaved: (saved: SavedNote) => boolean
 
   const recorder = useRecorder({
     maxMs: MAX_RECORDING_MS,
-    onStop: ({ audio, hitLimit }) => save("voice", "/api/notes/voice", { method: "POST", headers: { "content-type": audio.type }, body: audio }, hitLimit),
+    onStop: ({ audio, hitLimit }) => save("voice", "/api/notes/voice", fileInit(audio), hitLimit),
   });
 
   async function record() {
@@ -73,7 +73,13 @@ export function useCapture({ onSaved }: { onSaved: (saved: SavedNote) => boolean
     }
   }
 
-  const saveText = (body: string) => save("text", "/api/notes", jsonInit("POST", { body }));
+  // The typed note, shared by the laptop's capture card and the phone's Record screen, so a
+  // half-typed note survives the phone moving between /notes and /notes/feed.
+  const [draft, setDraft] = useState("");
+  async function saveDraft() {
+    if (pending || recorder.recording || !draft.trim()) return;
+    if (await save("text", "/api/notes", jsonInit("POST", { body: draft }))) setDraft("");
+  }
 
   // An uploaded document (an old progress report) becomes one note per student it is about.
   const upload = (file: File) =>
@@ -91,7 +97,7 @@ export function useCapture({ onSaved }: { onSaved: (saved: SavedNote) => boolean
       toast.success(result.replaced.length > 0 ? `${made} Replaced ${plural(result.replaced.length, "note")} made from it earlier.` : made);
     });
 
-  return { pending, recorder, record, saveText, upload, nearLimit: MAX_RECORDING_MS - recorder.elapsedMs <= 30_000 };
+  return { pending, recorder, record, draft, setDraft, saveDraft, upload };
 }
 
 export type Capture = ReturnType<typeof useCapture>;

@@ -1,6 +1,6 @@
 import { ClipboardList, FileText, Mic, PenLine, type LucideIcon } from "lucide-react";
 import type { Note, NoteKind } from "../worker/db/schema";
-import { dateFormat, dateTimeFormat } from "./ui";
+import { dateFormat, dateTimeFormat, shortDateFormat } from "./ui";
 
 // Where a note came from, as a coloured tile and a word; `dot` is the same colour for the
 // student page's timeline.
@@ -12,12 +12,11 @@ export const kinds: Record<NoteKind, { label: string; icon: LucideIcon; tile: st
 };
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { timeStyle: "short" });
-const shortDate = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
 
 // When a note was made. A note cut from a document has a day, not a time. `timeOnly` is for
 // lists already grouped under a day heading.
 export function noteWhen(note: Note, timeOnly = false) {
   const when = new Date(note.notedAt);
-  if (note.kind === "progress_report") return (timeOnly ? shortDate : dateFormat).format(when);
+  if (note.kind === "progress_report") return (timeOnly ? shortDateFormat : dateFormat).format(when);
   return (timeOnly ? timeFormat : dateTimeFormat).format(when);
 }

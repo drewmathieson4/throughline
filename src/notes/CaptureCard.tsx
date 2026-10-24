@@ -1,10 +1,11 @@
-import { useState, type FormEvent } from "react";
 import { Mic, Paperclip } from "lucide-react";
 import { DOCUMENT_TYPES } from "../api";
 import FilePicker from "../FilePicker";
 import { mmss } from "../ui";
+import { useElapsed } from "../useRecorder";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import SoundBars from "./SoundBars";
 import { MAX_RECORDING_MS, type Capture } from "./useCapture";
@@ -12,36 +13,34 @@ import { MAX_RECORDING_MS, type Capture } from "./useCapture";
 // The laptop's way in: type, upload a document, or record. A note needs no class: tagging
 // works out who it is about.
 export default function CaptureCard({ capture }: { capture: Capture }) {
-  const { pending, recorder } = capture;
-  const [draft, setDraft] = useState("");
+  const { pending, recorder, draft, setDraft, saveDraft } = capture;
   const busy = pending !== null || recorder.recording;
-
-  async function submit(e?: FormEvent) {
-    e?.preventDefault();
-    if (busy || !draft.trim()) return;
-    if (await capture.saveText(draft)) setDraft("");
-  }
 
   return (
     <>
-      <form onSubmit={submit} className="mt-[22px] rounded-[22px] border bg-card p-[18px] pb-3.5 shadow-card">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void saveDraft();
+        }}
+        className="mt-[22px] rounded-[22px] border bg-card p-[18px] pb-3.5 shadow-card">
         <label htmlFor="note" className="block text-[15px] font-bold">
           New note
         </label>
-        <textarea
+        <Textarea
           id="note"
           rows={3}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           // ⌘/Ctrl+Enter adds the note without reaching for the mouse.
           onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void submit();
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void saveDraft();
           }}
           placeholder="What did you notice today? Name students and they're tagged for you."
-          className="mt-2.5 block w-full resize-y rounded-[14px] border border-input bg-field px-3.5 py-3 text-[15px] leading-normal outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="mt-2.5 field-sizing-fixed resize-y rounded-[14px] bg-field text-[15px] leading-normal md:text-[15px]"
         />
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <FilePicker accept={DOCUMENT_TYPES} disabled={busy} onFile={capture.upload} className="h-11 px-4">
+          <FilePicker accept={DOCUMENT_TYPES} disabled={busy} onFile={capture.upload} className="px-4">
             <Paperclip className="size-4" aria-hidden />
             {pending === "document" ? "Reading and tagging…" : "Upload a document"}
           </FilePicker>
@@ -63,9 +62,12 @@ export default function CaptureCard({ capture }: { capture: Capture }) {
 }
 
 // Open while recording and while the recording saves. Esc and clicks outside do nothing, so
-// a recording is only ever ended by Stop or Discard.
+// a recording is only ever ended by Stop or Discard. It owns the ticking clock, so the feed
+// behind it does not re-render four times a second.
 function RecordDialog({ capture }: { capture: Capture }) {
-  const { recorder, pending, nearLimit } = capture;
+  const { recorder, pending } = capture;
+  const elapsedMs = useElapsed(recorder.startedAt);
+  const nearLimit = MAX_RECORDING_MS - elapsedMs <= 30_000;
   const keep = (e: Event) => e.preventDefault();
   return (
     <Dialog open={recorder.recording || pending === "voice"}>
@@ -82,7 +84,7 @@ function RecordDialog({ capture }: { capture: Capture }) {
               <span className="size-2 animate-pulse rounded-full bg-coral-dot" aria-hidden />
               Recording
             </DialogTitle>
-            <p className={cn("mt-2.5 text-5xl font-extrabold tracking-[-0.03em] tabular-nums", nearLimit && "text-sunny-foreground")}>{mmss(recorder.elapsedMs)}</p>
+            <p className={cn("mt-2.5 text-5xl font-extrabold tracking-[-0.03em] tabular-nums", nearLimit && "text-sunny-foreground")}>{mmss(elapsedMs)}</p>
             <p className="mt-0.5 text-[13px] text-muted-foreground">of {mmss(MAX_RECORDING_MS)} · say students' names as you go</p>
             <SoundBars stream={recorder.stream} className="mt-4 h-14" barClassName="bg-coral-dot/60" />
             <button

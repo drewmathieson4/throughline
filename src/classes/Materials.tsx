@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import type { MaterialRow } from "../../worker/api-types";
 import { DOCUMENT_TYPES, api, fileInit } from "../api";
 import FilePicker from "../FilePicker";
-import { dateFormat, errorText } from "../ui";
+import { caption, dateFormat, errorText } from "../ui";
 import { useAction } from "../useAction";
 import type { useMaterials } from "./useMaterials";
 import { Panel } from "@/components/Panel";
@@ -35,7 +35,7 @@ export default function Materials({ classId, materials, setMaterials, error: loa
         accept={DOCUMENT_TYPES}
         disabled={uploading}
         onFile={upload}
-        className="h-auto w-full justify-start gap-3.5 rounded-[22px] border-2 border-dashed border-[#C9D0DC] bg-transparent px-[18px] py-4 text-left whitespace-normal text-foreground hover:bg-accent/40"
+        className="h-auto w-full justify-start gap-3.5 rounded-[22px] border-2 border-dashed border-dashed-line bg-transparent px-[18px] py-4 text-left whitespace-normal text-foreground hover:bg-accent/40"
       >
         <span className="inline-flex size-11 flex-none items-center justify-center rounded-full bg-accent text-accent-foreground">
           <Upload className="size-5" aria-hidden />
@@ -91,7 +91,6 @@ export default function Materials({ classId, materials, setMaterials, error: loa
 
 // The grading bar's colours, in category order; the legend carries the names and numbers.
 const BAR = ["bg-primary", "bg-mint-dot", "bg-sunny-dot", "bg-coral-dot", "bg-sky-foreground", "bg-accent-foreground"];
-const caption = "mb-2 text-xs font-extrabold tracking-[.06em] text-muted-foreground uppercase";
 
 function Summary({ summary }: { summary: NonNullable<MaterialRow["summary"]> }) {
   return (
@@ -99,7 +98,7 @@ function Summary({ summary }: { summary: NonNullable<MaterialRow["summary"]> }) 
       <p className="mt-3.5 text-[14.5px] leading-relaxed text-secondary-foreground">{summary.description}</p>
       {summary.grading.some((g) => g.weight > 0) && (
         <section className="mt-[18px]">
-          <h4 className={caption}>Grading</h4>
+          <h4 className={`mb-2 ${caption}`}>Grading</h4>
           <div aria-hidden className="flex h-3.5 gap-[3px] overflow-hidden rounded-full">
             {summary.grading.map((g, i) => (
               <span key={g.category} className={cn("basis-0", BAR[i % BAR.length])} style={{ flexGrow: g.weight }} />
@@ -117,7 +116,7 @@ function Summary({ summary }: { summary: NonNullable<MaterialRow["summary"]> }) 
       )}
       {summary.goals.length > 0 && (
         <section className="mt-5">
-          <h4 className={caption}>Goals</h4>
+          <h4 className={`mb-2 ${caption}`}>Goals</h4>
           <ul className="flex flex-col gap-2">
             {summary.goals.map((goal) => (
               <li key={goal} className="flex gap-2.5 text-sm leading-normal">
@@ -132,7 +131,7 @@ function Summary({ summary }: { summary: NonNullable<MaterialRow["summary"]> }) 
       )}
       {summary.units.length > 0 && (
         <section className="mt-5">
-          <h4 className={caption}>Units</h4>
+          <h4 className={`mb-2 ${caption}`}>Units</h4>
           <ul className="flex flex-wrap gap-2">
             {summary.units.map((u) => (
               <li key={u.name} className="rounded-xl bg-secondary px-3 py-1.5 text-[13px] text-secondary-foreground">
@@ -145,7 +144,7 @@ function Summary({ summary }: { summary: NonNullable<MaterialRow["summary"]> }) 
       )}
       {summary.policies.length > 0 && (
         <section className="mt-5">
-          <h4 className={caption}>Policies</h4>
+          <h4 className={`mb-2 ${caption}`}>Policies</h4>
           <ul className="ml-[18px] list-disc text-sm leading-[1.7] text-secondary-foreground">
             {summary.policies.map((p) => (
               <li key={p}>{p}</li>

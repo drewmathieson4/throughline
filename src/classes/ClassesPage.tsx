@@ -69,18 +69,18 @@ function ClassCard({ cls }: { cls: ClassRow }) {
   return (
     <Link to={`/classes/${cls.id}`} className="flex flex-col gap-4 rounded-[22px] border border-border bg-card p-[18px] shadow-card transition-colors hover:border-ring/60">
       <span className="flex items-center gap-3.5">
-        <Avatar colour={colourOf(cls.id)} name={cls.name} size="lg" square />
+        <Avatar colour={colourOf(cls.id)} name={cls.name} size={56} square />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-lg font-extrabold tracking-[-0.01em]">{cls.name}</span>
           <span className="mt-0.5 block text-[13px] text-muted-foreground">{termLabel(cls)}</span>
         </span>
-        <ChevronRight className="size-5 text-[#9AA1AE]" aria-hidden />
+        <ChevronRight className="size-5 text-chevron" aria-hidden />
       </span>
       <span className="flex items-center gap-2.5">
         {students.length > 0 && (
           <span className="inline-flex pl-2">
             {students.slice(0, 5).map((s) => (
-              <Avatar key={s.id} colour={colourOf(cls.id)} name={`${s.firstName} ${s.lastName}`} size="sm" className="-ml-2 size-[30px] border-2 border-card text-[10.5px]" />
+              <Avatar key={s.id} colour={colourOf(cls.id)} name={`${s.firstName} ${s.lastName}`} size={30} className="-ml-2 border-2 border-card" />
             ))}
           </span>
         )}
@@ -120,7 +120,7 @@ export default function ClassesPage({ classes, onCreated }: { classes: ClassRow[
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="flex min-h-[120px] items-center justify-center gap-2.5 rounded-2xl border-2 border-dashed border-[#C9D0DC] text-[15px] font-bold text-accent-foreground hover:bg-accent/40"
+            className="flex min-h-[120px] items-center justify-center gap-2.5 rounded-2xl border-2 border-dashed border-dashed-line text-[15px] font-bold text-accent-foreground hover:bg-accent/40"
           >
             <span className="inline-flex size-9 items-center justify-center rounded-full bg-accent">
               <Plus className="size-5" aria-hidden />

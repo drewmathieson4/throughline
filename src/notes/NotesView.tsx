@@ -5,14 +5,14 @@ import { AlertCircle, ChevronDown, Mic } from "lucide-react";
 import type { ClassRow } from "../../worker/db/schema";
 import type { NoteWithTags } from "../../worker/api-types";
 import NoteItem from "../NoteItem";
-import { errorText } from "../ui";
+import { chipOff, chipOn, chipRow, errorText } from "../ui";
 import { BackLink, PageTitle } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { useIsLaptop } from "@/lib/useIsLaptop";
 import { cn } from "@/lib/utils";
 import CaptureCard from "./CaptureCard";
 import { groupByDay } from "./days";
-import { useNotes } from "./notesStore";
+import { toPickable, useNotes } from "./notesStore";
 import RecordHome from "./RecordHome";
 import SavedSheet from "./SavedSheet";
 import StudentPicker from "./StudentPicker";
@@ -22,8 +22,6 @@ import { useCapture, type SavedNote } from "./useCapture";
 const todayLabel = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" });
 
 const chip = "inline-flex min-h-9 flex-none items-center gap-1.5 rounded-full border px-3.5 text-[13.5px] font-semibold";
-const chipOn = "border-primary bg-primary text-primary-foreground";
-const chipOff = "border-input bg-background text-secondary-foreground hover:bg-muted";
 
 // Tagged, or a candidate for a name the tagger could not settle ("Alex" with two Alexes).
 const about = (n: NoteWithTags, studentId: string) =>
@@ -39,7 +37,7 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
   const onFeed = useMatch("/notes/feed") !== null;
   const home = !isLaptop && !onFeed;
   const navigate = useNavigate();
-  const { notes, error, people, needsCount, colourOf } = useNotes();
+  const { notes, error, people, roster, classNames, needsCount, colourOf } = useNotes();
   const [needsOnly, setNeedsOnly] = useState(false);
   const [classFilter, setClassFilter] = useState("");
   const [studentFilter, setStudentFilter] = useState("");
@@ -103,10 +101,12 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
     setClassFilter(next);
     if (next && studentFilter && people.get(studentFilter)?.classId !== next) setStudentFilter("");
   };
-  const filterable = [...people.entries()]
-    .filter(([, p]) => !p.left && (!classFilter || p.classId === classFilter))
-    .sort(([, a], [, b]) => a.name.localeCompare(b.name))
-    .map(([id, p]) => ({ id, name: p.name, classId: p.classId, className: classes.find((c) => c.id === p.classId)?.name ?? "" }));
+  const filterable = picking
+    ? roster
+        .filter((s) => !s.leftAt && (!classFilter || s.classId === classFilter))
+        .map((s) => toPickable(s, classNames))
+        .sort((a, b) => a.name.localeCompare(b.name))
+    : [];
 
   return (
     <section>
@@ -119,7 +119,7 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
       {isLaptop && <CaptureCard capture={capture} />}
       {error && <p className={`mt-4 ${errorText}`}>{error}</p>}
 
-      <div className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 py-0.5 [scrollbar-width:none] md:mx-0 md:mt-[22px] md:flex-wrap md:px-0">
+      <div className={chipRow}>
         {needsCount > 0 && (
           <button
             type="button"
@@ -159,7 +159,7 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
                 badge={
                   n.classId && (
                     <span className="truncate rounded-full px-2.5 py-[3px] text-xs font-bold" style={{ background: colourOf(n.classId).bg, color: colourOf(n.classId).fg }}>
-                      {classes.find((c) => c.id === n.classId)?.name ?? "Class"}
+                      {classNames.get(n.classId) ?? "Class"}
                     </span>
                   )
                 }
@@ -191,7 +191,7 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
             navigate("/notes");
             void capture.record();
           }}
-          className="fixed right-[18px] bottom-[calc(78px+max(20px,env(safe-area-inset-bottom)))] z-30 inline-flex size-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-pop"
+          className="fixed right-[18px] bottom-[calc(var(--tabbar-h)+20px)] z-30 inline-flex size-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-pop"
         >
           <Mic className="size-7" aria-hidden />
         </button>

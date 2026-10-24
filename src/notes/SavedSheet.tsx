@@ -18,7 +18,7 @@ export default function SavedSheet({ saved, onClose, onRecordAnother }: { saved:
         side="bottom"
         showCloseButton={false}
         aria-describedby={undefined}
-        className="max-h-[78svh] overflow-y-auto rounded-t-[28px] border-0 px-5 pt-3 pb-[max(26px,env(safe-area-inset-bottom))] text-foreground"
+        className="max-h-[78svh] overflow-y-auto px-5 pt-3 pb-[max(26px,env(safe-area-inset-bottom))] text-foreground"
       >
         <span aria-hidden className="mx-auto mb-4 block h-[5px] w-10 rounded-full bg-input" />
         {note && saved && (

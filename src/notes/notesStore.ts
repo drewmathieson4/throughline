@@ -6,6 +6,16 @@ import type { Colour } from "@/lib/avatar";
 // old tags but drop out of the picker.
 export type Person = { name: string; first: string; classId: string; left: boolean };
 
+/** A row in the StudentPicker. */
+export type Pickable = { id: string; name: string; classId: string; className: string };
+
+export const toPickable = (s: RosterStudent, classNames: Map<string, string>): Pickable => ({
+  id: s.id,
+  name: `${s.firstName} ${s.lastName}`,
+  classId: s.classId,
+  className: classNames.get(s.classId) ?? "",
+});
+
 export type NotesStore = {
   /** Null until the first load. */
   notes: NoteWithTags[] | null;

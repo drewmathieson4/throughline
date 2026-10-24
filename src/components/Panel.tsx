@@ -35,7 +35,7 @@ export function Panel({ open, onOpenChange, title, top = false, children }: { op
     </Dialog>
   ) : (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" showCloseButton={false} aria-describedby={undefined} className="max-h-[85svh] rounded-t-[28px] border-0 px-4 pt-[18px] pb-[max(20px,env(safe-area-inset-bottom))]">
+      <SheetContent side="bottom" showCloseButton={false} aria-describedby={undefined} className="max-h-[85svh] px-4 pt-[18px] pb-[max(20px,env(safe-area-inset-bottom))]">
         {body}
       </SheetContent>
     </Sheet>

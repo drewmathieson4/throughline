@@ -2,7 +2,7 @@ import { Sparkles } from "lucide-react";
 import { Link } from "react-router";
 import type { ClassRow } from "../../worker/db/schema";
 import { useNotes } from "../notes/notesStore";
-import { errorText, plural } from "../ui";
+import { chipOff, chipOn, chipRow, errorText, plural } from "../ui";
 import { runBusy, sameRange, validRange, wholeYear, type ClassRun, type Range } from "./reportsStore";
 import { Avatar } from "@/components/Avatar";
 import { PageTitle } from "@/components/page";
@@ -44,18 +44,15 @@ export default function ReportsControls({
   return (
     <>
       <PageTitle eyebrow="The brief for each student's report, built from your notes and grades">Reports</PageTitle>
-      <nav aria-label="Class" className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 py-0.5 [scrollbar-width:none] md:mx-0 md:mt-[22px] md:flex-wrap md:px-0">
+      <nav aria-label="Class" className={chipRow}>
         {classes.map((c) => (
           <Link
             key={c.id}
             to={`/reports/${c.id}`}
             aria-current={c.id === cls.id ? "page" : undefined}
-            className={cn(
-              "inline-flex min-h-[42px] flex-none items-center gap-2 rounded-full border pr-4 pl-1.5 text-sm font-bold",
-              c.id === cls.id ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background text-secondary-foreground hover:bg-muted",
-            )}
+            className={cn("inline-flex min-h-[42px] flex-none items-center gap-2 rounded-full border pr-4 pl-1.5 text-sm font-bold", c.id === cls.id ? chipOn : chipOff)}
           >
-            <Avatar colour={colourOf(c.id)} name={c.name} size="sm" className="size-[30px] text-[10.5px]" />
+            <Avatar colour={colourOf(c.id)} name={c.name} size={30} />
             {c.name}
           </Link>
         ))}
@@ -76,7 +73,7 @@ export default function ReportsControls({
           onClick={() => onRange(year)}
           className={cn(
             "min-h-11 rounded-full border px-4 text-[13.5px] font-bold",
-            isYear ? "border-primary bg-accent text-accent-foreground" : "border-input bg-background text-secondary-foreground hover:bg-muted",
+            isYear ? "border-primary bg-accent text-accent-foreground" : chipOff,
           )}
         >
           Whole year

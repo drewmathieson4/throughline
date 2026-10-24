@@ -6,7 +6,7 @@ import { buttonVariants } from "@/components/ui/button";
 // input. The input is cleared after each pick so choosing the same file again fires onChange.
 export default function FilePicker({ accept, disabled, onFile, className, children }: { accept: string; disabled?: boolean; onFile: (file: File) => void; className?: string; children: ReactNode }) {
   return (
-    <label className={cn(buttonVariants({ variant: "outline", size: "sm" }), "cursor-pointer has-focus-visible:ring-3 has-focus-visible:ring-ring/50", disabled && "pointer-events-none opacity-50", className)}>
+    <label className={cn(buttonVariants({ variant: "outline" }), "cursor-pointer has-focus-visible:ring-3 has-focus-visible:ring-ring/50", disabled && "pointer-events-none opacity-50", className)}>
       {children}
       <input
         type="file"

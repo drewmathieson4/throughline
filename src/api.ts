@@ -19,9 +19,9 @@ export const jsonInit = (method: string, body: unknown): RequestInit => ({
 const DOCUMENT_EXTENSIONS: Record<UploadExtension, true> = { pdf: true, docx: true, txt: true, md: true };
 export const DOCUMENT_TYPES = Object.keys(DOCUMENT_EXTENSIONS).map((e) => `.${e}`).join(",");
 
-// A file sent as the raw request body, the way the upload routes read it. The browser
-// leaves the type blank for some extensions; the Worker decides by the name anyway.
-export const fileInit = (file: File): RequestInit => ({
+// A file or recording sent as the raw request body, the way the upload routes read it. The
+// browser leaves the type blank for some extensions; the Worker decides by the name anyway.
+export const fileInit = (file: Blob): RequestInit => ({
   method: "POST",
   headers: { "content-type": file.type || "application/octet-stream" },
   body: file,

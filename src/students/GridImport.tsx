@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Upload } from "lucide-react";
 import type { SkippedRow } from "../../worker/api-types";
 import FilePicker from "../FilePicker";
-import { errorText } from "../ui";
+import { errorText, plural } from "../ui";
 import { csvToGrid } from "./csv";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -42,7 +42,7 @@ export default function GridImport({
 
   return (
     <div className="mt-4 flex flex-col gap-3">
-      <FilePicker accept={ACCEPT} disabled={busy} onFile={run} className="h-11 justify-center text-[15px] font-bold">
+      <FilePicker accept={ACCEPT} disabled={busy} onFile={run} className="justify-center px-3.5 text-[15px] font-bold">
         <Upload className="size-4" aria-hidden />
         {busy ? "Importing…" : fileLabel}
       </FilePicker>
@@ -64,7 +64,7 @@ export function SkippedLines({ skipped }: { skipped: SkippedRow[] }) {
   if (skipped.length === 0) return null;
   return (
     <details className="mt-2 text-[13.5px]">
-      <summary className="cursor-pointer font-bold text-sunny-foreground">{skipped.length === 1 ? "1 skipped line" : `${skipped.length} skipped lines`}</summary>
+      <summary className="cursor-pointer font-bold text-sunny-foreground">{plural(skipped.length, "skipped line")}</summary>
       <ul className="mt-1.5 ml-4 list-disc text-secondary-foreground">
         {skipped.map((s, i) => (
           <li key={i}>

@@ -2,10 +2,9 @@ import { useState } from "react";
 import { Check, Mic } from "lucide-react";
 import type { NoteKind } from "../../worker/db/schema";
 import type { Citation, Coverage, Gap, GoalStatus, GradeSummary, SynthesisView, TaggedNoteResponse } from "../../worker/api-types";
-import { api, jsonInit, messageOf } from "../api";
-import { dateFormat, errorText, mmss, plural } from "../ui";
-import { useRecorder } from "../useRecorder";
-import { day } from "./reportsStore";
+import { api, fileInit, jsonInit, messageOf } from "../api";
+import { calendarDay, caption, errorText, dateFormat, mmss, pct, plural, shortDateFormat } from "../ui";
+import { useElapsed, useRecorder } from "../useRecorder";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -15,8 +14,6 @@ import { cn } from "@/lib/utils";
 
 const MAX_ANSWER_MS = 2 * 60 * 1000;
 
-const pct = (n: number) => `${Math.round(n)}%`;
-const shortDay = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
 const monthFormat = new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric" });
 
 const KIND_SHORT: Record<NoteKind, string> = { text: "note", voice: "voice note", student_form: "form", progress_report: "report" };
@@ -42,12 +39,10 @@ const SECTION = {
   change: { title: "Over the period", ink: "text-sky-foreground", tint: "bg-tint-change" },
 } as const;
 
-const sectionHeading = "mb-2.5 text-xs font-extrabold tracking-[0.06em] uppercase";
-
 function coverageLine(c: Coverage): string {
-  const sources = Object.entries(c.bySource).map(([k, n]) => `${n} ${KIND_SHORT[k as NoteKind]}${n === 1 ? "" : "s"}`);
+  const sources = Object.entries(c.bySource).map(([k, n]) => plural(n, KIND_SHORT[k as NoteKind]));
   const parts = [`${plural(c.notes, "note")}${sources.length > 1 ? ` (${sources.join(", ")})` : ""}`];
-  if (c.lastNotedAt) parts.push(`last ${day(c.lastNotedAt)}`);
+  if (c.lastNotedAt) parts.push(`last ${calendarDay(c.lastNotedAt)}`);
   if (c.emptyMonths.length) parts.push(`nothing in ${c.emptyMonths.map((m) => monthFormat.format(new Date(`${m}-01T00:00:00`))).join(", ")}`);
   if (c.longestSilenceDays > 30) parts.push(`a ${c.longestSilenceDays}-day stretch with no note`);
   parts.push(c.grades + c.missing > 0 ? `${plural(c.grades, "grade")}${c.missing ? `, ${c.missing} missing` : ""}` : "no grades");
@@ -55,7 +50,7 @@ function coverageLine(c: Coverage): string {
 }
 
 function chipLabel(c: Citation): string {
-  if (c.type === "note") return `${shortDay.format(new Date(c.notedAt))} ${KIND_SHORT[c.kind]}`;
+  if (c.type === "note") return `${shortDateFormat.format(new Date(c.notedAt))} ${KIND_SHORT[c.kind]}`;
   if (c.type === "grades") return "Grade summary";
   return `${c.assignment} · ${c.pct === null ? "missing" : pct(c.pct)}${c.classMean !== null ? ` (class ${pct(c.classMean)})` : ""}`;
 }
@@ -116,7 +111,7 @@ function Evidence({ evidence, grades }: { evidence: Citation[]; grades: GradeSum
           {shown.type === "note" && (
             <>
               <p className="text-xs font-semibold text-muted-foreground">
-                {day(shown.notedAt)}
+                {calendarDay(shown.notedAt)}
                 {shown.sourceName ? ` · ${shown.sourceName}` : ""}
               </p>
               {shown.quotes.map((q, i) => (
@@ -140,7 +135,7 @@ function Section({ kind, items, grades }: { kind: keyof typeof SECTION; items: I
   const { title, ink, tint } = SECTION[kind];
   return (
     <section className="mt-[26px]">
-      <h3 className={cn(sectionHeading, ink)}>{title}</h3>
+      <h3 className={cn(caption, "mb-2.5", ink)}>{title}</h3>
       <ul className="flex flex-col gap-2.5">
         {items.map((it, i) => (
           <li key={i} className={cn("rounded-[18px] px-4 py-3.5", tint)}>
@@ -166,7 +161,7 @@ function GapItem({ gap, studentId, classId, onRecorded }: { gap: Gap; studentId:
     onStop: async ({ audio }) => {
       setSaving(true);
       try {
-        const note = await api<TaggedNoteResponse>(`/api/notes/voice?classId=${classId}`, { method: "POST", headers: { "content-type": audio.type }, body: audio });
+        const note = await api<TaggedNoteResponse>(`/api/notes/voice?classId=${classId}`, fileInit(audio));
         if (!note.students.some((s) => s.studentId === studentId)) {
           await api(`/api/notes/${note.id}/students`, jsonInit("POST", { studentId, quotes: [note.body] }));
         }
@@ -179,6 +174,8 @@ function GapItem({ gap, studentId, classId, onRecorded }: { gap: Gap; studentId:
       }
     },
   });
+
+  const elapsedMs = useElapsed(recorder.startedAt);
 
   async function record() {
     setError(null);
@@ -213,7 +210,7 @@ function GapItem({ gap, studentId, classId, onRecorded }: { gap: Gap; studentId:
               onClick={recorder.recording ? recorder.stop : record}
             >
               {recorder.recording ? <span className="size-2.5 animate-pulse rounded-full bg-white" aria-hidden /> : <Mic aria-hidden />}
-              {saving ? "Saving…" : recorder.recording ? `Stop (${mmss(recorder.elapsedMs)})` : "Record answer"}
+              {saving ? "Saving…" : recorder.recording ? `Stop (${mmss(elapsedMs)})` : "Record answer"}
             </Button>
           )
         )}
@@ -273,7 +270,7 @@ export default function Summary({
 
       {s.goals.length > 0 && (
         <section className="mt-[26px]">
-          <h3 className={cn(sectionHeading, "text-muted-foreground")}>Course goals</h3>
+          <h3 className={cn(caption, "mb-2.5")}>Course goals</h3>
           <ul>
             {s.goals.map((g, i) => (
               <li key={i} className="flex gap-3 border-t border-muted py-3">

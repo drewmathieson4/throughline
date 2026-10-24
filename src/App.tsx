@@ -11,7 +11,8 @@ import { useNotes } from "./notes/notesStore";
 import NotesView from "./notes/NotesView";
 import { ReportsProvider } from "./reports/ReportsProvider";
 import ReportsView from "./reports/ReportsView";
-import { errorText } from "./ui";
+import { errorText, needsYou } from "./ui";
+import { LogoWave } from "@/components/page";
 import { cn } from "@/lib/utils";
 
 const tabs: { to: string; label: string; icon: LucideIcon }[] = [
@@ -29,15 +30,13 @@ function useNeedsBadge(to: string) {
   const { needsCount } = useNotes();
   return to === "/notes" && needsCount > 0 ? needsCount : 0;
 }
-const needsLabel = (n: number) => `, ${n} ${n === 1 ? "needs" : "need"} you`;
+const needsLabel = (n: number) => `, ${needsYou(n)}`;
 
 function Wordmark() {
   return (
     <Link to="/notes" className="flex items-center gap-2.5 px-2.5 pb-[26px]">
       <span className="inline-flex size-9 items-center justify-center rounded-[11px] bg-primary text-primary-foreground">
-        <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M3 15c3 0 3-6 6-6s3 6 6 6 3-6 6-6" />
-        </svg>
+        <LogoWave className="size-5" />
       </span>
       <span className="text-[19px] font-extrabold tracking-[-0.02em]">Throughline</span>
     </Link>
@@ -129,7 +128,7 @@ function App() {
       <ReportsProvider>
         <div className="min-h-svh md:flex">
           <SideNav />
-          <main className={cn("min-w-0 flex-1 md:pb-0", !recordHome && "pb-24")}>
+          <main className={cn("min-w-0 flex-1 md:pb-0", !recordHome && "pb-[calc(var(--tabbar-h)+18px)]")}>
             <div
               className={cn(
                 "mx-auto px-4 pt-[18px] pb-7 md:px-12 md:pt-10 md:pb-[72px]",

@@ -14,7 +14,8 @@ const MIN_MS = 1000;
 export type Recorder = {
   supported: boolean;
   recording: boolean;
-  elapsedMs: number;
+  /** When the recording began (Date.now()), for useElapsed; null when not recording. */
+  startedAt: number | null;
   /** The live mic while recording, for a level meter; null otherwise. */
   stream: MediaStream | null;
   start: () => Promise<void>;
@@ -27,9 +28,8 @@ export type Recorder = {
 export type Recording = { audio: Blob; hitLimit: boolean };
 
 export function useRecorder({ maxMs, onStop }: { maxMs: number; onStop: (rec: Recording) => void }): Recorder {
-  const [recording, setRecording] = useState(false);
-  const [elapsedMs, setElapsedMs] = useState(0);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  // Set for the length of a recording; recording, stream and startedAt all derive from it.
+  const [live, setLive] = useState<{ stream: MediaStream; startedAt: number } | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   // Set while start() awaits the permission prompt, so a second click cannot open a second mic.
   const startingRef = useRef(false);
@@ -73,20 +73,16 @@ export function useRecorder({ maxMs, onStop }: { maxMs: number; onStop: (rec: Re
 
     const chunks: Blob[] = [];
     const startedAt = Date.now();
-    const tick = window.setInterval(() => setElapsedMs(Date.now() - startedAt), 250);
     const limit = window.setTimeout(() => rec.stop(), maxMs);
 
     rec.ondataavailable = (e) => {
       if (e.data.size > 0) chunks.push(e.data);
     };
     rec.onstop = () => {
-      window.clearInterval(tick);
       window.clearTimeout(limit);
       release();
       recorderRef.current = null;
-      setRecording(false);
-      setStream(null);
-      setElapsedMs(0);
+      setLive(null);
       const elapsed = Date.now() - startedAt;
       const discarded = discardRef.current;
       discardRef.current = false;
@@ -96,13 +92,25 @@ export function useRecorder({ maxMs, onStop }: { maxMs: number; onStop: (rec: Re
 
     recorderRef.current = rec;
     discardRef.current = false;
-    setRecording(true);
-    setStream(mic);
+    setLive({ stream: mic, startedAt });
     rec.start();
   }, [maxMs]);
 
   // Leaving the page mid-recording must not leave the mic open.
   useEffect(() => stop, [stop]);
 
-  return { supported, recording, elapsedMs, stream, start, stop, cancel };
+  return { supported, recording: live !== null, startedAt: live?.startedAt ?? null, stream: live?.stream ?? null, start, stop, cancel };
+}
+
+// Time since startedAt, ticking four times a second; 0 when not recording (and until the
+// first tick, since `now` may predate the start). Call it in the component that shows the
+// clock, so each tick re-renders only that component.
+export function useElapsed(startedAt: number | null) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (startedAt === null) return;
+    const tick = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(tick);
+  }, [startedAt]);
+  return startedAt === null ? 0 : Math.max(0, now - startedAt);
 }

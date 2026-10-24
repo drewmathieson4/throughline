@@ -177,7 +177,7 @@ function ClassReports({ classes, cls, studentId }: { classes: ClassRow[]; cls: C
               rows={rows}
               classId={cls.id}
               colour={colour}
-              selectedId={isLaptop ? selectedId : undefined}
+              selectedId={selectedId}
               running={reports.running}
               disabled={busy || !ready}
               onGenerate={(id) => roster && generateOne(id, roster.range)}

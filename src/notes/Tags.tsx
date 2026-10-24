@@ -4,12 +4,12 @@ import { Plus, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import type { NoteWithTags } from "../../worker/api-types";
 import { api, jsonInit } from "../api";
-import { errorText } from "../ui";
+import { caption, errorText } from "../ui";
 import { useAction } from "../useAction";
 import { Avatar } from "@/components/Avatar";
 import { initialsOf } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
-import { useNotes, type Person } from "./notesStore";
+import { toPickable, useNotes, type Person } from "./notesStore";
 import StudentPicker from "./StudentPicker";
 
 const collapse = (s: string) => s.replace(/\s+/g, " ").trim();
@@ -33,12 +33,15 @@ export default function Tags({ note, compact = false }: { note: NoteWithTags; co
     p ? (withClass ? `${p.name} (${classNames.get(p.classId) ?? "class"})` : p.name) : "Unknown student";
   const spans = new Set(note.students.map((s) => people.get(s.studentId)?.classId)).size > 1;
 
-  // Students still in a class and not already on the note, the note's own class first.
+  // Students still in a class and not already on the note, the note's own class first. Built
+  // only while the picker is open: every note on the feed renders a Tags.
   const tagged = new Set(note.students.map((s) => s.studentId));
-  const pickable = roster
-    .filter((s) => !s.leftAt && !tagged.has(s.id))
-    .sort((a, b) => Number(b.classId === note.classId) - Number(a.classId === note.classId) || a.lastName.localeCompare(b.lastName))
-    .map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}`, classId: s.classId, className: classNames.get(s.classId) ?? "" }));
+  const pickable = picking
+    ? roster
+        .filter((s) => !s.leftAt && !tagged.has(s.id))
+        .sort((a, b) => Number(b.classId === note.classId) - Number(a.classId === note.classId) || a.lastName.localeCompare(b.lastName))
+        .map((s) => toPickable(s, classNames))
+    : [];
 
   const untagged = note.students.length === 0 && note.mentions.length === 0;
   const classNote = (n: NoteWithTags) => (n.classId && n.students.length === 0 ? " · kept as a class note" : "");
@@ -61,7 +64,7 @@ export default function Tags({ note, compact = false }: { note: NoteWithTags; co
                     onClick={() => run(`/api/notes/${note.id}/mentions/${m.id}/assign`, jsonInit("POST", { studentId: id }), () => `Tagged to ${name}`)}
                     className="inline-flex min-h-10 items-center gap-2 rounded-full border border-sunny-line bg-background pr-3.5 pl-[5px] text-[13.5px] font-semibold text-secondary-foreground hover:bg-muted disabled:opacity-50"
                   >
-                    <Avatar colour={colourOf(people.get(id)?.classId)} name={people.get(id)?.name ?? "?"} className="size-[30px] text-[11px]" />
+                    <Avatar colour={colourOf(people.get(id)?.classId)} name={people.get(id)?.name ?? "?"} size={30} />
                     {name}
                   </button>
                 );
@@ -80,7 +83,7 @@ export default function Tags({ note, compact = false }: { note: NoteWithTags; co
       })}
 
       <div className={cn("mt-3 flex flex-col gap-2.5", !compact && "border-t border-dashed pt-3")}>
-        {compact && note.students.length > 0 && <p className="text-xs font-extrabold tracking-[.06em] text-muted-foreground uppercase">Tagged</p>}
+        {compact && note.students.length > 0 && <p className={caption}>Tagged</p>}
         {note.students.map((s) => {
           const p = people.get(s.studentId);
           const name = label(p, note.classId === null ? spans : p?.classId !== note.classId);
