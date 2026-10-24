@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import type { SynthesisResult } from "../../worker/api-types";
 import { api, jsonInit } from "../api";
-import { ReportsContext, runQueue, wholeYear, type ClassRun, type Range, type ReportsStore } from "./reportsStore";
+import { ReportsContext, runBusy, runQueue, wholeYear, type ClassRun, type Range, type ReportsStore } from "./reportsStore";
 
 // Summary runs live above the routes, so a "Generate for class" run keeps going and keeps its
 // progress when the teacher switches tab or class. The picked period lives here too, since
@@ -38,7 +38,14 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
 
   function generateClass(classId: string, range: Range, studentIds: string[]) {
     setRuns((prev) => new Map(prev).set(classId, { range, done: 0, total: studentIds.length, failed: 0 }));
-    void runQueue(
+    // However the queue ends, close the run out (anyone not counted is a failure) so the
+    // class never stays busy with its Generate button disabled.
+    const finish = () =>
+      setRuns((prev) => {
+        const run = prev.get(classId);
+        return run && runBusy(run) ? new Map(prev).set(classId, { ...run, done: run.total, failed: run.failed + run.total - run.done }) : prev;
+      });
+    runQueue(
       studentIds,
       CONCURRENCY,
       (id) => generate(id, range),
@@ -47,7 +54,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
           const run = prev.get(classId);
           return run ? new Map(prev).set(classId, { ...run, done: run.done + 1, failed: run.failed + (ok ? 0 : 1) }) : prev;
         }),
-    );
+    ).then(finish, finish);
   }
 
   const store: ReportsStore = {

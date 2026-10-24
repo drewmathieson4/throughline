@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import type { ClassRow } from "../../worker/db/schema";
 import { useNotes } from "../notes/notesStore";
 import { errorText, plural } from "../ui";
-import { sameRange, validRange, wholeYear, type ClassRun, type Range } from "./reportsStore";
+import { runBusy, sameRange, validRange, wholeYear, type ClassRun, type Range } from "./reportsStore";
 import { Avatar } from "@/components/Avatar";
 import { PageTitle } from "@/components/page";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,8 @@ export default function ReportsControls({
   const { colourOf } = useNotes();
   const year = wholeYear(cls);
   const isYear = sameRange(range, year);
-  const busy = run !== null && run.done < run.total;
+  const busyRun = runBusy(run) ? run : null;
+  const busy = busyRun !== null;
 
   return (
     <>
@@ -86,7 +87,7 @@ export default function ReportsControls({
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-[22px] bg-accent px-[18px] py-4">
         <div className="min-w-[200px] flex-1">
           <p className="text-[15px] font-extrabold text-accent-foreground">
-            {busy ? `Generating ${run.done} of ${run.total}` : pending > 0 ? `${plural(pending, "student")} need${pending === 1 ? "s" : ""} a summary` : "Every summary is up to date"}
+            {busy ? `Generating ${busyRun.done} of ${busyRun.total}` : pending > 0 ? `${plural(pending, "student")} need${pending === 1 ? "s" : ""} a summary` : "Every summary is up to date"}
           </p>
           <p className="mt-0.5 text-[13px] text-secondary-foreground">
             {busy
@@ -96,8 +97,8 @@ export default function ReportsControls({
                 : "They go out of date when you add notes or grades."}
           </p>
           {busy && (
-            <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-white/80" role="progressbar" aria-label="Summaries made" aria-valuemin={0} aria-valuemax={run.total} aria-valuenow={run.done}>
-              <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${Math.round((run.done / run.total) * 100)}%` }} />
+            <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-white/80" role="progressbar" aria-label="Summaries made" aria-valuemin={0} aria-valuemax={busyRun.total} aria-valuenow={busyRun.done}>
+              <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${Math.round((busyRun.done / busyRun.total) * 100)}%` }} />
             </div>
           )}
           {!busy && run && run.failed > 0 && <p className={cn("mt-1.5", errorText)}>{plural(run.failed, "summary")} could not be made; try those again.</p>}
