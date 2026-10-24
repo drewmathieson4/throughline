@@ -1,38 +1,48 @@
 import { useState } from "react";
+import { Check, Mic } from "lucide-react";
 import type { NoteKind } from "../../worker/db/schema";
-import type { Citation, CitedPoint, Coverage, Gap, GoalStatus, GradeSummary, SynthesisView, TaggedNoteResponse } from "../../worker/api-types";
+import type { Citation, Coverage, Gap, GoalStatus, GradeSummary, SynthesisView, TaggedNoteResponse } from "../../worker/api-types";
 import { api, jsonInit, messageOf } from "../api";
 import { dateFormat, errorText, mmss, plural } from "../ui";
 import { useRecorder } from "../useRecorder";
+import { day } from "./reportsStore";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 // One student's structured summary: a short narrative of the period, then the highlights and
-// themes, each point with its evidence folded away until asked for, and last the gaps, so the
-// teacher reads the whole picture before adding context. The teacher writes the report; this
-// is the brief.
+// themes, each point with its sources under it, and last the gaps, so the teacher reads the
+// whole picture before adding context. The teacher writes the report; this is the brief.
 
 const MAX_ANSWER_MS = 2 * 60 * 1000;
 
 const pct = (n: number) => `${Math.round(n)}%`;
-// A calendar day (YYYY-MM-DD) read as local midnight, so it shows as that day.
-const day = (iso: string) => dateFormat.format(new Date(`${iso.slice(0, 10)}T00:00:00`));
 const shortDay = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
 const monthFormat = new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric" });
 
 const KIND_SHORT: Record<NoteKind, string> = { text: "note", voice: "voice note", student_form: "form", progress_report: "report" };
 
 const LABEL = {
-  well_supported: { text: "Well supported", style: "bg-green-100 text-green-800" },
-  thin: { text: "Thin", style: "bg-amber-100 text-amber-900" },
-  very_thin: { text: "Very thin", style: "bg-red-100 text-red-800" },
+  well_supported: { text: "Well supported", style: "bg-mint text-mint-foreground" },
+  thin: { text: "Thin", style: "bg-sunny text-sunny-foreground" },
+  very_thin: { text: "Very thin", style: "bg-coral text-coral-foreground" },
 } as const;
 
 const GOAL_LABEL: Record<GoalStatus, { text: string; style: string }> = {
-  met: { text: "Met", style: "bg-green-100 text-green-800" },
-  partly: { text: "Partly", style: "bg-amber-100 text-amber-900" },
-  not_yet: { text: "Not yet", style: "bg-red-100 text-red-800" },
-  no_evidence: { text: "No evidence", style: "bg-gray-100 text-gray-600" },
+  met: { text: "Met", style: "bg-mint text-mint-foreground" },
+  partly: { text: "Partly", style: "bg-sunny text-sunny-foreground" },
+  not_yet: { text: "Not yet", style: "bg-coral text-coral-foreground" },
+  no_evidence: { text: "No evidence", style: "bg-secondary text-muted-foreground" },
 };
+
+// Heading ink and card tint per section; see the tints in index.css.
+const SECTION = {
+  highlights: { title: "Highlights", ink: "text-accent-foreground", tint: "bg-tint-highlight" },
+  strengths: { title: "Strengths", ink: "text-mint-foreground", tint: "bg-tint-strength" },
+  growth: { title: "Areas to grow", ink: "text-sunny-foreground", tint: "bg-tint-grow" },
+  change: { title: "Over the period", ink: "text-sky-foreground", tint: "bg-tint-change" },
+} as const;
+
+const sectionHeading = "mb-2.5 text-xs font-extrabold tracking-[0.06em] uppercase";
 
 function coverageLine(c: Coverage): string {
   const sources = Object.entries(c.bySource).map(([k, n]) => `${n} ${KIND_SHORT[k as NoteKind]}${n === 1 ? "" : "s"}`);
@@ -72,75 +82,71 @@ function GradeFacts({ g }: { g: GradeSummary }) {
   );
 }
 
-// The evidence behind a point, folded to a "3 sources" toggle so the points read as a list.
-// Unfolded, a note chip opens its quotes and the grade summary chip the headline numbers. A
-// point resting on one source says so even folded.
+// The sources behind a point, as chips. A note chip opens its quotes below and the grade
+// summary chip the headline numbers; a single grade chip already says everything. A point
+// resting on one source says so.
 function Evidence({ evidence, grades }: { evidence: Citation[]; grades: GradeSummary | null }) {
-  const [unfolded, setUnfolded] = useState(false);
   const [open, setOpen] = useState<number | null>(null);
   const shown = open === null ? null : evidence[open];
   return (
-    <div className="mt-0.5">
-      <button
-        type="button"
-        aria-expanded={unfolded}
-        onClick={() => setUnfolded(!unfolded)}
-        className={`text-xs hover:underline ${evidence.length === 1 ? "text-amber-700" : "text-gray-500"}`}
-      >
-        {unfolded ? "▾" : "▸"} {plural(evidence.length, "source")}
-      </button>
-      {unfolded && (
-        <>
-          <div className="mt-1 flex flex-wrap items-center gap-1">
-            {evidence.map((c, i) => {
-              const expandable = c.type === "note" || (c.type === "grades" && grades);
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  disabled={!expandable}
-                  onClick={() => setOpen(open === i ? null : i)}
-                  className={`rounded-full border px-2 py-0.5 text-xs ${open === i ? "border-gray-900 bg-gray-900 text-white" : "border-gray-300 text-gray-700"} disabled:cursor-default`}
-                >
-                  {chipLabel(c)}
-                </button>
-              );
-            })}
-          </div>
-          {shown && (
-            <div className="mt-1 rounded bg-gray-50 p-2 text-xs text-gray-700">
-              {shown.type === "note" && (
-                <>
-                  <p className="text-gray-500">
-                    {day(shown.notedAt)}
-                    {shown.sourceName ? ` · ${shown.sourceName}` : ""}
-                  </p>
-                  {shown.quotes.map((q, i) => (
-                    <blockquote key={i} className="mt-1 border-l-2 border-gray-300 pl-2 whitespace-pre-wrap">
-                      {q}
-                    </blockquote>
-                  ))}
-                </>
+    <>
+      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+        {evidence.map((c, i) => {
+          const expandable = c.type === "note" || (c.type === "grades" && grades);
+          return (
+            <button
+              key={i}
+              type="button"
+              disabled={!expandable}
+              aria-expanded={expandable ? open === i : undefined}
+              onClick={() => setOpen(open === i ? null : i)}
+              className={cn(
+                "min-h-[30px] rounded-full border px-[11px] text-xs font-bold disabled:cursor-default",
+                open === i ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background text-secondary-foreground enabled:hover:bg-muted",
               )}
-              {shown.type === "grades" && grades && <GradeFacts g={grades} />}
-            </div>
+            >
+              {chipLabel(c)}
+            </button>
+          );
+        })}
+        {evidence.length === 1 && <span className="rounded-full bg-sunny px-[9px] py-[3px] text-[11.5px] font-bold text-sunny-foreground">One source</span>}
+      </div>
+      {shown && (
+        <div className="mt-2.5 rounded-xl border-l-3 border-primary bg-background px-3.5 py-2.5 text-[13.5px] leading-normal text-secondary-foreground">
+          {shown.type === "note" && (
+            <>
+              <p className="text-xs font-semibold text-muted-foreground">
+                {day(shown.notedAt)}
+                {shown.sourceName ? ` · ${shown.sourceName}` : ""}
+              </p>
+              {shown.quotes.map((q, i) => (
+                <blockquote key={i} className="mt-1 whitespace-pre-wrap">
+                  {q}
+                </blockquote>
+              ))}
+            </>
           )}
-        </>
+          {shown.type === "grades" && grades && <GradeFacts g={grades} />}
+        </div>
       )}
-    </div>
+    </>
   );
 }
 
-function Points({ title, points, grades }: { title: string; points: CitedPoint[]; grades: GradeSummary | null }) {
-  if (points.length === 0) return null;
+type Item = { title?: string; text: string; evidence: Citation[] };
+
+function Section({ kind, items, grades }: { kind: keyof typeof SECTION; items: Item[]; grades: GradeSummary | null }) {
+  if (items.length === 0) return null;
+  const { title, ink, tint } = SECTION[kind];
   return (
-    <section className="mt-5">
-      <h4 className="text-sm font-medium text-gray-600">{title}</h4>
-      <ul className="mt-1 space-y-3">
-        {points.map((p, i) => (
-          <li key={i} className="text-sm">
-            {p.point}
-            <Evidence evidence={p.evidence} grades={grades} />
+    <section className="mt-[26px]">
+      <h3 className={cn(sectionHeading, ink)}>{title}</h3>
+      <ul className="flex flex-col gap-2.5">
+        {items.map((it, i) => (
+          <li key={i} className={cn("rounded-[18px] px-4 py-3.5", tint)}>
+            {it.title && <p className="mb-1 text-[15px] font-extrabold">{it.title}</p>}
+            <p className="text-[14.5px] leading-relaxed">{it.text}</p>
+            <Evidence evidence={it.evidence} grades={grades} />
           </li>
         ))}
       </ul>
@@ -185,19 +191,32 @@ function GapItem({ gap, studentId, classId, onRecorded }: { gap: Gap; studentId:
   }
 
   return (
-    <li className="py-2 text-sm">
-      <p>
-        <span className="font-medium">{gap.area}</span>
-        {gap.why && <span className="text-gray-500"> · {gap.why}</span>}
+    <li className="mt-3.5 border-t border-border pt-3.5">
+      <p className="text-[13px]">
+        <span className="font-extrabold">{gap.area}</span>
+        {gap.why && <span className="text-muted-foreground"> · {gap.why}</span>}
       </p>
-      <p className="mt-0.5 text-gray-800">{gap.ask}</p>
-      <div className="mt-1 flex flex-wrap items-center gap-2">
-        {recorder.supported && (
-          <Button type="button" variant="outline" size="sm" disabled={saving} onClick={recorder.recording ? recorder.stop : record}>
-            {saving ? "Saving…" : recorder.recording ? `Stop (${mmss(recorder.elapsedMs)})` : "Record answer"}
-          </Button>
+      <p className="mt-1 text-[15px] leading-normal font-semibold">{gap.ask}</p>
+      <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
+        {saved ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-mint px-3 py-1.5 text-[13px] font-bold text-mint-foreground">
+            <Check className="size-4" aria-hidden />
+            Saved as a voice note
+          </span>
+        ) : (
+          recorder.supported && (
+            <Button
+              type="button"
+              variant={recorder.recording ? "default" : "soft"}
+              className={cn(recorder.recording && "bg-recording hover:bg-recording/90")}
+              disabled={saving}
+              onClick={recorder.recording ? recorder.stop : record}
+            >
+              {recorder.recording ? <span className="size-2.5 animate-pulse rounded-full bg-white" aria-hidden /> : <Mic aria-hidden />}
+              {saving ? "Saving…" : recorder.recording ? `Stop (${mmss(recorder.elapsedMs)})` : "Record answer"}
+            </Button>
+          )
         )}
-        {saved && <span className="text-xs text-green-700">Saved as a voice note</span>}
         {error && <span className={errorText}>{error}</span>}
       </div>
     </li>
@@ -206,7 +225,7 @@ function GapItem({ gap, studentId, classId, onRecorded }: { gap: Gap; studentId:
 
 export default function Summary({
   synthesis,
-  name,
+  firstName,
   classId,
   stale,
   newNotes,
@@ -215,7 +234,7 @@ export default function Summary({
   onRecorded,
 }: {
   synthesis: SynthesisView;
-  name: string;
+  firstName: string;
   classId: string;
   stale: boolean;
   newNotes: number;
@@ -225,73 +244,64 @@ export default function Summary({
 }) {
   const s = synthesis.json;
   const label = LABEL[s.coverage.label];
+  const made = dateFormat.format(new Date(synthesis.createdAt));
   return (
-    <article className="mt-2">
-      <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-xl font-semibold">{name}</h2>
-        <span className="text-sm text-gray-500">
-          {day(synthesis.periodStart)} – {day(synthesis.periodEnd)} · made {dateFormat.format(new Date(synthesis.createdAt))}
-        </span>
-      </div>
+    <>
       {stale && (
-        <div className="mt-2 flex flex-wrap items-center gap-2 rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900">
-          {newNotes > 0 ? `${plural(newNotes, "new note")} since this was made.` : "The evidence has changed since this was made."}
-          <Button type="button" className="ml-auto" disabled={regenerating} onClick={onRegenerate}>
+        <div className="mt-[18px] flex flex-wrap items-center gap-x-3.5 gap-y-2.5 rounded-2xl border border-sunny-line bg-sunny-soft py-3 pr-3 pl-4">
+          <p className="min-w-[160px] flex-1 text-sm font-bold text-sunny-ink">
+            {newNotes > 0 ? `${plural(newNotes, "new note")} since ${made}.` : `The evidence has changed since ${made}.`}
+          </p>
+          <Button type="button" size="sm" className="bg-foreground text-background hover:bg-foreground/90" disabled={regenerating} onClick={onRegenerate}>
+            {regenerating && <span className="size-3 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden />}
             {regenerating ? "Regenerating…" : "Regenerate"}
           </Button>
         </div>
       )}
 
-      <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600">
-        <span className={`rounded px-2 py-0.5 ${label.style}`}>{label.text}</span>
+      <p className="mt-[18px] flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
+        <span className={cn("rounded-full px-2.5 py-1 text-xs font-extrabold", label.style)}>{label.text}</span>
         {coverageLine(s.coverage)}
       </p>
 
-      {s.overview && <p className="mt-4 whitespace-pre-line text-sm leading-relaxed">{s.overview}</p>}
+      {s.overview && <p className="mt-[18px] text-[16.5px] leading-[1.7] whitespace-pre-line">{s.overview}</p>}
 
-      {s.highlights.length > 0 && (
-        <section className="mt-5">
-          <h4 className="text-sm font-medium text-gray-600">Highlights</h4>
-          <ul className="mt-1 space-y-3">
-            {s.highlights.map((h, i) => (
-              <li key={i} className="text-sm">
-                <span className="font-medium">{h.title}.</span> {h.story}
-                <Evidence evidence={h.evidence} grades={s.grades} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      <Points title="Strengths" points={s.strengths} grades={s.grades} />
-      <Points title="Areas to grow" points={s.growth} grades={s.grades} />
-      <Points title="Over the period" points={s.change} grades={s.grades} />
+      <Section kind="highlights" items={s.highlights.map((h) => ({ title: h.title, text: h.story, evidence: h.evidence }))} grades={s.grades} />
+      <Section kind="strengths" items={s.strengths.map((p) => ({ text: p.point, evidence: p.evidence }))} grades={s.grades} />
+      <Section kind="growth" items={s.growth.map((p) => ({ text: p.point, evidence: p.evidence }))} grades={s.grades} />
+      <Section kind="change" items={s.change.map((p) => ({ text: p.point, evidence: p.evidence }))} grades={s.grades} />
 
       {s.goals.length > 0 && (
-        <section className="mt-5">
-          <h4 className="text-sm font-medium text-gray-600">Course goals</h4>
-          <ul className="mt-1 space-y-3">
+        <section className="mt-[26px]">
+          <h3 className={cn(sectionHeading, "text-muted-foreground")}>Course goals</h3>
+          <ul>
             {s.goals.map((g, i) => (
-              <li key={i} className="text-sm">
-                <span className={`mr-2 rounded px-1.5 py-0.5 text-xs ${GOAL_LABEL[g.status].style}`}>{GOAL_LABEL[g.status].text}</span>
-                {g.goal}
-                {g.point && <p className="mt-0.5 text-gray-700">{g.point}</p>}
-                {g.evidence.length > 0 && <Evidence evidence={g.evidence} grades={s.grades} />}
+              <li key={i} className="flex gap-3 border-t border-muted py-3">
+                <span className={cn("inline-flex h-[26px] min-w-[86px] flex-none items-center justify-center rounded-full px-2.5 text-xs font-extrabold", GOAL_LABEL[g.status].style)}>
+                  {GOAL_LABEL[g.status].text}
+                </span>
+                <div className="min-w-0">
+                  <p className="mt-0.5 text-[14.5px] font-bold">{g.goal}</p>
+                  {g.point && <p className="mt-1 text-[13.5px] leading-normal text-secondary-foreground">{g.point}</p>}
+                  {g.evidence.length > 0 && <Evidence evidence={g.evidence} grades={s.grades} />}
+                </div>
               </li>
             ))}
           </ul>
         </section>
       )}
+
       {s.gaps.length > 0 && (
-        <section className="mt-8 rounded border border-gray-200 p-3">
-          <h3 className="text-sm font-medium">Where more context would help</h3>
-          <p className="mt-0.5 text-xs text-gray-500">Answer out loud and it is saved as a voice note about {name.split(" ")[0]}; then regenerate.</p>
-          <ul className="mt-1 divide-y divide-gray-100">
+        <section className="mt-[26px] rounded-[20px] border-2 border-ring/50 bg-field p-[18px]">
+          <h3 className="text-base font-extrabold">Where more context would help</h3>
+          <p className="mt-1 text-[13px] text-muted-foreground">Answer out loud. It's saved as a voice note about {firstName}; then regenerate.</p>
+          <ul>
             {s.gaps.map((g, i) => (
               <GapItem key={i} gap={g} studentId={synthesis.studentId} classId={classId} onRecorded={onRecorded} />
             ))}
           </ul>
         </section>
       )}
-    </article>
+    </>
   );
 }

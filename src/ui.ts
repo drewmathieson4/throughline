@@ -1,8 +1,3 @@
-// Class strings for the plain form controls that are not yet the Input and Label components
-// (the Reports date range, until ui-reports); buttons are the Button component in src/components/ui.
-export const input =
-  "min-h-11 rounded-xl border border-input bg-background px-3.5 py-2 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
-export const fieldLabel = "flex flex-col gap-1.5 text-[13px] font-semibold text-secondary-foreground";
 export const errorText = "text-sm text-destructive";
 
 export const dateTimeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });

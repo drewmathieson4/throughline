@@ -46,6 +46,10 @@
   --color-sunny-ink: var(--sunny-ink);
   --color-field: var(--field);
   --color-recording: var(--recording);
+  --color-tint-highlight: var(--tint-highlight);
+  --color-tint-strength: var(--tint-strength);
+  --color-tint-grow: var(--tint-grow);
+  --color-tint-change: var(--tint-change);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -90,7 +94,9 @@
 /* White surfaces, cool greys, one cobalt. Status colours: mint is good or recent, sunny is
    unsure or getting stale, coral is missing or quiet. Each has a soft fill, a readable ink
    for text on that fill, and a stronger dot. Sky marks a note from a document; the paler
-   sunny pair is the "Who is…?" banner, so it reads as a question rather than a warning. */
+   sunny pair is the "Who is…?" banner, so it reads as a question rather than a warning.
+   The four pale tints are the report's sections: highlights, strengths, areas to grow,
+   change over the period. */
 :root {
   --background: #ffffff;
   --foreground: #14161c;
@@ -126,6 +132,10 @@
   --sunny-ink: #5c3d00;
   --field: #f8f9fb;
   --recording: #d92d20;
+  --tint-highlight: #f3f6ff;
+  --tint-strength: #f0fbf6;
+  --tint-grow: #fff8ec;
+  --tint-change: #f1f7ff;
   --radius: 0.75rem;
 }
 

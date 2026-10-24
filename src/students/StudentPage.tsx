@@ -95,7 +95,7 @@ export default function StudentPage({ cls, id }: { cls: ClassRow; id: string }) 
           </div>
         </div>
         <div className="flex gap-2">
-          <Link to={`/reports/${cls.id}`} className={buttonVariants({ variant: "soft" })}>
+          <Link to={`/reports/${cls.id}/${student.id}`} className={buttonVariants({ variant: "soft" })}>
             <Sparkles className="size-4" aria-hidden />
             View report
           </Link>

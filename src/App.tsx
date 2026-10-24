@@ -9,10 +9,9 @@ import ClassView, { StudentView } from "./classes/ClassView";
 import { NotesProvider } from "./notes/NotesProvider";
 import { useNotes } from "./notes/notesStore";
 import NotesView from "./notes/NotesView";
-import ReportsPage from "./reports/ReportsPage";
+import { ReportsProvider } from "./reports/ReportsProvider";
+import ReportsView from "./reports/ReportsView";
 import { errorText } from "./ui";
-import { Avatar } from "@/components/Avatar";
-import { PageTitle } from "@/components/page";
 import { cn } from "@/lib/utils";
 
 const tabs: { to: string; label: string; icon: LucideIcon }[] = [
@@ -31,23 +30,6 @@ function useNeedsBadge(to: string) {
   return to === "/notes" && needsCount > 0 ? needsCount : 0;
 }
 const needsLabel = (n: number) => `, ${n} ${n === 1 ? "needs" : "need"} you`;
-
-const STORED_CLASS_KEY = "throughline.classId";
-// Storage can be blocked (private mode, embedded pages); remembering the class is a nicety, not a need.
-const readStoredClass = () => {
-  try {
-    return localStorage.getItem(STORED_CLASS_KEY);
-  } catch {
-    return null;
-  }
-};
-const storeClass = (id: string) => {
-  try {
-    localStorage.setItem(STORED_CLASS_KEY, id);
-  } catch {
-    /* ignore */
-  }
-};
 
 function Wordmark() {
   return (
@@ -128,33 +110,6 @@ function BottomTab({ to, label, icon: Icon }: (typeof tabs)[number]) {
   );
 }
 
-// The only class switcher in the app: notes are not filed by class, and Classes picks a class
-// by its card.
-function ReportsHeader({ classes, current }: { classes: ClassRow[]; current: string }) {
-  const { colourOf } = useNotes();
-  return (
-    <>
-      <PageTitle eyebrow="The brief for each student's report, built from your notes and grades">Reports</PageTitle>
-      <nav aria-label="Class" className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 py-0.5 [scrollbar-width:none] md:mx-0 md:mt-[22px] md:flex-wrap md:px-0">
-        {classes.map((c) => (
-          <Link
-            key={c.id}
-            to={`/reports/${c.id}`}
-            aria-current={c.id === current ? "page" : undefined}
-            className={cn(
-              "inline-flex min-h-[42px] flex-none items-center gap-2 rounded-full border pr-4 pl-1.5 text-sm font-bold",
-              c.id === current ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background text-secondary-foreground hover:bg-muted",
-            )}
-          >
-            <Avatar colour={colourOf(c.id)} name={c.name} size="sm" className="size-[30px] text-[10.5px]" />
-            {c.name}
-          </Link>
-        ))}
-      </nav>
-    </>
-  );
-}
-
 function App() {
   const [classes, setClasses] = useState<ClassRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -164,76 +119,45 @@ function App() {
     loadClasses();
   }, []);
 
-  // The class Reports shows. It is kept here as well as in the URL because the Reports page
-  // stays mounted while another tab shows (so a class run keeps going), and because /reports
-  // goes back to the last class picked. A URL naming a class that no longer exists is
-  // never adopted; the route below sends it on to this one.
+  // Reports is wider, for the roster and the open report side by side.
   const onReports = useMatch("/reports/*") !== null;
-  const urlReportsId = useMatch("/reports/:classId")?.params.classId;
-  const [reportsId, setReportsId] = useState(readStoredClass);
-  if (urlReportsId && urlReportsId !== reportsId && classes?.some((c) => c.id === urlReportsId)) setReportsId(urlReportsId);
-  const reportsCls = classes?.find((c) => c.id === reportsId) ?? classes?.[0] ?? null;
-  const shownReportsId = reportsCls?.id;
-  useEffect(() => {
-    if (shownReportsId) storeClass(shownReportsId);
-  }, [shownReportsId]);
-  const unknownReportsUrl = !!urlReportsId && !!classes && !classes.some((c) => c.id === urlReportsId);
   // The phone's Record screen fills the width and height itself (on a laptop /notes is the feed).
   const recordHome = useMatch("/notes") !== null;
 
   return (
     <NotesProvider classes={classes ?? NO_CLASSES}>
-      <div className="min-h-svh md:flex">
-        <SideNav />
-        <main className={cn("min-w-0 flex-1 md:pb-0", !recordHome && "pb-24")}>
-          <div
-            className={cn(
-              "mx-auto px-4 pt-[18px] pb-7 md:px-12 md:pt-10 md:pb-[72px]",
-              onReports ? "max-w-[1160px]" : "max-w-[780px]",
-              recordHome && "max-md:max-w-none max-md:p-0",
-            )}
-          >
-            {error && <p className={`mb-4 ${errorText}`}>{error}</p>}
-            {classes === null ? (
-              !error && <p className="text-sm text-muted-foreground">Loading…</p>
-            ) : (
-              <Routes>
-                <Route path="/" element={<Navigate to="/notes" replace />} />
-                <Route path="/notes/*" element={<NotesView classes={classes} />} />
-                <Route path="/classes" element={<ClassesPage classes={classes} onCreated={(c) => setClasses((prev) => [...(prev ?? []), c])} />} />
-                <Route path="/classes/:classId" element={<ClassView classes={classes} onClassesChanged={loadClasses} />} />
-                <Route path="/classes/:classId/students/:studentId" element={<StudentView classes={classes} />} />
-                {/* The Reports page itself renders below, outside the routes, so it stays mounted. */}
-                <Route path="/reports" element={reportsCls && <Navigate to={`/reports/${reportsCls.id}`} replace />} />
-                <Route path="/reports/:classId" element={unknownReportsUrl && <Navigate to="/reports" replace />} />
-                <Route path="*" element={<Navigate to="/notes" replace />} />
-              </Routes>
-            )}
+      <ReportsProvider>
+        <div className="min-h-svh md:flex">
+          <SideNav />
+          <main className={cn("min-w-0 flex-1 md:pb-0", !recordHome && "pb-24")}>
+            <div
+              className={cn(
+                "mx-auto px-4 pt-[18px] pb-7 md:px-12 md:pt-10 md:pb-[72px]",
+                onReports ? "max-w-[1160px]" : "max-w-[780px]",
+                recordHome && "max-md:max-w-none max-md:p-0",
+              )}
+            >
+              {error && <p className={`mb-4 ${errorText}`}>{error}</p>}
+              {classes === null ? (
+                !error && <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : (
+                <Routes>
+                  <Route path="/" element={<Navigate to="/notes" replace />} />
+                  <Route path="/notes/*" element={<NotesView classes={classes} />} />
+                  <Route path="/classes" element={<ClassesPage classes={classes} onCreated={(c) => setClasses((prev) => [...(prev ?? []), c])} />} />
+                  <Route path="/classes/:classId" element={<ClassView classes={classes} onClassesChanged={loadClasses} />} />
+                  <Route path="/classes/:classId/students/:studentId" element={<StudentView classes={classes} />} />
+                  <Route path="/reports/:classId?/:studentId?" element={<ReportsView classes={classes} />} />
+                  <Route path="*" element={<Navigate to="/notes" replace />} />
+                </Routes>
+              )}
 
-            {reportsCls && classes && (
-              <div hidden={!onReports}>
-                <ReportsHeader classes={classes} current={reportsCls.id} />
-                <ReportsPage key={reportsCls.id} cls={reportsCls} active={onReports} />
-              </div>
-            )}
-            {onReports && classes?.length === 0 && (
-              <section>
-                <PageTitle>Reports</PageTitle>
-                <p className="mt-2 text-[15px] text-muted-foreground">
-                  Reports are made per class.{" "}
-                  <Link to="/classes" className="font-bold text-accent-foreground hover:underline">
-                    Create a class
-                  </Link>{" "}
-                  to start.
-                </p>
-              </section>
-            )}
-
-            {!recordHome && <p className="mt-10 text-center text-xs text-muted-foreground md:hidden">{DEMO_NOTICE}</p>}
-          </div>
-        </main>
-        <TabBar />
-      </div>
+              {!recordHome && <p className="mt-10 text-center text-xs text-muted-foreground md:hidden">{DEMO_NOTICE}</p>}
+            </div>
+          </main>
+          <TabBar />
+        </div>
+      </ReportsProvider>
     </NotesProvider>
   );
 }
