@@ -131,6 +131,7 @@ function BottomTab({ to, label, icon: Icon }: (typeof tabs)[number]) {
 // The only class switcher in the app: notes are not filed by class, and Classes picks a class
 // by its card.
 function ReportsHeader({ classes, current }: { classes: ClassRow[]; current: string }) {
+  const { colourOf } = useNotes();
   return (
     <>
       <PageTitle eyebrow="The brief for each student's report, built from your notes and grades">Reports</PageTitle>
@@ -145,7 +146,7 @@ function ReportsHeader({ classes, current }: { classes: ClassRow[]; current: str
               c.id === current ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background text-secondary-foreground hover:bg-muted",
             )}
           >
-            <Avatar id={c.id} name={c.name} size="sm" className="size-[30px] text-[10.5px]" />
+            <Avatar colour={colourOf(c.id)} name={c.name} size="sm" className="size-[30px] text-[10.5px]" />
             {c.name}
           </Link>
         ))}

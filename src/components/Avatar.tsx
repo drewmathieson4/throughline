@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { colourFor, initialsOf } from "@/lib/avatar";
+import { initialsOf, type Colour } from "@/lib/avatar";
 
 const sizes = {
   sm: "size-7 text-[11px]",
@@ -8,8 +8,9 @@ const sizes = {
 };
 
 // Decorative: the name is always written next to it, so screen readers skip the initials.
-export function Avatar({ id, name, size = "md", square = false, className }: { id: string; name: string; size?: keyof typeof sizes; square?: boolean; className?: string }) {
-  const { bg, fg } = colourFor(id);
+// `colour` is the class's (the notes store's colourOf), for a class and for its students alike.
+export function Avatar({ colour, name, size = "md", square = false, className }: { colour: Colour; name: string; size?: keyof typeof sizes; square?: boolean; className?: string }) {
+  const { bg, fg } = colour;
   return (
     <span
       aria-hidden

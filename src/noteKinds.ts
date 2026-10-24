@@ -2,12 +2,13 @@ import { ClipboardList, FileText, Mic, PenLine, type LucideIcon } from "lucide-r
 import type { Note, NoteKind } from "../worker/db/schema";
 import { dateFormat, dateTimeFormat } from "./ui";
 
-// Where a note came from, as a coloured tile and a word.
-export const kinds: Record<NoteKind, { label: string; icon: LucideIcon; tile: string }> = {
-  text: { label: "Note", icon: PenLine, tile: "bg-accent text-accent-foreground" },
-  voice: { label: "Voice note", icon: Mic, tile: "bg-coral text-coral-foreground" },
-  progress_report: { label: "From a document", icon: FileText, tile: "bg-sky text-sky-foreground" },
-  student_form: { label: "Student form", icon: ClipboardList, tile: "bg-mint text-mint-foreground" },
+// Where a note came from, as a coloured tile and a word; `dot` is the same colour for the
+// student page's timeline.
+export const kinds: Record<NoteKind, { label: string; icon: LucideIcon; tile: string; dot: string }> = {
+  text: { label: "Note", icon: PenLine, tile: "bg-accent text-accent-foreground", dot: "bg-primary" },
+  voice: { label: "Voice note", icon: Mic, tile: "bg-coral text-coral-foreground", dot: "bg-coral-dot" },
+  progress_report: { label: "From a document", icon: FileText, tile: "bg-sky text-sky-foreground", dot: "bg-sky-foreground" },
+  student_form: { label: "Student form", icon: ClipboardList, tile: "bg-mint text-mint-foreground", dot: "bg-mint-dot" },
 };
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { timeStyle: "short" });

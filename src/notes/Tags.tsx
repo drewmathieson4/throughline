@@ -7,7 +7,7 @@ import { api, jsonInit } from "../api";
 import { errorText } from "../ui";
 import { useAction } from "../useAction";
 import { Avatar } from "@/components/Avatar";
-import { colourFor, initialsOf } from "@/lib/avatar";
+import { initialsOf } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
 import { useNotes, type Person } from "./notesStore";
 import StudentPicker from "./StudentPicker";
@@ -21,7 +21,7 @@ const collapse = (s: string) => s.replace(/\s+/g, " ").trim();
 // mention's candidates are in different classes. `compact` is the phone's Saved sheet: no
 // quotes, and a heading over the tags.
 export default function Tags({ note, compact = false }: { note: NoteWithTags; compact?: boolean }) {
-  const { people, classNames, roster, update } = useNotes();
+  const { people, classNames, roster, update, colourOf } = useNotes();
   const [picking, setPicking] = useState(false);
   // Every route here answers with the note as it now stands; the list swaps it in.
   const { run, busy, error } = useAction(async (path: string, init: RequestInit, done: (n: NoteWithTags) => string) => {
@@ -38,7 +38,7 @@ export default function Tags({ note, compact = false }: { note: NoteWithTags; co
   const pickable = roster
     .filter((s) => !s.leftAt && !tagged.has(s.id))
     .sort((a, b) => Number(b.classId === note.classId) - Number(a.classId === note.classId) || a.lastName.localeCompare(b.lastName))
-    .map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}`, className: classNames.get(s.classId) ?? "" }));
+    .map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}`, classId: s.classId, className: classNames.get(s.classId) ?? "" }));
 
   const untagged = note.students.length === 0 && note.mentions.length === 0;
   const classNote = (n: NoteWithTags) => (n.classId && n.students.length === 0 ? " · kept as a class note" : "");
@@ -61,7 +61,7 @@ export default function Tags({ note, compact = false }: { note: NoteWithTags; co
                     onClick={() => run(`/api/notes/${note.id}/mentions/${m.id}/assign`, jsonInit("POST", { studentId: id }), () => `Tagged to ${name}`)}
                     className="inline-flex min-h-10 items-center gap-2 rounded-full border border-sunny-line bg-background pr-3.5 pl-[5px] text-[13.5px] font-semibold text-secondary-foreground hover:bg-muted disabled:opacity-50"
                   >
-                    <Avatar id={id} name={people.get(id)?.name ?? "?"} className="size-[30px] text-[11px]" />
+                    <Avatar colour={colourOf(people.get(id)?.classId)} name={people.get(id)?.name ?? "?"} className="size-[30px] text-[11px]" />
                     {name}
                   </button>
                 );
@@ -84,7 +84,7 @@ export default function Tags({ note, compact = false }: { note: NoteWithTags; co
         {note.students.map((s) => {
           const p = people.get(s.studentId);
           const name = label(p, note.classId === null ? spans : p?.classId !== note.classId);
-          const { bg, fg } = colourFor(s.studentId);
+          const { bg, fg } = colourOf(p?.classId);
           const chip = (
             <>
               <span className="inline-flex size-[26px] items-center justify-center rounded-full bg-background text-[10.5px] font-extrabold">{initialsOf(p?.name ?? "?")}</span>

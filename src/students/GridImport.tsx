@@ -1,30 +1,32 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
+import { Upload } from "lucide-react";
 import type { SkippedRow } from "../../worker/api-types";
 import FilePicker from "../FilePicker";
-import { input } from "../ui";
+import { errorText } from "../ui";
 import { csvToGrid } from "./csv";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 const MAX_LINES = 600;
 const ACCEPT = ".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain";
 
 // A file button and a paste box that both turn into a grid of cells: the roster and the
-// grade book import share it. onGrid does the request; a thrown error is the caller's to
-// show (it runs inside their useAction). The paste box closes after a successful import.
+// grade book import share it, inside their Add window. onGrid does the request; a thrown
+// error is the caller's to show (it runs inside their useAction), and lands under the box.
 export default function GridImport({
-  label,
-  pasteLabel,
+  fileLabel,
   placeholder,
   busy,
+  error,
   onGrid,
 }: {
-  label: ReactNode;
-  pasteLabel: string;
+  fileLabel: string;
   placeholder: string;
   busy: boolean;
+  error: string | null;
   onGrid: (read: () => Promise<string[][]>) => Promise<boolean>;
 }) {
-  const [pasting, setPasting] = useState(false);
   const [text, setText] = useState("");
 
   // Reading the file happens inside the caller's action so a failed read surfaces there too.
@@ -35,33 +37,24 @@ export default function GridImport({
       if (grid.length > MAX_LINES) throw new Error(`That has ${grid.length} lines; the limit is ${MAX_LINES}.`);
       return grid;
     };
-    if (await onGrid(read)) {
-      setText("");
-      setPasting(false);
-    }
+    if (await onGrid(read)) setText("");
   };
 
   return (
-    <>
-      <div className="flex flex-wrap items-center gap-3">
-        <FilePicker accept={ACCEPT} disabled={busy} onFile={run}>
-          {busy ? "Importing…" : label}
-        </FilePicker>
-        <button type="button" className="text-sm text-gray-500 hover:underline" onClick={() => setPasting((p) => !p)}>
-          {pasting ? "Hide paste box" : pasteLabel}
-        </button>
-      </div>
-      {pasting && (
-        <div className="mt-2 flex flex-col gap-2">
-          <textarea aria-label={pasteLabel} rows={5} className={`w-full font-mono ${input}`} value={text} onChange={(e) => setText(e.target.value)} placeholder={placeholder} />
-          <div>
-            <Button type="button" disabled={busy || !text.trim()} onClick={() => run(text)}>
-              {busy ? "Importing…" : "Import"}
-            </Button>
-          </div>
-        </div>
-      )}
-    </>
+    <div className="mt-4 flex flex-col gap-3">
+      <FilePicker accept={ACCEPT} disabled={busy} onFile={run} className="h-11 justify-center text-[15px] font-bold">
+        <Upload className="size-4" aria-hidden />
+        {busy ? "Importing…" : fileLabel}
+      </FilePicker>
+      <Label>
+        Or paste from a spreadsheet
+        <Textarea rows={5} className="min-h-32 font-mono text-[13px] md:text-[13px]" value={text} onChange={(e) => setText(e.target.value)} placeholder={placeholder} />
+      </Label>
+      {error && <p className={errorText}>{error}</p>}
+      <Button type="button" className="self-end" disabled={busy || !text.trim()} onClick={() => run(text)}>
+        {busy ? "Importing…" : "Import"}
+      </Button>
+    </div>
   );
 }
 
@@ -70,12 +63,12 @@ export default function GridImport({
 export function SkippedLines({ skipped }: { skipped: SkippedRow[] }) {
   if (skipped.length === 0) return null;
   return (
-    <details className="mt-1 text-amber-700">
-      <summary>Skipped lines</summary>
-      <ul className="ml-4 list-disc">
+    <details className="mt-2 text-[13.5px]">
+      <summary className="cursor-pointer font-bold text-sunny-foreground">{skipped.length === 1 ? "1 skipped line" : `${skipped.length} skipped lines`}</summary>
+      <ul className="mt-1.5 ml-4 list-disc text-secondary-foreground">
         {skipped.map((s, i) => (
           <li key={i}>
-            line {s.line}: {s.cells.filter(Boolean).join(", ") || "(blank)"} <span className="text-gray-500">({s.reason})</span>
+            line {s.line}: {s.cells.filter(Boolean).join(", ") || "(blank)"} <span className="text-muted-foreground">({s.reason})</span>
           </li>
         ))}
       </ul>

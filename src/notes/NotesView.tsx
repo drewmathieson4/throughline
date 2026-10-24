@@ -8,7 +8,6 @@ import NoteItem from "../NoteItem";
 import { errorText } from "../ui";
 import { BackLink, PageTitle } from "@/components/page";
 import { Button } from "@/components/ui/button";
-import { colourFor } from "@/lib/avatar";
 import { useIsLaptop } from "@/lib/useIsLaptop";
 import { cn } from "@/lib/utils";
 import CaptureCard from "./CaptureCard";
@@ -40,7 +39,7 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
   const onFeed = useMatch("/notes/feed") !== null;
   const home = !isLaptop && !onFeed;
   const navigate = useNavigate();
-  const { notes, error, people, needsCount } = useNotes();
+  const { notes, error, people, needsCount, colourOf } = useNotes();
   const [needsOnly, setNeedsOnly] = useState(false);
   const [classFilter, setClassFilter] = useState("");
   const [studentFilter, setStudentFilter] = useState("");
@@ -107,7 +106,7 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
   const filterable = [...people.entries()]
     .filter(([, p]) => !p.left && (!classFilter || p.classId === classFilter))
     .sort(([, a], [, b]) => a.name.localeCompare(b.name))
-    .map(([id, p]) => ({ id, name: p.name, className: classes.find((c) => c.id === p.classId)?.name ?? "" }));
+    .map(([id, p]) => ({ id, name: p.name, classId: p.classId, className: classes.find((c) => c.id === p.classId)?.name ?? "" }));
 
   return (
     <section>
@@ -159,7 +158,7 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
                 fresh={n.id === freshId}
                 badge={
                   n.classId && (
-                    <span className="truncate rounded-full px-2.5 py-[3px] text-xs font-bold" style={{ background: colourFor(n.classId).bg, color: colourFor(n.classId).fg }}>
+                    <span className="truncate rounded-full px-2.5 py-[3px] text-xs font-bold" style={{ background: colourOf(n.classId).bg, color: colourOf(n.classId).fg }}>
                       {classes.find((c) => c.id === n.classId)?.name ?? "Class"}
                     </span>
                   )

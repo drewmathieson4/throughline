@@ -4,12 +4,15 @@ import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { ClassRow } from "../../worker/db/schema";
 import { api, jsonInit } from "../api";
+import { useNotes } from "../notes/notesStore";
+import { errorText, plural } from "../ui";
+import { useAction } from "../useAction";
+import { termLabel } from "./term";
 import { Avatar } from "@/components/Avatar";
 import { PageTitle } from "@/components/page";
 import { Button } from "@/components/ui/button";
-import { errorText, fieldLabel, input } from "../ui";
-import { useAction } from "../useAction";
-import { termLabel } from "./term";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 function NewClassForm({ onCreated, onCancel }: { onCreated: (c: ClassRow) => void; onCancel?: () => void }) {
   const [name, setName] = useState("");
@@ -28,19 +31,19 @@ function NewClassForm({ onCreated, onCancel }: { onCreated: (c: ClassRow) => voi
       className="flex flex-col gap-3 rounded-2xl border-2 border-ring/60 bg-card p-[18px]"
     >
       <p className="text-base font-extrabold">New class</p>
-      <label className={fieldLabel}>
+      <Label>
         Class name
-        <input className={input} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Period 8 · Journalism" />
-      </label>
+        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Period 8 · Journalism" />
+      </Label>
       <div className="grid grid-cols-2 gap-2.5">
-        <label className={fieldLabel}>
+        <Label>
           Term starts
-          <input type="date" className={input} value={termStart} onChange={(e) => setTermStart(e.target.value)} />
-        </label>
-        <label className={fieldLabel}>
+          <Input type="date" value={termStart} onChange={(e) => setTermStart(e.target.value)} />
+        </Label>
+        <Label>
           Term ends
-          <input type="date" className={input} value={termEnd} onChange={(e) => setTermEnd(e.target.value)} />
-        </label>
+          <Input type="date" value={termEnd} onChange={(e) => setTermEnd(e.target.value)} />
+        </Label>
       </div>
       {error && <p className={errorText}>{error}</p>}
       <div className="flex justify-end gap-2">
@@ -54,6 +57,38 @@ function NewClassForm({ onCreated, onCancel }: { onCreated: (c: ClassRow) => voi
         </Button>
       </div>
     </form>
+  );
+}
+
+// A class at a glance: who is in it (from the notes store, so no request of its own) and how
+// many of its notes have a name to settle.
+function ClassCard({ cls }: { cls: ClassRow }) {
+  const { roster, notes, colourOf } = useNotes();
+  const students = roster.filter((s) => s.classId === cls.id && !s.leftAt);
+  const unsure = notes?.filter((n) => n.classId === cls.id && n.mentions.length > 0).length ?? 0;
+  return (
+    <Link to={`/classes/${cls.id}`} className="flex flex-col gap-4 rounded-[22px] border border-border bg-card p-[18px] shadow-card transition-colors hover:border-ring/60">
+      <span className="flex items-center gap-3.5">
+        <Avatar colour={colourOf(cls.id)} name={cls.name} size="lg" square />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-lg font-extrabold tracking-[-0.01em]">{cls.name}</span>
+          <span className="mt-0.5 block text-[13px] text-muted-foreground">{termLabel(cls)}</span>
+        </span>
+        <ChevronRight className="size-5 text-[#9AA1AE]" aria-hidden />
+      </span>
+      <span className="flex items-center gap-2.5">
+        {students.length > 0 && (
+          <span className="inline-flex pl-2">
+            {students.slice(0, 5).map((s) => (
+              <Avatar key={s.id} colour={colourOf(cls.id)} name={`${s.firstName} ${s.lastName}`} size="sm" className="-ml-2 size-[30px] border-2 border-card text-[10.5px]" />
+            ))}
+          </span>
+        )}
+        <span className="text-[13px] font-semibold text-secondary-foreground">{students.length > 0 ? plural(students.length, "student") : "No students yet"}</span>
+        <span className="flex-1" />
+        {unsure > 0 && <span className="rounded-full bg-sunny px-2.5 py-0.5 text-xs font-bold text-sunny-foreground">{unsure} unsure</span>}
+      </span>
+    </Link>
   );
 }
 
@@ -73,22 +108,11 @@ export default function ClassesPage({ classes, onCreated }: { classes: ClassRow[
 
   return (
     <section>
-      <PageTitle>Classes</PageTitle>
+      <PageTitle eyebrow={none ? undefined : `${classes.length} ${classes.length === 1 ? "class" : "classes"}`}>Classes</PageTitle>
       {none && <p className="mt-2 text-[15px] text-muted-foreground">Create your first class, then add its students and course materials.</p>}
       <div className="mt-5 grid gap-3.5 md:grid-cols-2">
         {classes.map((c) => (
-          <Link
-            key={c.id}
-            to={`/classes/${c.id}`}
-            className="flex min-h-[120px] items-center gap-3.5 rounded-2xl border border-border bg-card p-[18px] shadow-card transition-colors hover:border-ring/60"
-          >
-            <Avatar id={c.id} name={c.name} size="lg" square />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-lg font-extrabold tracking-[-0.01em]">{c.name}</span>
-              <span className="mt-0.5 block text-[13px] text-muted-foreground">{termLabel(c)}</span>
-            </span>
-            <ChevronRight className="size-5 text-[#9AA1AE]" aria-hidden />
-          </Link>
+          <ClassCard key={c.id} cls={c} />
         ))}
         {none || creating ? (
           <NewClassForm onCreated={created} onCancel={none ? undefined : () => setCreating(false)} />

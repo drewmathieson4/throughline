@@ -1,75 +1,68 @@
-import { useState } from "react";
+import { Link } from "react-router";
 import type { ImportedClass, RosterImportResult } from "../../worker/api-types";
 import { api, jsonInit } from "../api";
-import { errorText, plural } from "../ui";
+import { plural } from "../ui";
 import { useAction } from "../useAction";
 import GridImport, { SkippedLines } from "./GridImport";
+import { rosterCounts } from "./importText";
 
 // Pick a roster file, or paste names, and they are imported on the spot: no preview, no
 // column form. The Worker finds the students; the summary says what it did, and anything it
-// got wrong is fixed on the students page.
+// got wrong is fixed on the student's page.
 export default function ImportRoster({ classId, onImported }: { classId: string; onImported: (result: RosterImportResult) => void }) {
-  const [result, setResult] = useState<RosterImportResult | null>(null);
   const { run, busy, error } = useAction(async (read: () => Promise<string[][]>) => {
     const grid = await read();
     const r = await api<RosterImportResult>("/api/students/import", jsonInit("POST", { classId, grid }));
-    setResult(r);
+    if (r.source === "none") throw new Error("Couldn't find student names in that. Paste names one per line, or add students one at a time.");
     onImported(r);
   });
 
   return (
-    <div className="mt-6">
-      <GridImport
-        label="Import roster file"
-        pasteLabel="or paste names"
-        placeholder={"One student per line, or paste cells from a spreadsheet:\nTamsin Brook\nQuill, Avery"}
-        busy={busy}
-        onGrid={run}
-      />
-      {error && <p className={`mt-2 ${errorText}`}>{error}</p>}
-      {result && <Summary result={result} classId={classId} />}
-    </div>
+    <GridImport
+      fileLabel="Choose a roster file"
+      placeholder={"One student per line, or cells from a spreadsheet:\nTamsin Brook\nQuill, Avery"}
+      busy={busy}
+      error={error}
+      onGrid={run}
+    />
   );
 }
 
-function Summary({ result, classId }: { result: RosterImportResult; classId: string }) {
-  const added = result.classes.reduce((n, k) => n + k.added.length, 0);
-  const existing = result.classes.reduce((n, k) => n + k.existing.length, 0);
-  if (result.source === "none") {
-    return <p className="mt-3 text-sm text-amber-700">Couldn't find student names in that. Add them below, or paste names one per line.</p>;
-  }
-  const elsewhere = result.classes.some((k) => k.id !== classId);
+export function RosterSummary({ result, classId }: { result: RosterImportResult; classId: string }) {
+  const { added, existing } = rosterCounts(result);
   return (
-    <section role="status" className="mt-3 text-sm">
-      <p>
+    <>
+      <p className="font-bold">
         Added {plural(added, "student")}
         {existing > 0 && `, ${existing} already enrolled`}
         {result.skipped.length > 0 && `, ${plural(result.skipped.length, "line")} skipped`}.
-        {elsewhere && " Pick a class at the top to see them."}
       </p>
       {result.classes.map((k) => (
-        <ClassSummary key={k.id} cls={k} showName={result.classes.length > 1 || k.id !== classId} />
+        <ClassSummary key={k.id} cls={k} elsewhere={result.classes.length > 1 || k.id !== classId} />
       ))}
       <SkippedLines skipped={result.skipped} />
-    </section>
+    </>
   );
 }
 
-function ClassSummary({ cls, showName }: { cls: ImportedClass; showName: boolean }) {
+// A file that names other classes splits across them; those get a link and their name.
+function ClassSummary({ cls, elsewhere }: { cls: ImportedClass; elsewhere: boolean }) {
   if (cls.added.length === 0) return null;
   return (
-    <div className="mt-1">
-      {showName && (
-        <p className="font-medium">
-          {cls.name}
-          {cls.created && <span className="font-normal text-gray-500"> (new class)</span>}
+    <div className="mt-2">
+      {elsewhere && (
+        <p className="font-semibold">
+          <Link to={`/classes/${cls.id}`} className="text-accent-foreground hover:underline">
+            {cls.name}
+          </Link>
+          {cls.created && <span className="font-normal text-muted-foreground"> (new class)</span>}
         </p>
       )}
-      <ul className="ml-4 list-disc text-gray-700">
+      <ul className="mt-1 ml-4 list-disc text-secondary-foreground">
         {cls.added.map((s) => (
           <li key={`${s.firstName} ${s.lastName}`}>
             {s.firstName} {s.lastName}
-            {s.aliases.length > 0 && <span className="text-gray-500"> (goes by {s.aliases.join(", ")})</span>}
+            {s.aliases.length > 0 && <span className="text-muted-foreground"> (goes by {s.aliases.join(", ")})</span>}
           </li>
         ))}
       </ul>

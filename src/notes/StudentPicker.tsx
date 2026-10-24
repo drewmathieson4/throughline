@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Check, Search, Users, X } from "lucide-react";
+import { Check, Search, Users } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Panel } from "@/components/Panel";
+import { useNotes } from "./notesStore";
 import { useIsLaptop } from "@/lib/useIsLaptop";
 import { cn } from "@/lib/utils";
 
-export type Pickable = { id: string; name: string; className: string };
+export type Pickable = { id: string; name: string; classId: string; className: string };
 
 type Props = {
   open: boolean;
@@ -20,10 +20,11 @@ type Props = {
   onPick: (id: string | null) => void;
 };
 
-// A searchable list of students: a bottom sheet on a phone, a dialog near the top on a laptop.
-// The feed's student filter and a note's "+ Tag" both use it.
+// A searchable list of students in a Panel (a bottom sheet on a phone, a dialog near the top on
+// a laptop). The feed's student filter and a note's "+ Tag" both use it.
 export default function StudentPicker({ open, onOpenChange, title, students, selected, allowAny, onPick }: Props) {
   const isLaptop = useIsLaptop();
+  const { colourOf } = useNotes();
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
   const shown = q ? students.filter((s) => s.name.toLowerCase().includes(q)) : students;
@@ -37,14 +38,8 @@ export default function StudentPicker({ open, onOpenChange, title, students, sel
   };
   const row = "flex min-h-[52px] w-full items-center gap-3 rounded-xl px-1.5 text-left hover:bg-muted";
 
-  const body = (
-    <>
-      <div className="flex items-center gap-2">
-        {isLaptop ? <DialogTitle className="flex-1 text-lg font-extrabold">{title}</DialogTitle> : <SheetTitle className="flex-1 text-lg font-extrabold">{title}</SheetTitle>}
-        <button type="button" onClick={() => change(false)} aria-label="Close" className="inline-flex size-10 items-center justify-center rounded-full bg-muted text-secondary-foreground">
-          <X className="size-4" aria-hidden />
-        </button>
-      </div>
+  return (
+    <Panel open={open} onOpenChange={change} title={title} top>
       <label className="mt-3 flex min-h-[46px] items-center gap-2 rounded-[14px] bg-muted px-3.5 text-muted-foreground">
         <Search className="size-4" aria-hidden />
         <input
@@ -68,7 +63,7 @@ export default function StudentPicker({ open, onOpenChange, title, students, sel
         )}
         {shown.map((s) => (
           <button key={s.id} type="button" onClick={() => pick(s.id)} aria-pressed={s.id === selected} className={cn(row, s.id === selected && "bg-accent")}>
-            <Avatar id={s.id} name={s.name} className="size-9 text-xs" />
+            <Avatar colour={colourOf(s.classId)} name={s.name} className="size-9 text-xs" />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[15px] font-bold">{s.name}</span>
               <span className="block truncate text-[12.5px] text-muted-foreground">{s.className}</span>
@@ -78,20 +73,6 @@ export default function StudentPicker({ open, onOpenChange, title, students, sel
         ))}
         {shown.length === 0 && <p className="px-1.5 py-4 text-sm text-muted-foreground">{q ? `No student matches “${query.trim()}”.` : "No students to pick."}</p>}
       </div>
-    </>
-  );
-
-  return isLaptop ? (
-    <Dialog open={open} onOpenChange={change}>
-      <DialogContent showCloseButton={false} aria-describedby={undefined} className="top-24 flex max-h-[min(640px,calc(100svh-8rem))] translate-y-0 flex-col gap-0 rounded-[28px] p-4 pb-5 sm:max-w-[460px]">
-        {body}
-      </DialogContent>
-    </Dialog>
-  ) : (
-    <Sheet open={open} onOpenChange={change}>
-      <SheetContent side="bottom" showCloseButton={false} aria-describedby={undefined} className="max-h-[85svh] rounded-t-[28px] border-0 px-4 pt-[18px] pb-[max(20px,env(safe-area-inset-bottom))]">
-        {body}
-      </SheetContent>
-    </Sheet>
+    </Panel>
   );
 }
