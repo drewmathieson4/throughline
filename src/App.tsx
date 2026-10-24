@@ -127,8 +127,11 @@ function App() {
     <NotesProvider classes={classes ?? NO_CLASSES}>
       <ReportsProvider>
         <div className="min-h-svh md:flex">
+          {/* The home-screen app draws under the iPhone status bar, whose text iOS makes white:
+              Record is cobalt up to the top edge, every other phone screen gets a cobalt strip. */}
+          {!recordHome && <div aria-hidden className="fixed inset-x-0 top-0 z-40 h-(--statusbar-h) bg-primary md:hidden" />}
           <SideNav />
-          <main className={cn("min-w-0 flex-1 md:pb-0", !recordHome && "pb-[calc(var(--tabbar-h)+18px)]")}>
+          <main className={cn("min-w-0 flex-1 md:pb-0", !recordHome && "pt-(--statusbar-h) pb-[calc(var(--tabbar-h)+18px)] md:pt-0")}>
             <div
               className={cn(
                 "mx-auto px-4 pt-[18px] pb-7 md:px-12 md:pt-10 md:pb-[72px]",

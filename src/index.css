@@ -147,6 +147,9 @@
   /* The phone's fixed tab bar: 58px of tabs over the larger of 20px and the home-indicator
      inset. Whatever sits above it clears this. */
   --tabbar-h: calc(58px + max(20px, env(safe-area-inset-bottom)));
+  /* The iPhone status bar (time, signal, battery) when the app runs from the home screen; 0 in
+     a browser tab. The app draws under it, so the top of every phone screen clears this. */
+  --statusbar-h: env(safe-area-inset-top);
 }
 
 @layer base {

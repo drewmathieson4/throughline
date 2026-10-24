@@ -9,8 +9,8 @@ import SoundBars from "./SoundBars";
 import { MAX_RECORDING_MS, type Capture } from "./useCapture";
 
 // The phone's Notes home: one giant button, Shazam-style. The screen is cobalt, red while
-// recording; the result slides up as the Saved sheet (NotesView). The bottom padding clears
-// the fixed tab bar.
+// recording; the result slides up as the Saved sheet (NotesView). The colour runs up under the
+// status bar, and the padding clears it at the top and the fixed tab bar at the bottom.
 export default function RecordHome({ capture, notes, needsCount, onOpenNeeds }: { capture: Capture; notes: NoteWithTags[]; needsCount: number; onOpenNeeds: () => void }) {
   const { recorder, pending, draft, setDraft } = capture;
   const elapsedMs = useElapsed(recorder.startedAt);
@@ -23,7 +23,7 @@ export default function RecordHome({ capture, notes, needsCount, onOpenNeeds }: 
     <section
       aria-label="Record a note"
       className={cn(
-        "flex min-h-svh flex-col px-[18px] pt-[18px] pb-[calc(var(--tabbar-h)+16px)] text-white transition-colors duration-300",
+        "flex min-h-svh flex-col px-[18px] pt-[calc(var(--statusbar-h)+18px)] pb-[calc(var(--tabbar-h)+16px)] text-white transition-colors duration-300",
         recording ? "bg-recording" : "bg-primary",
       )}
     >

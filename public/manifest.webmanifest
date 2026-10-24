@@ -1,0 +1,15 @@
+{
+  "name": "Throughline",
+  "short_name": "Throughline",
+  "description": "Quick notes about students, and the throughline they add up to.",
+  "start_url": "/notes",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#2b59ff",
+  "background_color": "#2b59ff",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

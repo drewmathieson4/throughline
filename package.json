@@ -10,6 +10,7 @@
     "preview": "npm run build && vite preview",
     "deploy": "npm run build && wrangler deploy",
     "cf-typegen": "wrangler types",
+    "icons": "sh scripts/icons/build.sh",
     "test": "vitest run",
     "typecheck": "tsc -b",
     "db:generate": "drizzle-kit generate",
