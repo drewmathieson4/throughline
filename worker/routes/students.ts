@@ -2,12 +2,12 @@
 // deleting, so notes tagged to the student keep their evidence.
 import { Hono } from "hono";
 import Anthropic from "@anthropic-ai/sdk";
-import { asc, desc, eq, getTableColumns, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "../db/schema";
-import type { AppEnv } from "../db/client";
+import type { UserEnv } from "../db/client";
 import type { ImportedClass, RosterImportResult, RosterStudent, StudentDetail } from "../api-types";
-import { notFound, requireClass, selectClasses, selectRoster } from "../db/helpers";
+import { notFound, ownedClasses, requireClass, selectClasses, selectRoster } from "../db/helpers";
 import { classIdQuery, dateField, idParam, nameField, notInFuture } from "../fields";
 import { summarise } from "../grades";
 import { gradingWeights, selectMaterialSummaries } from "../materials";
@@ -64,7 +64,7 @@ async function findTable(grid: Grid, apiKey: string | undefined): Promise<Table 
   }
 }
 
-const students = new Hono<AppEnv>();
+const students = new Hono<UserEnv>();
 
 // POST /api/students/import { classId, grid } → what was added, per class, and which lines
 // were skipped and why. No preview: the teacher asked for the file to be imported, and a
@@ -75,7 +75,8 @@ const students = new Hono<AppEnv>();
 students.post("/import", validate("json", importBody), async (c) => {
   const { classId, grid } = c.req.valid("json");
   const db = c.var.db;
-  const [classes, roster] = await db.batch([selectClasses(db), selectRoster(db)]);
+  const uid = c.var.user.id;
+  const [classes, roster] = await db.batch([selectClasses(db, uid), selectRoster(db, uid)]);
   const selected = classes.find((k) => k.id === classId);
   if (!selected) throw notFound("class");
 
@@ -92,7 +93,7 @@ students.post("/import", validate("json", importBody), async (c) => {
     if (!k) {
       k = { id: crypto.randomUUID(), name };
       classByName.set(key, k);
-      newClasses.push({ ...k, createdAt: now });
+      newClasses.push({ ...k, ownerId: uid, createdAt: now });
     }
     return k;
   };
@@ -137,7 +138,7 @@ const byName = new Intl.Collator("en");
 // the ones that need the teacher. The client decides whether to show who has left.
 students.get("/", validate("query", classIdQuery), async (c) => {
   const { classId } = c.req.valid("query");
-  await requireClass(c.var.db, classId);
+  await requireClass(c.var.db, c.var.user.id, classId);
   const s = schema.students;
   const ns = schema.noteStudents;
   const n = schema.notes;
@@ -161,7 +162,7 @@ students.get("/", validate("query", classIdQuery), async (c) => {
 // POST /api/students { classId, firstName, lastName } → 201 with the stored row
 students.post("/", validate("json", createStudent), async (c) => {
   const { classId, firstName, lastName } = c.req.valid("json");
-  await requireClass(c.var.db, classId);
+  await requireClass(c.var.db, c.var.user.id, classId);
   const row = await c.var.db
     .insert(schema.students)
     .values({ id: crypto.randomUUID(), classId, firstName, lastName, createdAt: new Date().toISOString() })
@@ -180,10 +181,12 @@ students.get("/:id", validate("param", idParam), async (c) => {
   const g = schema.gradeEntries;
   const s = schema.students;
   // Every query only needs the id (the class comes in through subqueries), so one batch.
+  // Only the first checks ownership: when it finds nobody the rest are thrown away.
+  const mine = inArray(s.classId, ownedClasses(db, c.var.user.id));
   const classOf = db.select({ classId: s.classId }).from(s).where(eq(s.id, id));
   const classmates = db.select({ id: s.id }).from(s).where(inArray(s.classId, classOf));
   const [[student], notes, grades, classGrades, materials] = await db.batch([
-    db.select().from(s).where(eq(s.id, id)),
+    db.select().from(s).where(and(eq(s.id, id), mine)),
     db
       .select(getTableColumns(n))
       .from(schema.noteStudents)
@@ -202,7 +205,12 @@ students.get("/:id", validate("param", idParam), async (c) => {
 students.patch("/:id", validate("param", idParam), validate("json", patchStudent), async (c) => {
   const { id } = c.req.valid("param");
   const patch = c.req.valid("json");
-  const row = await c.var.db.update(schema.students).set(patch).where(eq(schema.students.id, id)).returning().get();
+  const row = await c.var.db
+    .update(schema.students)
+    .set(patch)
+    .where(and(eq(schema.students.id, id), inArray(schema.students.classId, ownedClasses(c.var.db, c.var.user.id))))
+    .returning()
+    .get();
   if (!row) throw notFound("student");
   return c.json(row);
 });

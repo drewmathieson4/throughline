@@ -4,7 +4,7 @@ import type { Student } from "../db/schema";
 import type { ClassRow } from "../db/schema";
 import type { RosterImportResult, RosterStudent, StudentDetail } from "../api-types";
 import { suggestMapping } from "../roster-model";
-import { CLASS_B_ID, MENTION_ID, NOTE_ID, PERIOD_3_COUNT, SEED_CLASS_ID, SEED_CLASS_NAMES, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb } from "../test-db";
+import { CLASS_B_ID, MENTION_ID, NOTE_ID, OTHER_CLASS_ID, OTHER_STUDENT_ID, PERIOD_3_COUNT, SEED_CLASS_ID, SEED_CLASS_NAMES, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb, signedIn } from "../test-db";
 
 // The model fallback for column mapping is mocked: no network, and each test says what it answers.
 vi.mock(import("../roster-model"), async (importOriginal) => ({ ...(await importOriginal()), suggestMapping: vi.fn() }));
@@ -122,7 +122,7 @@ test("PATCH /api/students/:id rejects empty patches, bad dates, and unknown ids"
 // ---- POST /api/students/import ----------------------------------------------------------
 
 const keyed = (): Env => ({ ...db.env, ANTHROPIC_API_KEY: "test-key" });
-const importRoster = (body: unknown, env?: Env) => app.request("/api/students/import", jsonInit("POST", body), env ?? db.env);
+const importRoster = (body: unknown, env?: Env) => app.request("/api/students/import", signedIn(jsonInit("POST", body)), env ?? db.env);
 const importJson = async (grid: string[][], env?: Env, classId = SEED_CLASS_ID) => (await importRoster({ classId, grid }, env)).json() as Promise<RosterImportResult>;
 const names = (rows: { firstName: string; lastName: string }[]) => rows.map((r) => `${r.firstName} ${r.lastName}`);
 // The one class a file without sections lands in.
@@ -280,4 +280,16 @@ test("import: rejects a bad request shape and an unknown class", async () => {
   expect((await importRoster({ classId: SEED_CLASS_ID, grid: [[1]] })).status).toBe(400);
   expect((await importRoster({ classId: SEED_CLASS_ID })).status).toBe(400);
   expect((await importRoster({ classId: UNKNOWN_ID, grid: [["a"]] })).status).toBe(404);
+});
+
+test("another teacher's class and students are not found", async () => {
+  expect((await db.request(`/api/students?classId=${OTHER_CLASS_ID}`)).status).toBe(404);
+  expect((await db.request(`/api/students/${OTHER_STUDENT_ID}`)).status).toBe(404);
+  expect((await db.request(`/api/students/${OTHER_STUDENT_ID}`, jsonInit("PATCH", { firstName: "Taken" }))).status).toBe(404);
+  expect((await db.request("/api/students", jsonInit("POST", { classId: OTHER_CLASS_ID, firstName: "New", lastName: "Kid" }))).status).toBe(404);
+  expect((await importRoster({ classId: OTHER_CLASS_ID, grid: [["First", "Last"], ["New", "Kid"]] })).status).toBe(404);
+  // The owner still can.
+  expect((await db.request(`/api/students/${OTHER_STUDENT_ID}`, undefined, "other")).status).toBe(200);
+  const roster = await db.json<RosterStudent[]>(`/api/students?classId=${OTHER_CLASS_ID}`, undefined, "other");
+  expect(roster.map((s) => s.firstName)).toEqual(["Orla"]);
 });

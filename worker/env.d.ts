@@ -4,4 +4,7 @@
 // merges with the generated `Env` and typechecks on a fresh clone.
 interface Env {
   ANTHROPIC_API_KEY: string;
+  // The OAuth client from the Google Cloud console (Google Auth Platform → Clients).
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
 }

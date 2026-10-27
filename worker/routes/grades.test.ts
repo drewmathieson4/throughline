@@ -2,7 +2,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import app from "../index";
 import type { GradeImportResult, StudentDetail } from "../api-types";
 import { categoriseAssignments } from "../gradebook-model";
-import { CLASS_B_ID, SEED_CLASS_ID, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb } from "../test-db";
+import { CLASS_B_ID, OTHER_CLASS_ID, SEED_CLASS_ID, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb, signedIn } from "../test-db";
 
 // The category fallback is mocked: no network, and each test says what it answers.
 vi.mock(import("../gradebook-model"), async (importOriginal) => ({ ...(await importOriginal()), categoriseAssignments: vi.fn() }));
@@ -14,7 +14,7 @@ const keyed = (): Env => ({ ...db.env, ANTHROPIC_API_KEY: "test-key" });
 const MATERIAL_ID = (n: number) => `55555555-5555-4555-8555-5555555555${String(n).padStart(2, "0")}`;
 
 const importGrid = (grid: string[][], opts: { classId?: string; env?: Env } = {}) =>
-  app.request("/api/grades/import", jsonInit("POST", { classId: opts.classId ?? SEED_CLASS_ID, grid }), opts.env ?? db.env);
+  app.request("/api/grades/import", signedIn(jsonInit("POST", { classId: opts.classId ?? SEED_CLASS_ID, grid })), opts.env ?? db.env);
 const importJson = async (grid: string[][], opts: { classId?: string; env?: Env } = {}) => (await importGrid(grid, opts)).json() as Promise<GradeImportResult>;
 const rows = () =>
   db.env.DB.prepare("SELECT student_id, assignment, category, score, max_score, due_date, position FROM grade_entries ORDER BY student_id, position")
@@ -157,4 +157,8 @@ test("GET /api/students/:id weights the overall by the syllabus when it covers e
   // Alex Marsh's quiz is missing, so his overall is his test alone; still weighted.
   const marsh = (await detail(STUDENT.alexMarsh)).grades!;
   expect(marsh).toMatchObject({ weighted: true, overall: 50, missing: 1 });
+});
+
+test("a grade book cannot be imported into another teacher's class", async () => {
+  expect((await importGrid([["Student", "Quiz 1"], ["Orla Nyx", "9/10"]], { classId: OTHER_CLASS_ID })).status).toBe(404);
 });

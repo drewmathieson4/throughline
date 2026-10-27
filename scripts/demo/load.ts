@@ -2,11 +2,15 @@
 // tagged live by the real tagger, then list the notes where the tagger and the answer key
 // disagree. A viewer aid, not a gate: the eval (npm run eval:tagging) guards the tagger.
 //
-//   npm run demo:load                     # wipes the LOCAL database's notes, then loads into localhost
-//   node scripts/demo/load.ts [--limit n] [--base-url https://…]   # appends; no wipe, any server
+//   SESSION=… npm run demo:load           # wipes the LOCAL database's notes, then loads into localhost
+//   SESSION=… node scripts/demo/load.ts [--limit n] [--base-url https://…]   # appends; no wipe, any server
+//
+// SESSION is the signed-in teacher's `session` cookie value (shared.ts says where to find it);
+// the notes land in their account. Run `npm run db:claim:local` first if the seed classes
+// are not theirs yet.
 import { parseArgs } from "node:util";
 import { candidateKey, labelMaps, messageOf, pool } from "../eval/shared.ts";
-import { baseUrlOption, fetchRoster, loadNotes, type DemoNote } from "./shared.ts";
+import { authHeaders, baseUrlOption, checkResponse, fetchRoster, loadNotes, type DemoNote } from "./shared.ts";
 
 const { values: args } = parseArgs({ options: { limit: { type: "string" }, "base-url": baseUrlOption } });
 const baseUrl = args["base-url"];
@@ -40,10 +44,10 @@ await pool([...outcomes.keys()], CONCURRENCY, async (i) => {
   try {
     const res = await fetch(`${baseUrl}/api/notes`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...authHeaders() },
       body: JSON.stringify({ body: outcome.note.note, notedAt: outcome.note.notedAt }),
     });
-    if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+    await checkResponse(res, `${baseUrl}/api/notes`);
     outcome.got = (await res.json()) as Tagged;
   } catch (err) {
     outcome.error = messageOf(err);

@@ -9,7 +9,11 @@
 --     just says "Alex" must become an unresolved mention for the teacher to settle.
 --   Rowan Pell (Period 3) and Ronan Pike (B Block) are lookalike names across classes.
 -- Class created_at values are staggered by a second so the class list keeps this order.
-INSERT OR IGNORE INTO classes (id, name, term_start, term_end, created_at) VALUES ('11111111-1111-4111-8111-111111111111', 'Period 3 Humanities', '2026-09-01', '2027-06-15', '2026-09-01T08:00:00.000Z');
+--
+-- The classes belong to a made-up teacher. A real local sign-in makes a different user, so
+-- after signing in run `npm run db:claim:local` to move the seed to that account.
+INSERT OR IGNORE INTO users (id, google_sub, email, name, created_at, last_signin_at) VALUES ('00000000-0000-4000-8000-000000000001', 'dev-google-sub', 'dev@example.test', 'Dev Teacher', '2026-09-01T08:00:00.000Z', '2026-09-01T08:00:00.000Z');
+INSERT OR IGNORE INTO classes (id, owner_id, name, term_start, term_end, created_at) VALUES ('11111111-1111-4111-8111-111111111111', '00000000-0000-4000-8000-000000000001', 'Period 3 Humanities', '2026-09-01', '2027-06-15', '2026-09-01T08:00:00.000Z');
 INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, created_at) VALUES ('22222222-2222-4222-8222-222222222201', '11111111-1111-4111-8111-111111111111', 'Avery', 'Quill', '2026-09-01T08:00:00.000Z');
 INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, aliases, created_at) VALUES ('22222222-2222-4222-8222-222222222202', '11111111-1111-4111-8111-111111111111', 'Rowan', 'Pell', '["Ro"]', '2026-09-01T08:00:00.000Z');
 INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, created_at) VALUES ('22222222-2222-4222-8222-222222222203', '11111111-1111-4111-8111-111111111111', 'Sable', 'Thorncroft', '2026-09-01T08:00:00.000Z');
@@ -18,7 +22,7 @@ INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, aliases, cr
 INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, aliases, created_at) VALUES ('22222222-2222-4222-8222-222222222206', '11111111-1111-4111-8111-111111111111', 'Ember', 'Castellane', '["Em"]', '2026-09-01T08:00:00.000Z');
 INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, created_at) VALUES ('22222222-2222-4222-8222-222222222209', '11111111-1111-4111-8111-111111111111', 'Alex', 'Marsh', '2026-09-01T08:00:00.000Z');
 
-INSERT OR IGNORE INTO classes (id, name, term_start, term_end, created_at) VALUES ('11111111-1111-4111-8111-111111112222', 'B Block Humanities', '2026-09-01', '2027-06-15', '2026-09-01T08:00:01.000Z');
+INSERT OR IGNORE INTO classes (id, owner_id, name, term_start, term_end, created_at) VALUES ('11111111-1111-4111-8111-111111112222', '00000000-0000-4000-8000-000000000001', 'B Block Humanities', '2026-09-01', '2027-06-15', '2026-09-01T08:00:01.000Z');
 INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, created_at) VALUES ('22222222-2222-4222-8222-222222222210', '11111111-1111-4111-8111-111111112222', 'Alex', 'Ruiz', '2026-09-01T08:00:00.000Z');
 INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, created_at) VALUES ('22222222-2222-4222-8222-222222222211', '11111111-1111-4111-8111-111111112222', 'Nola', 'Fairweather', '2026-09-01T08:00:00.000Z');
 INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, created_at) VALUES ('22222222-2222-4222-8222-222222222212', '11111111-1111-4111-8111-111111112222', 'Cassius', 'Vey', '2026-09-01T08:00:00.000Z');
@@ -26,7 +30,7 @@ INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, created_at)
 INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, aliases, created_at) VALUES ('22222222-2222-4222-8222-222222222214', '11111111-1111-4111-8111-111111112222', 'Theo', 'Brightwater', '["Teddy"]', '2026-09-01T08:00:00.000Z');
 INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, created_at) VALUES ('22222222-2222-4222-8222-222222222215', '11111111-1111-4111-8111-111111112222', 'Imogen', 'Hale', '2026-09-01T08:00:00.000Z');
 
-INSERT OR IGNORE INTO classes (id, name, term_start, term_end, created_at) VALUES ('11111111-1111-4111-8111-111111113333', 'Period 5 Humanities', '2026-09-01', '2027-06-15', '2026-09-01T08:00:02.000Z');
+INSERT OR IGNORE INTO classes (id, owner_id, name, term_start, term_end, created_at) VALUES ('11111111-1111-4111-8111-111111113333', '00000000-0000-4000-8000-000000000001', 'Period 5 Humanities', '2026-09-01', '2027-06-15', '2026-09-01T08:00:02.000Z');
 INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, created_at) VALUES ('22222222-2222-4222-8222-222222222207', '11111111-1111-4111-8111-111111113333', 'Linden', 'Oakhurst', '2026-09-01T08:00:00.000Z');
 INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, created_at) VALUES ('22222222-2222-4222-8222-222222222208', '11111111-1111-4111-8111-111111113333', 'Wren', 'Ashby', '2026-09-01T08:00:00.000Z');
 INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, created_at) VALUES ('22222222-2222-4222-8222-222222222216', '11111111-1111-4111-8111-111111113333', 'Felix', 'Stroud', '2026-09-01T08:00:00.000Z');
@@ -36,3 +40,6 @@ INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, aliases, cr
 INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, created_at) VALUES ('22222222-2222-4222-8222-222222222220', '11111111-1111-4111-8111-111111113333', 'Soren', 'Achterberg', '2026-09-01T08:00:00.000Z');
 -- Databases seeded before Period 5 existed had Linden and Wren in Period 3; move them.
 UPDATE students SET class_id = '11111111-1111-4111-8111-111111113333' WHERE id IN ('22222222-2222-4222-8222-222222222207', '22222222-2222-4222-8222-222222222208');
+-- Databases seeded before accounts existed have ownerless rows; give them to the dev teacher.
+UPDATE classes SET owner_id = '00000000-0000-4000-8000-000000000001' WHERE owner_id IS NULL;
+UPDATE notes SET owner_id = '00000000-0000-4000-8000-000000000001' WHERE owner_id IS NULL;

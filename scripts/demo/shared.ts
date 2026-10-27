@@ -21,11 +21,22 @@ export type DemoNote = z.infer<typeof DemoNote>;
 
 export const loadNotes = (): DemoNote[] => z.array(DemoNote).parse(JSON.parse(readFileSync(NOTES_PATH, "utf8")));
 
+// The API needs a signed-in teacher. Sign in at the dev server in a browser, then copy the
+// `session` cookie's value (DevTools → Application → Cookies) into SESSION for the script.
+export const authHeaders = (): Record<string, string> => (process.env.SESSION ? { cookie: `session=${process.env.SESSION}` } : {});
+const SIGN_IN_HINT = "sign in at the dev server, copy the `session` cookie value from DevTools → Application → Cookies, and run with SESSION=<value>";
+
+export async function checkResponse(res: Response, url: string): Promise<void> {
+  if (res.ok) return;
+  if (res.status === 401) throw new Error(`${url} → 401: ${SIGN_IN_HINT}`);
+  throw new Error(`${url} → ${res.status} ${await res.text()}`);
+}
+
 async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url).catch((err) => {
+  const res = await fetch(url, { headers: authHeaders() }).catch((err) => {
     throw new Error(`could not reach ${url} (is \`npm run dev\` running?): ${messageOf(err)}`);
   });
-  if (!res.ok) throw new Error(`${url} → ${res.status}`);
+  await checkResponse(res, url);
   return res.json() as Promise<T>;
 }
 

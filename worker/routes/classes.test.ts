@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { ClassRow } from "../db/schema";
-import { CLASS_B_ID, CLASS_C_ID, SEED_CLASS_ID, jsonInit, setupTestDb } from "../test-db";
+import { CLASS_B_ID, CLASS_C_ID, OTHER_CLASS_ID, OTHER_USER_ID, SEED_CLASS_ID, jsonInit, setupTestDb } from "../test-db";
 
 const db = setupTestDb();
 
@@ -26,4 +26,16 @@ test("POST /api/classes rejects bad input with { error }", async () => {
     expect(res.status).toBe(400);
     expect(await res.json()).toHaveProperty("error");
   }
+});
+
+test("each teacher sees only their own classes, and a new class belongs to whoever made it", async () => {
+  const mine = await db.json<ClassRow[]>("/api/classes");
+  expect(mine.map((c) => c.id)).not.toContain(OTHER_CLASS_ID);
+  const theirs = await db.json<ClassRow[]>("/api/classes", undefined, "other");
+  expect(theirs.map((c) => c.id)).toEqual([OTHER_CLASS_ID]);
+
+  const made = await db.json<ClassRow>("/api/classes", jsonInit("POST", { name: "Period 2 Science" }), "other");
+  expect(made.ownerId).toBe(OTHER_USER_ID);
+  expect((await db.json<ClassRow[]>("/api/classes")).map((c) => c.id)).not.toContain(made.id);
+  expect((await db.json<ClassRow[]>("/api/classes", undefined, "other")).map((c) => c.id)).toContain(made.id);
 });

@@ -2,3 +2,7 @@
 # route tests; `node --env-file=.dev.vars` loads it for scripts/eval. Production uses
 # `npx wrangler secret put ANTHROPIC_API_KEY`.
 ANTHROPIC_API_KEY=
+# Google sign-in: a Web application OAuth client whose redirect URI is
+# http://localhost:5173/api/auth/callback (and the deployed host's, for production).
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=

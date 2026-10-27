@@ -3,7 +3,11 @@ import { MessageSquareText, Sparkles, Users, type LucideIcon } from "lucide-reac
 import { Link, NavLink, Navigate, Route, Routes, useMatch } from "react-router";
 // Type-only imports: nothing from the Worker ends up in the browser bundle.
 import type { ClassRow } from "../worker/db/schema";
+import type { SessionUser } from "../worker/api-types";
 import { api, messageOf } from "./api";
+import { AccountCard } from "./auth/Account";
+import SignIn from "./auth/SignIn";
+import { useSession } from "./auth/useSession";
 import { useOnline } from "./offline/useOnline";
 import ClassesPage from "./classes/ClassesPage";
 import ClassView, { StudentView } from "./classes/ClassView";
@@ -44,15 +48,19 @@ function Wordmark() {
   );
 }
 
-// Laptop: a slim sidebar. Phone: the same three tabs as a bar along the bottom.
-function SideNav() {
+type Account = { user: SessionUser | null; onSignOut: () => void };
+
+// Laptop: a slim sidebar, the account pinned at the bottom. Phone: the same three tabs as a
+// bar along the bottom, the account under each screen's content.
+function SideNav({ user, onSignOut }: Account) {
   return (
     <nav aria-label="Main" className="sticky top-0 hidden h-svh w-62 flex-none flex-col gap-1 border-r border-border px-4 pt-7 pb-5 md:flex">
       <Wordmark />
       {tabs.map((tab) => (
         <SideTab key={tab.to} {...tab} />
       ))}
-      <p className="mt-auto rounded-[14px] bg-muted px-3.5 py-3 text-[12.5px] leading-normal text-muted-foreground">{DEMO_NOTICE}</p>
+      <AccountCard user={user} onSignOut={onSignOut} className="mt-auto" />
+      <p className="mt-2 rounded-[14px] bg-muted px-3.5 py-3 text-[12.5px] leading-normal text-muted-foreground">{DEMO_NOTICE}</p>
     </nav>
   );
 }
@@ -110,7 +118,9 @@ function BottomTab({ to, label, icon: Icon }: (typeof tabs)[number]) {
   );
 }
 
-function App() {
+// The app a signed-in teacher uses. Mounted fresh at each sign-in, so nothing loaded for one
+// teacher is still on screen for the next.
+function Shell({ user, onSignOut }: Account) {
   const [classes, setClasses] = useState<ClassRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -142,7 +152,7 @@ function App() {
           {/* The home-screen app draws under the iPhone status bar, whose text iOS makes white:
               Record is cobalt up to the top edge, every other phone screen gets a cobalt strip. */}
           {!recordHome && <div aria-hidden className="fixed inset-x-0 top-0 z-40 h-(--statusbar-h) bg-primary md:hidden" />}
-          <SideNav />
+          <SideNav user={user} onSignOut={onSignOut} />
           <main className={cn("min-w-0 flex-1 md:pb-0", !recordHome && "pt-(--statusbar-h) pb-[calc(var(--tabbar-h)+18px)] md:pt-0")}>
             <div
               className={cn(
@@ -166,7 +176,12 @@ function App() {
                 </Routes>
               )}
 
-              {!recordHome && <p className="mt-10 text-center text-xs text-muted-foreground md:hidden">{DEMO_NOTICE}</p>}
+              {!recordHome && (
+                <div className="mt-10 md:hidden">
+                  <AccountCard user={user} onSignOut={onSignOut} />
+                  <p className="mt-4 text-center text-xs text-muted-foreground">{DEMO_NOTICE}</p>
+                </div>
+              )}
             </div>
           </main>
           <TabBar />
@@ -174,6 +189,15 @@ function App() {
       </ReportsProvider>
     </NotesProvider>
   );
+}
+
+// Nothing shows until the server has said who this is: the sign-in screen for nobody, the
+// app for a teacher, and the app with no name on it when the server could not be reached.
+function App() {
+  const { session, signOut } = useSession();
+  if (session.status === "loading") return null;
+  if (session.status === "out") return <SignIn />;
+  return <Shell user={session.status === "in" ? session.user : null} onSignOut={signOut} />;
 }
 
 export default App;

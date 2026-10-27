@@ -18,7 +18,7 @@ import { z } from "zod";
 import * as schema from "../db/schema";
 import type { CourseSummary } from "../db/schema";
 import type { DocumentImportResult, DocumentKind, DocumentProgress, DocumentStep, MaterialRow, NoteWithTags } from "../api-types";
-import type { AppEnv, Db } from "../db/client";
+import type { Db, UserEnv } from "../db/client";
 import { requireClass, selectClasses, selectRoster } from "../db/helpers";
 import { sortDocument } from "../document-kind";
 import { splitDocument, type SplitResult } from "../documents";
@@ -82,12 +82,12 @@ async function summarise(apiKey: string | undefined, name: string, text: string)
 
 // The passages about each student of the picked classes, or null when the model could not
 // be asked or did not answer usably (logged). The caller decides what null means.
-async function split(db: Db, apiKey: string | undefined, name: string, text: string, classIds: string[]): Promise<SplitResult | null> {
+async function split(db: Db, userId: string, apiKey: string | undefined, name: string, text: string, classIds: string[]): Promise<SplitResult | null> {
   if (!apiKey) {
     console.warn("ANTHROPIC_API_KEY is not set; document not split", name);
     return null;
   }
-  const [roster, classes] = await db.batch([selectRoster(db, classIds), selectClasses(db)]);
+  const [roster, classes] = await db.batch([selectRoster(db, userId, classIds), selectClasses(db, userId)]);
   try {
     return await splitDocument({ text, roster, classes: classes.filter((k) => classIds.includes(k.id)), client: new Anthropic({ apiKey }) });
   } catch (err) {
@@ -114,7 +114,7 @@ function fittingPassages(passages: string[]): string[] {
   return kept;
 }
 
-const documents = new Hono<AppEnv>();
+const documents = new Hono<UserEnv>();
 
 // POST /api/documents?name=…&classIds=a,b[&modified=…][&as=course|students|both] with the
 // file as the body. A bad query, an unknown class, or students with no key are refused
@@ -133,13 +133,14 @@ documents.post("/", validate("query", documentQuery), uploadLimit, async (c) => 
     console.warn("ANTHROPIC_API_KEY is not set; document not imported", name);
     throw unreadable();
   }
-  await Promise.all(classIds.map((id) => requireClass(db, id)));
+  const uid = c.var.user.id;
+  await Promise.all(classIds.map((id) => requireClass(db, uid, id)));
 
   c.header("content-type", "application/x-ndjson");
   return stream(c, async (out) => {
     const send = (line: DocumentProgress) => out.write(`${JSON.stringify(line)}\n`);
     try {
-      const { status, result } = await importDocument(c.req.valid("query"), db, c.env.ANTHROPIC_API_KEY, () => readUpload(c, name), send);
+      const { status, result } = await importDocument(c.req.valid("query"), db, uid, c.env.ANTHROPIC_API_KEY, () => readUpload(c, name), send);
       await send({ status, result });
     } catch (err) {
       // Past the first byte the HTTP status is spent, so failures travel in the last line.
@@ -156,6 +157,7 @@ documents.post("/", validate("query", documentQuery), uploadLimit, async (c) => 
 async function importDocument(
   { name, classIds, modified, as }: z.infer<typeof documentQuery>,
   db: Db,
+  userId: string,
   apiKey: string | undefined,
   read: () => Promise<string>,
   send: (line: DocumentProgress) => Promise<unknown>,
@@ -173,7 +175,7 @@ async function importDocument(
 
   const [summary, parts] = await Promise.all([
     wantsMaterial ? step("summarise", () => summarise(apiKey, name, text)) : null,
-    wantsNotes ? step("split", () => split(db, apiKey, name, text, classIds)) : null,
+    wantsNotes ? step("split", () => split(db, userId, apiKey, name, text, classIds)) : null,
   ]);
   // A document only of students has no value uncut, so a failed split writes nothing.
   if (kind === "students" && !parts) throw unreadable();
@@ -197,7 +199,7 @@ async function importDocument(
     // A date the document states is stored at noon UTC so it shows as that day everywhere.
     const notedAt = parts.documentDate ? `${parts.documentDate}T12:00:00.000Z` : (modified ?? now);
     const reportNote = (quotes: string[], classId?: string) =>
-      noteRow({ classId, kind: "progress_report", body: quotes.join("\n\n"), sourceName: name, notedAt }, now);
+      noteRow({ ownerId: userId, classId, kind: "progress_report", body: quotes.join("\n\n"), sourceName: name, notedAt }, now);
     // An entry whose passages could not be verified has no evidence and gets no note.
     for (const s of parts.students) {
       const quotes = fittingPassages(s.quotes);
@@ -226,7 +228,12 @@ async function importDocument(
     .select({ id: m.noteId })
     .from(m)
     .where(sql`exists (select 1 from json_each(${m.candidateIds}) where json_each.value in ${pickedStudents})`);
-  const earlierNotes = and(eq(n.sourceName, name), eq(n.kind, "progress_report"), or(inArray(n.classId, classIds), and(isNull(n.classId), inArray(n.id, unsettled))));
+  const earlierNotes = and(
+    eq(n.ownerId, userId),
+    eq(n.sourceName, name),
+    eq(n.kind, "progress_report"),
+    or(inArray(n.classId, classIds), and(isNull(n.classId), inArray(n.id, unsettled))),
+  );
   const removeNotes = db
     .delete(n)
     .where(splitFailed ? sql`false` : earlierNotes)

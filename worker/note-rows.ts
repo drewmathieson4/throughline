@@ -9,11 +9,13 @@ import type { OpenMention } from "./tagging";
 // clip transcribes to roughly 5,000 characters. See DECISIONS.md.
 export const MAX_BODY_CHARS = 50_000;
 
-// A classId, when given, has already been checked with requireClass by the route.
-export type NoteValues = { classId?: string | null; kind: schema.NoteKind; body: string; notedAt?: string; sourceName?: string; clientId?: string };
+// ownerId is the signed-in teacher. A classId, when given, has already been checked with
+// requireClass by the route.
+export type NoteValues = { ownerId: string; classId?: string | null; kind: schema.NoteKind; body: string; notedAt?: string; sourceName?: string; clientId?: string };
 export function noteRow(values: NoteValues, now = new Date().toISOString()): Note {
   return {
     id: crypto.randomUUID(),
+    ownerId: values.ownerId,
     classId: values.classId ?? null,
     kind: values.kind,
     body: values.body,

@@ -8,7 +8,6 @@ import { HTTPException } from "hono/http-exception";
 import { bodyLimit } from "hono/body-limit";
 import { z } from "zod";
 import type { UploadExtension } from "./api-types";
-import type { AppEnv } from "./db/client";
 
 // Well above a term's report pack; a 10 MB PDF is a scan, which toMarkdown cannot read anyway.
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -55,7 +54,8 @@ const noImages = { images: { convert: false } };
 
 // The text of the uploaded file, trimmed, or a 400 saying why there is none. `name` has
 // passed uploadName.
-export async function readUpload(c: Context<AppEnv>, name: string): Promise<string> {
+// Only the body and the AI binding are read, so any route environment will do.
+export async function readUpload<E extends { Bindings: Env }>(c: Context<E>, name: string): Promise<string> {
   const bytes = await c.req.arrayBuffer();
   if (bytes.byteLength === 0) throw new HTTPException(400, { message: "file is empty" });
 

@@ -3,7 +3,7 @@ import app from "../index";
 import type { SynthesisResult, SynthesisRosterRow, SynthesisView } from "../api-types";
 import { synthesise, tidy } from "../synthesis-model";
 import { ModelError } from "../model";
-import { NOTE_ID, PERIOD_3_COUNT, SEED_CLASS_ID as CLASS_ID, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb } from "../test-db";
+import { NOTE_ID, OTHER_CLASS_ID, OTHER_STUDENT_ID, PERIOD_3_COUNT, SEED_CLASS_ID as CLASS_ID, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb, signedIn } from "../test-db";
 
 // The Opus call is stubbed: route tests never call the API. The stub answers through the real
 // tidy(), so what is stored has the shape a real answer would.
@@ -25,7 +25,7 @@ const keyed = (): Env => ({ ...db.env, ANTHROPIC_API_KEY: "test-key" });
 
 const RANGE = { from: "2026-09-01", to: "2026-12-19" };
 // POST with a chosen env: keyed() for a normal run, db.env to have no API key.
-const requestWith = async (env: Env, body: object) => app.request("/api/syntheses", jsonInit("POST", body), env);
+const requestWith = async (env: Env, body: object) => app.request("/api/syntheses", signedIn(jsonInit("POST", body)), env);
 const roster = (from = RANGE.from, to = RANGE.to) => db.json<SynthesisRosterRow[]>(`/api/syntheses?${new URLSearchParams({ classId: CLASS_ID, from, to })}`);
 
 // A note tagged to a student with a quote, noted on `day` and written at `createdAt`.
@@ -124,4 +124,16 @@ test("a student who has left is not listed", async () => {
   const rows = await roster();
   expect(rows).toHaveLength(PERIOD_3_COUNT - 1);
   expect(rows.some((r) => r.studentId === STUDENT.avery)).toBe(false);
+});
+
+test("another teacher's roster, students and summaries are not found", async () => {
+  expect((await db.request(`/api/syntheses?${new URLSearchParams({ classId: OTHER_CLASS_ID, ...RANGE })}`)).status).toBe(404);
+  expect((await requestWith(keyed(), { studentId: OTHER_STUDENT_ID, ...RANGE })).status).toBe(404);
+  expect(synthesiseMock).not.toHaveBeenCalled();
+  const id = "77777777-7777-4777-8777-777777777777";
+  await db.env.DB.prepare("INSERT INTO syntheses (id, student_id, period_start, period_end, version, input_hash, model, json, created_at) VALUES (?, ?, ?, ?, 1, 'h', 'm', '{}', ?)")
+    .bind(id, OTHER_STUDENT_ID, RANGE.from, RANGE.to, "2026-10-01T00:00:00.000Z")
+    .run();
+  expect((await db.request(`/api/syntheses/${id}`)).status).toBe(404);
+  expect((await db.request(`/api/syntheses/${id}`, undefined, "other")).status).toBe(200);
 });

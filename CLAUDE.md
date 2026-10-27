@@ -20,6 +20,7 @@ npm run deploy             # build + wrangler deploy
 npm run db:generate        # schema.ts -> new SQL migration in drizzle/
 npm run db:migrate:local   # apply migrations to the local D1
 npm run db:migrate:remote  # apply migrations to production D1
+npm run db:claim:local     # give the seed classes to whoever signed in to the local dev server last
 npm run cf-typegen         # regenerate worker-configuration.d.ts after editing wrangler.jsonc bindings
 ```
 
@@ -51,3 +52,4 @@ Data model shape worth knowing before touching routes: a `note` belongs to a cla
 - Model roles are fixed in `DECISIONS.md`: Opus 5.5 for synthesis and report drafts, Haiku 5.5 for tagging notes to students.
 - The Worker has no long-running background jobs; design features to complete within a request.
 - Voice-note transcription uses the Workers AI binding, which reaches the real Cloudflare account even in `npm run dev`; run `npx wrangler login` once per machine. Route tests fake the binding and never call it.
+- Sign-in needs `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.dev.vars` (`wrangler secret put` in production). Every `/api` route except `/api/health` and `/api/auth/*` needs the session cookie; `worker/test-db.ts` mints one per test and sends it by default, and `scripts/demo/load.ts` reads it from `SESSION`.

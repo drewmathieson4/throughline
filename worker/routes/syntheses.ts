@@ -5,13 +5,13 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import Anthropic from "@anthropic-ai/sdk";
-import { eq, getTableColumns } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "../db/schema";
 import type { SynthesisRow } from "../db/schema";
-import type { AppEnv } from "../db/client";
+import type { UserEnv } from "../db/client";
 import type { SynthesisResult, SynthesisRosterRow, SynthesisStatus, SynthesisView } from "../api-types";
-import { notFound } from "../db/helpers";
+import { notFound, ownedClasses, requireClass } from "../db/helpers";
 import { buildEvidence, loadEvidence, type Range } from "../evidence";
 import { dateField, idParam } from "../fields";
 import { SYNTHESIS_VERSION, inputHash, synthesise } from "../synthesis-model";
@@ -30,13 +30,14 @@ const view = ({ inputHash: _h, version: _v, ...row }: SynthesisRow): SynthesisVi
 const today = () => new Date().toISOString().slice(0, 10);
 const byName = new Intl.Collator("en");
 
-const syntheses = new Hono<AppEnv>();
+const syntheses = new Hono<UserEnv>();
 
 // GET /api/syntheses?classId=…&from=…&to=… → one row per student still in the class: whether
 // a summary exists for exactly this range and whether the evidence has changed since.
 // Hashing every student's evidence is a few dozen small JSON strings; no model is called.
 syntheses.get("/", validate("query", listQuery), async (c) => {
   const { classId, from, to } = c.req.valid("query");
+  await requireClass(c.var.db, c.var.user.id, classId);
   const loaded = await loadEvidence(c.var.db, classId, { from, to });
   if (loaded.className === null) throw notFound("class");
   const day = today();
@@ -70,7 +71,11 @@ syntheses.get("/", validate("query", listQuery), async (c) => {
 syntheses.post("/", validate("json", createBody), async (c) => {
   const { studentId, from, to } = c.req.valid("json");
   const db = c.var.db;
-  const student = await db.select({ classId: schema.students.classId }).from(schema.students).where(eq(schema.students.id, studentId)).get();
+  const student = await db
+    .select({ classId: schema.students.classId })
+    .from(schema.students)
+    .where(and(eq(schema.students.id, studentId), inArray(schema.students.classId, ownedClasses(db, c.var.user.id))))
+    .get();
   if (!student) throw notFound("student");
   const loaded = await loadEvidence(db, student.classId, { from, to });
   const s = loaded.students.find((x) => x.id === studentId)!;
@@ -110,7 +115,12 @@ syntheses.post("/", validate("json", createBody), async (c) => {
 
 // GET /api/syntheses/:id → one stored summary.
 syntheses.get("/:id", validate("param", idParam), async (c) => {
-  const row = await c.var.db.select(listed).from(schema.syntheses).where(eq(schema.syntheses.id, c.req.valid("param").id)).get();
+  const row = await c.var.db
+    .select(listed)
+    .from(schema.syntheses)
+    .innerJoin(schema.students, eq(schema.students.id, schema.syntheses.studentId))
+    .where(and(eq(schema.syntheses.id, c.req.valid("param").id), inArray(schema.students.classId, ownedClasses(c.var.db, c.var.user.id))))
+    .get();
   if (!row) throw notFound("summary");
   return c.json(row satisfies SynthesisView);
 });

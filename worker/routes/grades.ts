@@ -7,7 +7,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { sql } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "../db/schema";
-import type { AppEnv } from "../db/client";
+import type { UserEnv } from "../db/client";
 import type { GradeImportResult } from "../api-types";
 import { requireClass, selectRoster } from "../db/helpers";
 import { OTHER, categorise, defaultCategories, matchStudents, parseGradebook, type MatchedEntry } from "../gradebook";
@@ -50,7 +50,7 @@ async function fillCategories(entries: MatchedEntry[], syllabus: string[] | null
   for (const e of entries) if (e.category === null) e.category = fromModel.get(e.assignment) ?? OTHER;
 }
 
-const grades = new Hono<AppEnv>();
+const grades = new Hono<UserEnv>();
 
 // POST /api/grades/import { classId, grid } → what was written and which lines were skipped.
 // Students are matched to the class roster by name and never created. Importing the same
@@ -59,8 +59,9 @@ const grades = new Hono<AppEnv>();
 grades.post("/import", validate("json", importBody), async (c) => {
   const { classId, grid } = c.req.valid("json");
   const db = c.var.db;
-  await requireClass(db, classId);
-  const [roster, materials] = await db.batch([selectRoster(db, [classId]), selectMaterialSummaries(db, classId)]);
+  const uid = c.var.user.id;
+  await requireClass(db, uid, classId);
+  const [roster, materials] = await db.batch([selectRoster(db, uid, [classId]), selectMaterialSummaries(db, classId)]);
 
   const parsed = parseGradebook(grid);
   const empty: GradeImportResult = { shape: parsed.shape, students: 0, assignments: 0, entries: 0, missing: 0, skipped: [], guessedMax: [] };

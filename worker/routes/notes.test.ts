@@ -1,6 +1,6 @@
 import { expect, test, vi } from "vitest";
 import app from "../index";
-import { CLASS_B_ID, SEED_CLASS_ID as CLASS_ID, SEED_CLASS_NAMES, SEED_STUDENT_COUNT, STUDENT, UNKNOWN_ID, fakeAi, jsonInit, quietErrors, setupTestDb } from "../test-db";
+import { CLASS_B_ID, NOTE_ID, OTHER_CLASS_ID, OTHER_STUDENT_ID, OTHER_USER_ID, SEED_CLASS_ID as CLASS_ID, SEED_CLASS_NAMES, SEED_STUDENT_COUNT, STUDENT, UNKNOWN_ID, fakeAi, jsonInit, quietErrors, setupTestDb, signedIn } from "../test-db";
 import { tagNote, type TagResult } from "../tagging";
 import type { NoteWithTags, TaggedNoteResponse as Created } from "../api-types";
 
@@ -17,7 +17,7 @@ const keyed = (): Env => ({ ...db.env, ANTHROPIC_API_KEY: "test-key" });
 const getNotes = (classId?: string) => db.request(classId ? `/api/notes?classId=${classId}` : "/api/notes");
 const listOf = async (classId?: string) => (await getNotes(classId)).json() as Promise<NoteWithTags[]>;
 // A string body is sent verbatim so tests can post malformed JSON.
-const postNote = (body: unknown, env?: Env) => app.request("/api/notes", jsonInit("POST", body), env ?? db.env);
+const postNote = (body: unknown, env?: Env) => app.request("/api/notes", signedIn(jsonInit("POST", body)), env ?? db.env);
 
 function postVoice(
   classId: string | undefined,
@@ -28,7 +28,7 @@ function postVoice(
   const query = new URLSearchParams({ ...(classId && { classId }), ...opts.query });
   return app.request(
     query.size > 0 ? `/api/notes/voice?${query}` : "/api/notes/voice",
-    { method: "POST", headers: { "content-type": opts.type ?? "audio/webm;codecs=opus", ...opts.headers }, body: audio },
+    signedIn({ method: "POST", headers: { "content-type": opts.type ?? "audio/webm;codecs=opus", ...opts.headers }, body: audio }),
     { ...(opts.env ?? db.env), AI: ai as unknown as Ai },
   );
 }
@@ -254,20 +254,20 @@ test("POST /api/notes/:noteId/retag tags a note whose tagging failed, keeps a se
   expect(failed.tagging).toBe("failed");
 
   tagNoteMock.mockResolvedValueOnce(result([{ studentId: STUDENT.avery, quotes: ["Avery nailed the quiz."] }]));
-  const res = await app.request(`/api/notes/${failed.id}/retag`, { method: "POST" }, keyed());
+  const res = await app.request(`/api/notes/${failed.id}/retag`, signedIn({ method: "POST" }), keyed());
   expect(res.status).toBe(200);
   const retagged = (await res.json()) as Created;
   expect(retagged).toMatchObject({ tagging: "done", classId: CLASS_ID });
   expect(retagged.students).toEqual([{ studentId: STUDENT.avery, quotes: ["Avery nailed the quiz."] }]);
 
   // Now tagged: a second retag would replace what the teacher may have settled, so it is refused.
-  expect((await app.request(`/api/notes/${failed.id}/retag`, { method: "POST" }, keyed())).status).toBe(409);
-  expect((await app.request(`/api/notes/${(await createTagged()).id}/retag`, { method: "POST" }, keyed())).status).toBe(409);
+  expect((await app.request(`/api/notes/${failed.id}/retag`, signedIn({ method: "POST" }), keyed())).status).toBe(409);
+  expect((await app.request(`/api/notes/${(await createTagged()).id}/retag`, signedIn({ method: "POST" }), keyed())).status).toBe(409);
 
   // A retag that finds nothing does not clear a class the note already had.
   const classNote = (await (await postNote({ classId: CLASS_ID, body: "Rowdy today." })).json()) as Created;
   tagNoteMock.mockResolvedValueOnce(result([]));
-  const again = (await (await app.request(`/api/notes/${classNote.id}/retag`, { method: "POST" }, keyed())).json()) as Created;
+  const again = (await (await app.request(`/api/notes/${classNote.id}/retag`, signedIn({ method: "POST" }), keyed())).json()) as Created;
   expect(again).toMatchObject({ tagging: "done", classId: CLASS_ID, students: [] });
 });
 
@@ -275,7 +275,7 @@ test("POST /api/notes/:noteId/retag reports failure and leaves the note untagged
   tagNoteMock.mockReset();
   const note = (await (await postNote({ body: BODY })).json()) as Created; // no key: untagged
   tagNoteMock.mockRejectedValueOnce(new Error("rate limited"));
-  const res = await quietErrors(() => app.request(`/api/notes/${note.id}/retag`, { method: "POST" }, keyed()));
+  const res = await quietErrors(() => app.request(`/api/notes/${note.id}/retag`, signedIn({ method: "POST" }), keyed()));
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({ tagging: "failed", students: [], mentions: [] });
 });
@@ -467,4 +467,25 @@ test("POST /api/notes/voice returns 502 when Whisper fails and writes nothing", 
   expect(res.status).toBe(502);
   expect(await res.json()).toEqual({ error: "transcription failed" });
   expect(await listOf()).toEqual([]);
+});
+
+test("another teacher's notes, classes and students are not found, and a clientId is unique per teacher", async () => {
+  await db.insertNote(NOTE_ID(1), OTHER_CLASS_ID, "2026-10-01T00:00:00.000Z", OTHER_USER_ID).run();
+  expect((await listOf()).map((n) => n.id)).not.toContain(NOTE_ID(1));
+  expect((await db.json<NoteWithTags[]>("/api/notes", undefined, "other")).map((n) => n.id)).toEqual([NOTE_ID(1)]);
+  expect((await getNotes(OTHER_CLASS_ID)).status).toBe(404);
+  expect((await db.request(`/api/notes/${NOTE_ID(1)}/retag`, { method: "POST" })).status).toBe(404);
+  expect((await db.request(`/api/notes/${NOTE_ID(1)}/students`, jsonInit("POST", { studentId: STUDENT.avery }))).status).toBe(404);
+  expect((await db.request(`/api/notes/${NOTE_ID(1)}/students/${OTHER_STUDENT_ID}`, { method: "DELETE" })).status).toBe(404);
+
+  const mine = (await (await postNote({ body: "A note of mine." })).json()) as Created;
+  expect((await db.request(`/api/notes/${mine.id}/students`, jsonInit("POST", { studentId: OTHER_STUDENT_ID }))).status).toBe(404);
+  expect((await db.request(`/api/notes/${mine.id}/retag`, { method: "POST" }, "other")).status).toBe(404);
+
+  // Two browsers can mint the same id; each teacher gets their own note.
+  const clientId = "66666666-6666-4666-8666-666666666666";
+  const a = await db.request("/api/notes", jsonInit("POST", { body: "Mine.", clientId }));
+  const b = await db.request("/api/notes", jsonInit("POST", { body: "Theirs.", clientId }), "other");
+  expect([a.status, b.status]).toEqual([201, 201]);
+  expect(((await a.json()) as Created).id).not.toBe(((await b.json()) as Created).id);
 });

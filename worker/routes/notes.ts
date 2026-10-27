@@ -20,7 +20,7 @@ import { z } from "zod";
 import * as schema from "../db/schema";
 import type { Note, NoteStudent } from "../db/schema";
 import type { NoteWithTags, TaggedNoteResponse, TaggingStatus } from "../api-types";
-import type { AppEnv, Db } from "../db/client";
+import type { Db, UserEnv } from "../db/client";
 import { requireClass, requireNote, requireStudent, selectClasses, selectRoster } from "../db/helpers";
 import { MAX_BODY_CHARS, mentionRow, noteRow, type NoteValues } from "../note-rows";
 import { pastDatetime } from "../fields";
@@ -105,9 +105,13 @@ const withTags = async (db: Db, note: Note) => (await attachTags(db, eq(schema.n
 
 // The note an earlier send with this clientId stored, as it stands now. Its tagging ran (or
 // failed) on that first send; "done" here only says this request did not fail.
-async function sentBefore(db: Db, clientId: string | undefined): Promise<TaggedNoteResponse | undefined> {
+async function sentBefore(db: Db, userId: string, clientId: string | undefined): Promise<TaggedNoteResponse | undefined> {
   if (!clientId) return undefined;
-  const note = await db.select().from(schema.notes).where(eq(schema.notes.clientId, clientId)).get();
+  const note = await db
+    .select()
+    .from(schema.notes)
+    .where(and(eq(schema.notes.ownerId, userId), eq(schema.notes.clientId, clientId)))
+    .get();
   return note && { ...(await withTags(db, note)), tagging: "done" };
 }
 
@@ -124,14 +128,15 @@ function tagStatement(db: Db, existing: NoteStudent | undefined, noteId: string,
 const existingTag = (db: Db, noteId: string, studentId: string) =>
   db.select().from(schema.noteStudents).where(tagKey(noteId, studentId)).get();
 
-// Ask the model which students the note is about, across every class. null when it could not
-// be asked or did not answer usably; the caller decides what that means for existing rows.
-async function suggestTags(db: Db, apiKey: string | undefined, note: Note): Promise<TagResult | null> {
+// Ask the model which students the note is about, across every class of the teacher's. null
+// when it could not be asked or did not answer usably; the caller decides what that means
+// for existing rows.
+async function suggestTags(db: Db, apiKey: string | undefined, userId: string, note: Note): Promise<TagResult | null> {
   if (!apiKey) {
     console.warn("ANTHROPIC_API_KEY is not set; note saved without tags", note.id);
     return null;
   }
-  const [roster, classes] = await db.batch([selectRoster(db), selectClasses(db)]);
+  const [roster, classes] = await db.batch([selectRoster(db, userId), selectClasses(db, userId)]);
   try {
     return await tagNote({ body: note.body, roster, classes, client: new Anthropic({ apiKey }) });
   } catch (err) {
@@ -169,8 +174,8 @@ async function storeTags(db: Db, note: Note, result: TagResult): Promise<Note> {
 
 // Suggest and store. "failed" means the note's tags are untouched: either the model could not
 // be asked, or the rows could not be written (logged; the note itself is already saved).
-async function runTagging(db: Db, apiKey: string | undefined, note: Note): Promise<TaggedNoteResponse> {
-  const result = await suggestTags(db, apiKey, note);
+async function runTagging(db: Db, apiKey: string | undefined, userId: string, note: Note): Promise<TaggedNoteResponse> {
+  const result = await suggestTags(db, apiKey, userId, note);
   let tagging: TaggingStatus = "failed";
   if (result) {
     try {
@@ -187,19 +192,26 @@ async function runTagging(db: Db, apiKey: string | undefined, note: Note): Promi
 // sentBefore meet at the unique index; the later one writes nothing and returns the first
 // one's note: 200.
 async function saveCaptured(db: Db, apiKey: string | undefined, values: NoteValues): Promise<[TaggedNoteResponse, 200 | 201]> {
-  const note = await db.insert(schema.notes).values(noteRow(values)).onConflictDoNothing({ target: schema.notes.clientId }).returning().get();
-  if (note) return [await runTagging(db, apiKey, note), 201];
-  return [(await sentBefore(db, values.clientId))!, 200];
+  const note = await db
+    .insert(schema.notes)
+    .values(noteRow(values))
+    .onConflictDoNothing({ target: [schema.notes.ownerId, schema.notes.clientId] })
+    .returning()
+    .get();
+  if (note) return [await runTagging(db, apiKey, values.ownerId, note), 201];
+  return [(await sentBefore(db, values.ownerId, values.clientId))!, 200];
 }
 
-const notes = new Hono<AppEnv>();
+const notes = new Hono<UserEnv>();
 
-// GET /api/notes[?classId=…] → newest first, each with its students and open mentions.
-// Without a filter every note comes back, unassigned ones included (single-teacher scale).
+// GET /api/notes[?classId=…] → the teacher's notes, newest first, each with its students and
+// open mentions. Without a filter every one of theirs comes back, unassigned ones included.
 notes.get("/", validate("query", classQuery), async (c) => {
   const { classId } = c.req.valid("query");
-  if (classId) await requireClass(c.var.db, classId);
-  const where = classId ? eq(schema.notes.classId, classId) : undefined;
+  const uid = c.var.user.id;
+  if (classId) await requireClass(c.var.db, uid, classId);
+  const mine = eq(schema.notes.ownerId, uid);
+  const where = classId ? and(mine, eq(schema.notes.classId, classId)) : mine;
   const rows = await c.var.db
     .select()
     .from(schema.notes)
@@ -213,10 +225,11 @@ notes.get("/", validate("query", classQuery), async (c) => {
 // 200 with the same shape when the clientId was sent before.
 notes.post("/", validate("json", createNote), async (c) => {
   const { classId, body, notedAt, clientId } = c.req.valid("json");
-  const repeat = await sentBefore(c.var.db, clientId);
+  const uid = c.var.user.id;
+  const repeat = await sentBefore(c.var.db, uid, clientId);
   if (repeat) return c.json(repeat, 200);
-  if (classId) await requireClass(c.var.db, classId);
-  const [note, status] = await saveCaptured(c.var.db, c.env.ANTHROPIC_API_KEY, { classId, kind: "text", body, notedAt, clientId });
+  if (classId) await requireClass(c.var.db, uid, classId);
+  const [note, status] = await saveCaptured(c.var.db, c.env.ANTHROPIC_API_KEY, { ownerId: uid, classId, kind: "text", body, notedAt, clientId });
   return c.json(note, status);
 });
 
@@ -235,9 +248,10 @@ notes.post("/voice", validate("query", voiceQuery), audioLimit, async (c) => {
   const mediaType = (c.req.header("content-type") ?? "").trim().toLowerCase();
   if (!mediaType.startsWith("audio/")) throw new HTTPException(400, { message: "unsupported audio type" });
 
-  const repeat = await sentBefore(c.var.db, clientId);
+  const uid = c.var.user.id;
+  const repeat = await sentBefore(c.var.db, uid, clientId);
   if (repeat) return c.json(repeat, 200);
-  if (classId) await requireClass(c.var.db, classId);
+  if (classId) await requireClass(c.var.db, uid, classId);
   const audio = await c.req.arrayBuffer();
   if (audio.byteLength === 0) throw new HTTPException(400, { message: "nothing was heard" });
 
@@ -252,7 +266,7 @@ notes.post("/voice", validate("query", voiceQuery), audioLimit, async (c) => {
   // Only reachable by uploading a long audio file; the browser stops at five minutes.
   if (text.length > MAX_BODY_CHARS) throw new HTTPException(400, { message: "transcript is too long" });
 
-  const [note, status] = await saveCaptured(c.var.db, c.env.ANTHROPIC_API_KEY, { classId, kind: "voice", body: text, notedAt, clientId });
+  const [note, status] = await saveCaptured(c.var.db, c.env.ANTHROPIC_API_KEY, { ownerId: uid, classId, kind: "voice", body: text, notedAt, clientId });
   return c.json(note, status);
 });
 
@@ -260,30 +274,32 @@ notes.post("/voice", validate("query", voiceQuery), audioLimit, async (c) => {
 // a failed tagging call leaves. A tagged note is refused (409): nothing records which tags the
 // teacher settled, so replacing them would discard that work.
 notes.post("/:noteId/retag", validate("param", noteParam), async (c) => {
-  const note = await requireNote(c.var.db, c.req.valid("param").noteId);
+  const uid = c.var.user.id;
+  const note = await requireNote(c.var.db, uid, c.req.valid("param").noteId);
   const current = await withTags(c.var.db, note);
   if (current.students.length > 0 || current.mentions.length > 0) throw new HTTPException(409, { message: "note is already tagged" });
-  return c.json(await runTagging(c.var.db, c.env.ANTHROPIC_API_KEY, note));
+  return c.json(await runTagging(c.var.db, c.env.ANTHROPIC_API_KEY, uid, note));
 });
 
 // POST /api/notes/:noteId/students { studentId, quotes? } → the teacher adds a student the
 // model missed. 201 with the note.
 notes.post("/:noteId/students", validate("param", noteParam), validate("json", addStudent), async (c) => {
-  const note = await requireNote(c.var.db, c.req.valid("param").noteId);
+  const uid = c.var.user.id;
+  const note = await requireNote(c.var.db, uid, c.req.valid("param").noteId);
   const { studentId, quotes } = c.req.valid("json");
-  await requireStudent(c.var.db, studentId);
+  await requireStudent(c.var.db, uid, studentId);
   const existing = await existingTag(c.var.db, note.id, studentId);
   await c.var.db.batch([
     tagStatement(c.var.db, existing, note.id, studentId, verifyQuotes(note.body, quotes)),
     settleClassFrom(c.var.db, note.id, studentId),
   ]);
-  return c.json(await withTags(c.var.db, await requireNote(c.var.db, note.id)), 201);
+  return c.json(await withTags(c.var.db, await requireNote(c.var.db, uid, note.id)), 201);
 });
 
 // DELETE /api/notes/:noteId/students/:studentId → remove a tag; 200 with the note
 notes.delete("/:noteId/students/:studentId", validate("param", noteStudentParam), async (c) => {
   const { noteId, studentId } = c.req.valid("param");
-  const note = await requireNote(c.var.db, noteId);
+  const note = await requireNote(c.var.db, c.var.user.id, noteId);
   const deleted = await c.var.db.delete(schema.noteStudents).where(tagKey(noteId, studentId)).returning().get();
   if (!deleted) throw new HTTPException(404, { message: "tag not found" });
   return c.json(await withTags(c.var.db, note));
@@ -298,24 +314,25 @@ notes.post(
   async (c) => {
     const { noteId, mentionId } = c.req.valid("param");
     const { studentId } = c.req.valid("json");
-    await requireNote(c.var.db, noteId);
+    const uid = c.var.user.id;
+    await requireNote(c.var.db, uid, noteId);
     const mention = await c.var.db.select().from(schema.noteMentions).where(mentionKey(noteId, mentionId)).get();
     if (!mention) throw new HTTPException(404, { message: "mention not found" });
-    await requireStudent(c.var.db, studentId);
+    await requireStudent(c.var.db, uid, studentId);
     const existing = await existingTag(c.var.db, noteId, studentId);
     await c.var.db.batch([
       tagStatement(c.var.db, existing, noteId, studentId, mention.quotes),
       c.var.db.delete(schema.noteMentions).where(mentionKey(noteId, mentionId)),
       settleClassFrom(c.var.db, noteId, studentId),
     ]);
-    return c.json(await withTags(c.var.db, await requireNote(c.var.db, noteId)));
+    return c.json(await withTags(c.var.db, await requireNote(c.var.db, uid, noteId)));
   },
 );
 
 // DELETE /api/notes/:noteId/mentions/:mentionId → the name was nobody on the roster; 200 with the note
 notes.delete("/:noteId/mentions/:mentionId", validate("param", mentionParam), async (c) => {
   const { noteId, mentionId } = c.req.valid("param");
-  const note = await requireNote(c.var.db, noteId);
+  const note = await requireNote(c.var.db, c.var.user.id, noteId);
   const deleted = await c.var.db.delete(schema.noteMentions).where(mentionKey(noteId, mentionId)).returning().get();
   if (!deleted) throw new HTTPException(404, { message: "mention not found" });
   return c.json(await withTags(c.var.db, note));

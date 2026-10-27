@@ -1,7 +1,10 @@
 // Response shapes the routes compose from more than one table. The frontend imports these
 // type-only, like the row types in db/schema.ts, so a renamed column fails typecheck in
 // both places instead of drifting. Kept free of Hono and Env imports for that reason.
-import type { ClassMaterial, ClassRow, Note, NoteKind, NoteMention, NoteStudent, Student, SynthesisRow } from "./db/schema";
+import type { ClassMaterial, ClassRow, Note, NoteKind, NoteMention, NoteStudent, Student, SynthesisRow, User } from "./db/schema";
+
+// Who is signed in, as /api/auth/me reports it: never the Google id behind the account.
+export type SessionUser = Pick<User, "id" | "email" | "name" | "pictureUrl">;
 
 // What the upload routes read; the file pickers in the browser offer the same set.
 export type UploadExtension = "pdf" | "docx" | "txt" | "md";

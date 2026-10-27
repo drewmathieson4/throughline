@@ -6,7 +6,26 @@ import { getPlatformProxy, unstable_splitSqlQuery as splitSql } from "wrangler";
 import { drizzle } from "drizzle-orm/d1";
 import { migrate } from "drizzle-orm/d1/migrator";
 import app from "./index";
+import { hashToken } from "./auth";
 import seed from "../scripts/seed-dev.sql?raw";
+
+// Who is signed in. The seed's Dev Teacher owns the seeded classes; a second teacher with
+// one class of their own is added before every test, so ownership tests have someone to
+// be shut out of. A session for each is stored, and request() presents the dev one by default.
+export const DEV_USER_ID = "00000000-0000-4000-8000-000000000001";
+export const OTHER_USER_ID = "00000000-0000-4000-8000-000000000002";
+export const OTHER_CLASS_ID = "11111111-1111-4111-8111-111111119999";
+export const OTHER_STUDENT_ID = "22222222-2222-4222-8222-222222222299";
+const TOKENS = { dev: "test-session-dev", other: "test-session-other" } as const;
+export type Who = keyof typeof TOKENS | "anon";
+
+// The request as `who` would send it: with their session cookie, or none.
+export function signedIn(init: RequestInit = {}, who: Who = "dev"): RequestInit {
+  if (who === "anon") return init;
+  const headers = new Headers(init.headers);
+  headers.set("cookie", `session=${TOKENS[who]}`);
+  return { ...init, headers };
+}
 
 // The seeded roster (scripts/seed-dev.sql): three classes, 20 students. Tests that count rows
 // derive from these so a roster change is a one-line edit here.
@@ -37,7 +56,20 @@ const seedStatements = splitSql(seed);
 export function setupTestDb() {
   let env: Env;
   let dispose = async () => {};
+  let hashes: Record<keyof typeof TOKENS, string>;
   const prepare = (query: string, ...binds: unknown[]) => env.DB.prepare(query).bind(...binds);
+  // The second teacher, their class and student, and both sessions.
+  const accounts = () => {
+    const at = "2026-09-01T08:00:00.000Z";
+    const until = "2099-01-01T00:00:00.000Z";
+    return [
+      prepare("INSERT OR IGNORE INTO users (id, google_sub, email, name, created_at, last_signin_at) VALUES (?, 'other-google-sub', 'other@example.test', 'Other Teacher', ?, ?)", OTHER_USER_ID, at, at),
+      prepare("INSERT OR IGNORE INTO classes (id, owner_id, name, created_at) VALUES (?, ?, 'Period 1 Science', ?)", OTHER_CLASS_ID, OTHER_USER_ID, at),
+      prepare("INSERT OR IGNORE INTO students (id, class_id, first_name, last_name, created_at) VALUES (?, ?, 'Orla', 'Nyx', ?)", OTHER_STUDENT_ID, OTHER_CLASS_ID, at),
+      prepare("INSERT OR IGNORE INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)", hashes.dev, DEV_USER_ID, at, until),
+      prepare("INSERT OR IGNORE INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)", hashes.other, OTHER_USER_ID, at, until),
+    ];
+  };
 
   beforeAll(async () => {
     // remoteBindings: false keeps the AI binding from dialing Cloudflare; voice tests swap it
@@ -47,24 +79,32 @@ export function setupTestDb() {
     // Anthropic key there, so it is stripped; a test that wants tagging attempted adds one.
     env = { ...proxy.env };
     delete (env as Partial<Env>).ANTHROPIC_API_KEY;
+    // Likewise the Google client: the auth tests set their own and mock the calls to Google.
+    delete (env as Partial<Env>).GOOGLE_CLIENT_ID;
+    delete (env as Partial<Env>).GOOGLE_CLIENT_SECRET;
     dispose = proxy.dispose;
     await migrate(drizzle(env.DB), { migrationsFolder: "drizzle" });
+    hashes = { dev: await hashToken(TOKENS.dev), other: await hashToken(TOKENS.other) };
   });
-  // Deleting classes cascades through students, notes, note_students and note_mentions; the
+  // Deleting classes cascades through students, notes, note_students and note_mentions, and
+  // deleting users through sessions (classes and notes go first: they point at users). The
   // seed is INSERT OR IGNORE so it reruns cleanly. One place to keep in step with the schema.
-  beforeEach(() => env.DB.batch([prepare("DELETE FROM classes"), prepare("DELETE FROM notes"), ...seedStatements.map((s) => prepare(s))]));
+  beforeEach(() =>
+    env.DB.batch([prepare("DELETE FROM classes"), prepare("DELETE FROM notes"), prepare("DELETE FROM users"), ...seedStatements.map((s) => prepare(s)), ...accounts()]),
+  );
   afterAll(() => dispose());
 
-  const request = (url: string, init?: RequestInit) => app.request(url, init, env);
+  // As the dev teacher unless told otherwise; "anon" sends no cookie.
+  const request = (url: string, init?: RequestInit, who: Who = "dev") => app.request(url, signedIn(init, who), env);
   return {
     get env() {
       return env;
     },
     request,
-    json: async <T>(url: string, init?: RequestInit) => (await request(url, init)).json() as Promise<T>,
+    json: async <T>(url: string, init?: RequestInit, who: Who = "dev") => (await request(url, init, who)).json() as Promise<T>,
     // Raw inserts for tests that need rows without going through tagging.
-    insertNote: (id: string, classId: string | null, notedAt: string) =>
-      prepare("INSERT INTO notes (id, class_id, kind, body, noted_at, created_at) VALUES (?, ?, 'text', ?, ?, ?)", id, classId, `note ${id.slice(-2)}`, notedAt, notedAt),
+    insertNote: (id: string, classId: string | null, notedAt: string, ownerId = DEV_USER_ID) =>
+      prepare("INSERT INTO notes (id, owner_id, class_id, kind, body, noted_at, created_at) VALUES (?, ?, ?, 'text', ?, ?, ?)", id, ownerId, classId, `note ${id.slice(-2)}`, notedAt, notedAt),
     tagNote: (noteId: string, studentId: string) => prepare("INSERT INTO note_students (note_id, student_id) VALUES (?, ?)", noteId, studentId),
     // A course material whose summary states grading weights (or none, for a unit plan).
     insertMaterial: (id: string, classId: string, grading: { category: string; weight: number }[], createdAt = "2026-10-01T00:00:00.000Z") =>

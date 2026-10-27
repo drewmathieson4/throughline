@@ -11,13 +11,52 @@ import type { Synthesis } from "../api-types";
 const stringList = (name: string) =>
   text(name, { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`);
 
-export const classes = sqliteTable("classes", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  termStart: text("term_start"),
-  termEnd: text("term_end"),
-  createdAt: text("created_at").notNull(),
-});
+// A teacher, as Google identifies them. google_sub is Google's stable id for the account;
+// the email and name can change and are refreshed at each sign-in.
+export const users = sqliteTable(
+  "users",
+  {
+    id: text("id").primaryKey(),
+    googleSub: text("google_sub").notNull(),
+    email: text("email").notNull(),
+    name: text("name"),
+    pictureUrl: text("picture_url"),
+    createdAt: text("created_at").notNull(),
+    lastSigninAt: text("last_signin_at").notNull(),
+  },
+  (t) => [uniqueIndex("users_google_sub_idx").on(t.googleSub)],
+);
+
+// One row per sign-in. The browser's cookie holds the raw token; only its SHA-256 (hex) is
+// stored, so a copy of the database does not hand out live sessions. Deleting the row signs
+// that browser out.
+export const sessions = sqliteTable(
+  "sessions",
+  {
+    tokenHash: text("token_hash").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: text("created_at").notNull(),
+    expiresAt: text("expires_at").notNull(),
+  },
+  (t) => [index("sessions_user_idx").on(t.userId)],
+);
+
+// Everything a teacher owns hangs off their classes, except notes (below), which can exist
+// without a class. owner_id is nullable only for rows that predate accounts.
+export const classes = sqliteTable(
+  "classes",
+  {
+    id: text("id").primaryKey(),
+    ownerId: text("owner_id").references(() => users.id),
+    name: text("name").notNull(),
+    termStart: text("term_start"),
+    termEnd: text("term_end"),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("classes_owner_idx").on(t.ownerId)],
+);
 
 export const students = sqliteTable(
   "students",
@@ -49,6 +88,9 @@ export const notes = sqliteTable(
   "notes",
   {
     id: text("id").primaryKey(),
+    // The teacher who wrote it. A note may have no class yet, so ownership cannot come from
+    // the class; it is set from the session at creation.
+    ownerId: text("owner_id").references(() => users.id),
     classId: text("class_id").references(() => classes.id, { onDelete: "cascade" }),
     kind: text("kind", { enum: noteKinds }).notNull(),
     body: text("body").notNull(),
@@ -59,10 +101,16 @@ export const notes = sqliteTable(
     createdAt: text("created_at").notNull(), // when the row was written
     // Minted by the browser when a text or voice note is captured, so a resend of the same
     // note (the offline queue, or a retry after a lost response) finds it instead of making
-    // a second one. Null for notes from other sources; SQLite lets nulls repeat in a unique index.
+    // a second one. Null for notes from other sources; SQLite lets nulls repeat in a unique
+    // index. Unique per owner: two teachers' browsers can mint the same id.
     clientId: text("client_id"),
   },
-  (t) => [index("notes_class_idx").on(t.classId), index("notes_noted_at_idx").on(t.notedAt), uniqueIndex("notes_client_id_idx").on(t.clientId)],
+  (t) => [
+    index("notes_class_idx").on(t.classId),
+    index("notes_noted_at_idx").on(t.notedAt),
+    index("notes_owner_idx").on(t.ownerId),
+    uniqueIndex("notes_owner_client_id_idx").on(t.ownerId, t.clientId),
+  ],
 );
 
 // One note can be about several students. A row is a live tag the moment it is written,
@@ -177,6 +225,7 @@ export const settings = sqliteTable("settings", {
 });
 
 // Row types as the API returns them; the frontend imports these (type-only) too.
+export type User = typeof users.$inferSelect;
 export type ClassRow = typeof classes.$inferSelect;
 export type Student = typeof students.$inferSelect;
 export type Note = typeof notes.$inferSelect;

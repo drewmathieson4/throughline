@@ -5,7 +5,7 @@ import type { DocumentImportResult, DocumentKind, DocumentProgress, MaterialRow,
 import { sortDocument } from "../document-kind";
 import { splitDocument, type SplitResult } from "../documents";
 import { summariseMaterial } from "../materials-model";
-import { CLASS_B_ID, CLASS_C_ID, SEED_CLASS_ID as CLASS_ID, STUDENT, UNKNOWN_ID, NOTE_ID, fakeAi, quietErrors, setupTestDb } from "../test-db";
+import { CLASS_B_ID, CLASS_C_ID, OTHER_CLASS_ID, SEED_CLASS_ID as CLASS_ID, STUDENT, UNKNOWN_ID, NOTE_ID, fakeAi, quietErrors, setupTestDb, signedIn } from "../test-db";
 import { MAX_UPLOAD_BYTES } from "../upload";
 
 // The sorter, the splitter and the summariser are stubbed: route tests never call the API.
@@ -54,7 +54,7 @@ async function postDocument(name: string, body: BodyInit, opts: PostOpts = {}): 
   if (opts.as) query.set("as", opts.as);
   const res = await app.request(
     `/api/documents?${query}`,
-    { method: "POST", headers: { "content-type": "application/octet-stream", ...opts.headers }, body },
+    signedIn({ method: "POST", headers: { "content-type": "application/octet-stream", ...opts.headers }, body }),
     { ...(opts.env ?? keyed()), AI: (opts.ai ?? fakeAi("")) as unknown as Ai },
   );
   if (res.headers.get("content-type") !== "application/x-ndjson") return Object.assign(res, { steps: [] });
@@ -392,9 +392,9 @@ test("POST /api/documents rejects an unsupported type, a missing name, a future 
   const ai = fakeAi("");
   expect((await postDocument("notes.xlsx", "x", { ai })).status).toBe(400);
   expect(await (await postDocument("notes.xlsx", "x", { ai })).json()).toEqual({ error: "unsupported file type (use pdf, docx, txt, md)" });
-  expect((await app.request(`/api/documents?classIds=${CLASS_ID}`, { method: "POST", body: "x" }, keyed())).status).toBe(400);
+  expect((await app.request(`/api/documents?classIds=${CLASS_ID}`, signedIn({ method: "POST", body: "x" }), keyed())).status).toBe(400);
   expect((await postDocument("report.txt", "x", { ai, modified: "2999-01-01T00:00:00Z" })).status).toBe(400);
-  expect((await app.request(`/api/documents?name=a.txt&classIds=${CLASS_ID}&as=grades`, { method: "POST", body: "x" }, keyed())).status).toBe(400);
+  expect((await app.request(`/api/documents?name=a.txt&classIds=${CLASS_ID}&as=grades`, signedIn({ method: "POST", body: "x" }), keyed())).status).toBe(400);
 
   const tooBig = await postDocument("report.txt", new Uint8Array(MAX_UPLOAD_BYTES + 1), { ai });
   expect(tooBig.status).toBe(413);
@@ -416,4 +416,8 @@ test("POST /api/documents needs at least one known class, and checks them before
   expect(unknown.status).toBe(404);
   expect(ai.toMarkdown).not.toHaveBeenCalled();
   expect(await listMaterials(CLASS_ID)).toEqual([]);
+});
+
+test("a document cannot be imported into another teacher's class", async () => {
+  expect((await postDocument("syllabus.md", "# Course", { classIds: [CLASS_ID, OTHER_CLASS_ID] })).status).toBe(404);
 });

@@ -10,10 +10,19 @@ export class ApiError extends Error {
   }
 }
 
-// Every /api error response is { error: string }; surface that message when present.
+// Told once, by the session hook, so a 401 from any call (the session expired, or was ended
+// from another browser) shows the sign-in screen without each caller checking.
+let unauthorized: (() => void) | null = null;
+export const onUnauthorized = (fn: (() => void) | null) => {
+  unauthorized = fn;
+};
+
+// Every /api error response is { error: string }; surface that message when present. The
+// session cookie rides along on its own: every call is same-origin.
 export async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   const data = await res.json().catch(() => ({}));
+  if (res.status === 401) unauthorized?.();
   if (!res.ok) throw new ApiError((data as { error?: string }).error ?? `${url} → ${res.status}`, res.status);
   return data as T;
 }

@@ -8,7 +8,10 @@
 	"main": "worker/index.ts",
 	"compatibility_date": "2026-10-19",
 	"assets": {
-		"not_found_handling": "single-page-application"
+		"not_found_handling": "single-page-application",
+		// A browser navigation to /api/* (Google sending the teacher back to /api/auth/callback)
+		// would otherwise get index.html; this sends every /api path to the Worker first.
+		"run_worker_first": ["/api/*"]
 	},
 	"observability": {
 		"enabled": true

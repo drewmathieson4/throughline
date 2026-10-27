@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { MaterialRow } from "../api-types";
-import { CLASS_B_ID, SEED_CLASS_ID as CLASS_ID, UNKNOWN_ID, setupTestDb } from "../test-db";
+import { CLASS_B_ID, OTHER_CLASS_ID, SEED_CLASS_ID as CLASS_ID, UNKNOWN_ID, setupTestDb } from "../test-db";
 
 // Materials are written by POST /api/documents (documents.test.ts); these tests insert rows
 // directly and cover listing and deleting.
@@ -35,4 +35,13 @@ test("DELETE /api/materials/:id removes one material; deleting the class removes
   await db.env.DB.prepare("DELETE FROM classes WHERE id = ?").bind(CLASS_ID).run();
   const left = await db.env.DB.prepare("SELECT count(*) AS n FROM class_materials").first<{ n: number }>();
   expect(left?.n).toBe(0);
+});
+
+test("another teacher's materials are not found, to list or to delete", async () => {
+  const id = "55555555-5555-4555-8555-555555555599";
+  await db.insertMaterial(id, OTHER_CLASS_ID, []).run();
+  expect((await db.request(`/api/materials?classId=${OTHER_CLASS_ID}`)).status).toBe(404);
+  expect((await db.request(`/api/materials/${id}`, { method: "DELETE" })).status).toBe(404);
+  expect((await db.json<MaterialRow[]>(`/api/materials?classId=${OTHER_CLASS_ID}`, undefined, "other")).map((m) => m.id)).toEqual([id]);
+  expect((await db.request(`/api/materials/${id}`, { method: "DELETE" }, "other")).status).toBe(200);
 });
