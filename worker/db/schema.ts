@@ -29,6 +29,9 @@ export const users = sqliteTable(
     demo: integer("demo").notNull().default(0),
     demoNotesUsed: integer("demo_notes_used").notNull().default(0),
     demoReportsUsed: integer("demo_reports_used").notNull().default(0),
+    // What this account's model calls have cost so far, in micro-dollars (worker/spend.ts).
+    // Every account is metered; at the cap the models are switched off for it.
+    aiSpentMicro: integer("ai_spent_micro").notNull().default(0),
   },
   (t) => [uniqueIndex("users_google_sub_idx").on(t.googleSub)],
 );

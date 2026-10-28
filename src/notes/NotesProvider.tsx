@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import type { ClassRow } from "../../worker/db/schema";
 import type { NoteWithTags, RosterStudent, TaggedNoteResponse } from "../../worker/api-types";
 import { api, fileInit, jsonInit, messageOf } from "../api";
-import { useDemo } from "../auth/demoStore";
+import { useAllowance } from "../auth/allowanceStore";
 import { createQueue, type QueuedNote } from "../offline/queue";
 import { idbStore } from "../offline/store";
 import { useOnline } from "../offline/useOnline";
@@ -49,12 +49,12 @@ export function NotesProvider({ classes, children }: { classes: ClassRow[]; chil
   const onNotes = useMatch("/notes/*") !== null;
   const online = useOnline();
   // The queue is made once, so it cannot call the store; it counts what it settled and an
-  // effect asks for a demo visitor's allowance again after each one.
-  const { refreshDemo } = useDemo();
+  // effect asks for the account's allowance again after each one.
+  const { refreshAllowance } = useAllowance();
   const [settled, setSettled] = useState(0);
   useEffect(() => {
-    if (settled > 0) refreshDemo();
-  }, [settled, refreshDemo]);
+    if (settled > 0) refreshAllowance();
+  }, [settled, refreshAllowance]);
 
   const [queue] = useState(() => {
     // Queued notes that uploaded while nobody was waiting on them, summed into one toast.

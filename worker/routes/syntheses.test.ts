@@ -3,7 +3,8 @@ import app from "../index";
 import type { SessionUser, SynthesisResult, SynthesisRosterRow, SynthesisView } from "../api-types";
 import { synthesise, tidy } from "../synthesis-model";
 import { ModelError } from "../model";
-import { NOTE_ID, OTHER_CLASS_ID, OTHER_STUDENT_ID, PERIOD_3_COUNT, SEED_CLASS_ID as CLASS_ID, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb, signedIn } from "../test-db";
+import { ACCOUNT_CAP_MICRO, TOTAL_CAP_MICRO } from "../spend";
+import { DEV_EMAIL, DEV_USER_ID, NOTE_ID, OTHER_CLASS_ID, OTHER_USER_ID, OTHER_STUDENT_ID, PERIOD_3_COUNT, SEED_CLASS_ID as CLASS_ID, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb, signedIn } from "../test-db";
 
 // The Opus call is stubbed: route tests never call the API. The stub answers through the real
 // tidy(), so what is stored has the shape a real answer would.
@@ -149,6 +150,30 @@ test("a demo visitor gets three summaries; a cached one is free, and a failed on
   synthesiseMock.mockRejectedValueOnce(new ModelError("model refused synthesis"));
   expect((await quietErrors(post)).status).toBe(502);
   expect(await left()).toBe(1);
+});
+
+test("an account over its AI spend cap is refused a fresh summary with the reason, an owner is not, and the app's total pauses everyone", async () => {
+  await quoteNote(1, STUDENT.avery, "2026-09-15", "Avery led the seminar.");
+  await db.setSpent(DEV_USER_ID, ACCOUNT_CAP_MICRO);
+  const refused = await requestWith(keyed(), { studentId: STUDENT.avery, ...RANGE });
+  expect(refused.status).toBe(403);
+  expect(await refused.json()).toEqual({ error: "This account has used its $10 of AI; ask Drew to reset it" });
+  expect(synthesiseMock).not.toHaveBeenCalled();
+  expect(await storedCount()).toBe(0);
+
+  const owners = (): Env => ({ ...keyed(), OWNER_EMAILS: DEV_EMAIL });
+  expect((await requestWith(owners(), { studentId: STUDENT.avery, ...RANGE })).status).toBe(201);
+  // Unchanged evidence: the saved one is served, cap or not.
+  const cached = await requestWith(keyed(), { studentId: STUDENT.avery, ...RANGE });
+  expect(cached.status).toBe(200);
+  expect(((await cached.json()) as SynthesisResult).cached).toBe(true);
+
+  await db.setSpent(OTHER_USER_ID, TOTAL_CAP_MICRO);
+  await quoteNote(2, STUDENT.avery, "2026-09-16", "Avery again.");
+  const paused = await requestWith(owners(), { studentId: STUDENT.avery, ...RANGE });
+  expect(paused.status).toBe(403);
+  expect(await paused.json()).toEqual({ error: "Throughline's AI budget is used up for now; ask Drew" });
+  expect(synthesiseMock).toHaveBeenCalledTimes(1);
 });
 
 test("a student who has left is not listed", async () => {

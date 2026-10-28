@@ -1,8 +1,8 @@
 import { LogOut } from "lucide-react";
 import type { SessionUser } from "../../worker/api-types";
 import { useNotes } from "../notes/notesStore";
-import { allowanceLine, waitingToUpload } from "../ui";
-import { useDemo } from "./demoStore";
+import { allowanceLine, spendLine, waitingToUpload } from "../ui";
+import { useAllowance } from "./allowanceStore";
 import { SignInNudge } from "./SignInNudge";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
@@ -20,10 +20,11 @@ function AccountAvatar({ user }: { user: SessionUser }) {
 // Who is signed in, with the way out. Sign out waits while captured notes are still on the
 // device: they would otherwise upload under whoever signs in next. Nothing is shown when the
 // app opened without an answer from the server (offline); the user is unknown until it does.
-// A demo visitor sees what they have left and the way to their own account instead.
+// A demo visitor sees what they have left and the way to their own account instead; a
+// teacher who has spent some of their AI allowance sees how much.
 export function AccountCard({ user, onSignOut, className }: { user: SessionUser | null; onSignOut: () => void; className?: string }) {
   const { waiting } = useNotes();
-  const { demo } = useDemo();
+  const { demo, ai } = useAllowance();
   if (!user) return null;
   if (user.demo) {
     return (
@@ -44,7 +45,7 @@ export function AccountCard({ user, onSignOut, className }: { user: SessionUser 
       <AccountAvatar user={user} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13.5px] font-bold">{user.name ?? user.email}</p>
-        <p className="truncate text-xs text-muted-foreground">{waiting > 0 ? waitingToUpload(waiting) : user.email}</p>
+        <p className="truncate text-xs text-muted-foreground">{waiting > 0 ? waitingToUpload(waiting) : ai.spentUsd > 0 ? spendLine(ai) : user.email}</p>
       </div>
       <Button variant="ghost" size="icon-sm" aria-label="Sign out" title={waiting > 0 ? "Sign out once the waiting notes upload" : "Sign out"} disabled={waiting > 0} onClick={onSignOut}>
         <LogOut aria-hidden />

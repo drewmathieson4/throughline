@@ -1,7 +1,7 @@
 // Students: one row per child in a class. Leaving the class sets left_at rather than
 // deleting, so notes tagged to the student keep their evidence.
 import { Hono } from "hono";
-import Anthropic from "@anthropic-ai/sdk";
+import type Anthropic from "@anthropic-ai/sdk";
 import { and, asc, desc, eq, getTableColumns, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "../db/schema";
@@ -13,6 +13,7 @@ import { summarise } from "../grades";
 import { gradingWeights, selectMaterialSummaries } from "../materials";
 import { applyMapping, detectTable, hasNameColumn, planImport, type Grid, type ParsedRow, type Table } from "../roster";
 import { suggestMapping } from "../roster-model";
+import { modelAccess } from "../spend";
 import { validate } from "../validate";
 
 
@@ -48,15 +49,15 @@ const importBody = z.object({
 // D1 binds at most 100 parameters per statement; a student row binds six.
 const INSERT_CHUNK = 16;
 
-// The rules first; the model only when they give up, and only with a key. A model failure is
-// logged and the import reports that it found no names, as with tagging: the import must
-// not depend on it.
-async function findTable(grid: Grid, apiKey: string | undefined): Promise<Table | null> {
+// The rules first; the model only when they give up, and only when it can be called (a key,
+// and the account under its spend cap). A model failure is logged and the import reports
+// that it found no names, as with tagging: the import must not depend on it.
+async function findTable(grid: Grid, client: Anthropic | null): Promise<Table | null> {
   const table = detectTable(grid);
   if (table) return table;
-  if (!apiKey) return null;
+  if (!client) return null;
   try {
-    const m = await suggestMapping({ sample: grid, client: new Anthropic({ apiKey }) });
+    const m = await suggestMapping({ sample: grid, client });
     return hasNameColumn(m.roles) ? { roles: m.roles, start: m.hasHeader ? 1 : 0, end: grid.length, source: "model" } : null;
   } catch (err) {
     console.error("column mapping failed", err);
@@ -80,7 +81,7 @@ students.post("/import", validate("json", importBody), async (c) => {
   const selected = classes.find((k) => k.id === classId);
   if (!selected) throw notFound("class");
 
-  const table = await findTable(grid, c.env.ANTHROPIC_API_KEY);
+  const table = await findTable(grid, (await modelAccess(c)).client);
   if (!table) return c.json({ source: "none", classes: [], skipped: [] } satisfies RosterImportResult);
   const parsed = applyMapping(grid, table);
 

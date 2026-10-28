@@ -4,6 +4,8 @@
 // comments becomes one note per student it is about, cut against the picked classes' roster
 // (worker/documents.ts); a file with both does both, in parallel. `as=` gives the kind and
 // skips the sorting call, which is how the result card's "Treat as … instead" re-posts it.
+// Without the model (no key, or the account is over its spend cap) a file is stored as
+// course material, unsummarised; one the teacher said is about students is refused.
 //
 // Importing a file again replaces what that file name made before in the picked classes,
 // whichever kind it was, so a switch with `as=` removes the wrong kind. Why these choices,
@@ -11,7 +13,7 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { stream } from "hono/streaming";
-import Anthropic from "@anthropic-ai/sdk";
+import type Anthropic from "@anthropic-ai/sdk";
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import { z } from "zod";
@@ -26,6 +28,7 @@ import { splitDocument, type SplitResult } from "../documents";
 import { pastDatetime } from "../fields";
 import { summariseMaterial } from "../materials-model";
 import { MAX_BODY_CHARS, mentionRow, noteRow } from "../note-rows";
+import { modelAccess } from "../spend";
 import { readUpload, uploadLimit, uploadName } from "../upload";
 import { validate } from "../validate";
 
@@ -53,13 +56,13 @@ const unreadable = () => new HTTPException(502, { message: "could not read the s
 // The model's guess at the kind, or "course" when it could not be asked or did not answer
 // usably (logged): a stored material loses nothing, and the result card's switch makes the
 // file notes instead.
-async function sort(apiKey: string | undefined, name: string, text: string): Promise<DocumentKind> {
-  if (!apiKey) {
-    console.warn("ANTHROPIC_API_KEY is not set; document stored as course material", name);
+async function sort(client: Anthropic | null, name: string, text: string): Promise<DocumentKind> {
+  if (!client) {
+    console.warn("no model access (no API key, or over the spend cap); document stored as course material", name);
     return "course";
   }
   try {
-    return await sortDocument({ text, client: new Anthropic({ apiKey }) });
+    return await sortDocument({ text, client });
   } catch (err) {
     console.error("sorting failed for document", name, err);
     return "course";
@@ -68,13 +71,13 @@ async function sort(apiKey: string | undefined, name: string, text: string): Pro
 
 // The structured reading of a course document, or null when the model could not be asked or
 // did not answer usably (logged). Null never blocks storing it.
-async function summarise(apiKey: string | undefined, name: string, text: string): Promise<CourseSummary | null> {
-  if (!apiKey) {
-    console.warn("ANTHROPIC_API_KEY is not set; material stored without a summary", name);
+async function summarise(client: Anthropic | null, name: string, text: string): Promise<CourseSummary | null> {
+  if (!client) {
+    console.warn("no model access (no API key, or over the spend cap); material stored without a summary", name);
     return null;
   }
   try {
-    return await summariseMaterial({ text, client: new Anthropic({ apiKey }) });
+    return await summariseMaterial({ text, client });
   } catch (err) {
     console.error("summarising failed for material", name, err);
     return null;
@@ -83,14 +86,14 @@ async function summarise(apiKey: string | undefined, name: string, text: string)
 
 // The passages about each student of the picked classes, or null when the model could not
 // be asked or did not answer usably (logged). The caller decides what null means.
-async function split(db: Db, userId: string, apiKey: string | undefined, name: string, text: string, classIds: string[]): Promise<SplitResult | null> {
-  if (!apiKey) {
-    console.warn("ANTHROPIC_API_KEY is not set; document not split", name);
+async function split(db: Db, userId: string, client: Anthropic | null, name: string, text: string, classIds: string[]): Promise<SplitResult | null> {
+  if (!client) {
+    console.warn("no model access (no API key, or over the spend cap); document not split", name);
     return null;
   }
   const [roster, classes] = await db.batch([selectRoster(db, userId, classIds), selectClasses(db, userId)]);
   try {
-    return await splitDocument({ text, roster, classes: classes.filter((k) => classIds.includes(k.id)), client: new Anthropic({ apiKey }) });
+    return await splitDocument({ text, roster, classes: classes.filter((k) => classIds.includes(k.id)), client });
   } catch (err) {
     console.error("splitting failed for document", name, err);
     return null;
@@ -118,7 +121,7 @@ function fittingPassages(passages: string[]): string[] {
 const documents = new Hono<UserEnv>();
 
 // POST /api/documents?name=…&classIds=a,b[&modified=…][&as=course|students|both] with the
-// file as the body. A bad query, an unknown class, or students with no key are refused
+// file as the body. A bad query, an unknown class, or students with no model are refused
 // up front with an ordinary JSON error. Otherwise the answer streams as newline-delimited
 // JSON: a { step, done? } line as each step starts and ends, so the teacher sees what a
 // minute-long import is doing, then one { status, result } or { status, error } line.
@@ -129,8 +132,11 @@ const documents = new Hono<UserEnv>();
 documents.post("/", validate("query", documentQuery), uploadLimit, async (c) => {
   const { name, classIds, as } = c.req.valid("query");
   const db = c.var.db;
-  if (as === "students" && !c.env.ANTHROPIC_API_KEY) {
-    // Checked before the file is read: without the model there is nothing to do with it.
+  const access = await modelAccess(c);
+  if (as === "students" && !access.client) {
+    // Checked before the file is read: without the model there is nothing to do with it. An
+    // account over its spend cap is told so; a missing key reads as an unreadable file.
+    if (access.reason !== "no_key") throw access.denied;
     console.warn("ANTHROPIC_API_KEY is not set; document not imported", name);
     throw unreadable();
   }
@@ -144,7 +150,7 @@ documents.post("/", validate("query", documentQuery), uploadLimit, async (c) => 
   return stream(c, async (out) => {
     const send = (line: DocumentProgress) => out.write(`${JSON.stringify(line)}\n`);
     try {
-      const { status, result } = await importDocument(c.req.valid("query"), db, c.var.user, c.env.ANTHROPIC_API_KEY, () => readUpload(c, name), send);
+      const { status, result } = await importDocument(c.req.valid("query"), db, c.var.user, access.client, () => readUpload(c, name), send);
       await send({ status, result });
     } catch (err) {
       // Past the first byte the HTTP status is spent, so failures travel in the last line.
@@ -162,7 +168,7 @@ async function importDocument(
   { name, classIds, modified, as }: z.infer<typeof documentQuery>,
   db: Db,
   user: User,
-  apiKey: string | undefined,
+  client: Anthropic | null,
   read: () => Promise<string>,
   send: (line: DocumentProgress) => Promise<unknown>,
 ): Promise<{ status: 200 | 201; result: DocumentImportResult }> {
@@ -174,13 +180,13 @@ async function importDocument(
     return value;
   };
   const text = await step("read", read);
-  const kind = as ?? (await step("sort", () => sort(apiKey, name, text)));
+  const kind = as ?? (await step("sort", () => sort(client, name, text)));
   const wantsMaterial = kind !== "students";
   const wantsNotes = kind !== "course";
 
   const [summary, parts] = await Promise.all([
-    wantsMaterial ? step("summarise", () => summarise(apiKey, name, text)) : null,
-    wantsNotes ? step("split", () => split(db, userId, apiKey, name, text, classIds)) : null,
+    wantsMaterial ? step("summarise", () => summarise(client, name, text)) : null,
+    wantsNotes ? step("split", () => split(db, userId, client, name, text, classIds)) : null,
   ]);
   // A document only of students has no value uncut, so a failed split writes nothing.
   if (kind === "students" && !parts) throw unreadable();

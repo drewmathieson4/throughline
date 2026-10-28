@@ -1,7 +1,8 @@
 import { Sparkles } from "lucide-react";
 import { Link } from "react-router";
 import type { ClassRow } from "../../worker/db/schema";
-import { useDemo } from "../auth/demoStore";
+import { AiPaused } from "../auth/AiPaused";
+import { useAllowance } from "../auth/allowanceStore";
 import { SignInNudge } from "../auth/SignInNudge";
 import { useNotes } from "../notes/notesStore";
 import { chipOff, chipOn, chipRow, errorText, plural } from "../ui";
@@ -16,7 +17,7 @@ import { cn } from "@/lib/utils";
 // The top of Reports: the class pills (the only class switcher in the app), the period, and
 // the class run. The count on the button is the only warning before a run, per the
 // no-confirm rule. A demo visitor's count stops at what they have left; at none, the way on
-// is to sign in.
+// is to sign in. With the AI paused (the spend cap), the button says so instead.
 export default function ReportsControls({
   classes,
   cls,
@@ -39,13 +40,13 @@ export default function ReportsControls({
   onGenerateClass: () => void;
 }) {
   const { colourOf } = useNotes();
-  const { demo } = useDemo();
+  const { demo, ai } = useAllowance();
   const year = wholeYear(cls);
   const isYear = sameRange(range, year);
   const busyRun = runBusy(run) ? run : null;
   const busy = busyRun !== null;
   const count = demo ? Math.min(pending, demo.reportsLeft) : pending;
-  const capped = demo?.reportsLeft === 0 && pending > 0 && !busy;
+  const capped = (ai.off !== null || demo?.reportsLeft === 0) && pending > 0 && !busy;
 
   return (
     <>
@@ -86,7 +87,7 @@ export default function ReportsControls({
         </button>
         <span className="flex-1" />
         {capped ? (
-          <SignInNudge className="min-h-11" />
+          ai.off ? <AiPaused off={ai.off} className="min-h-11" /> : <SignInNudge className="min-h-11" />
         ) : (
           <Button type="button" className="min-h-11" disabled={!validRange(range) || !ready || busy || count === 0} onClick={onGenerateClass}>
             <Sparkles aria-hidden />

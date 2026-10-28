@@ -7,4 +7,6 @@ interface Env {
   // The OAuth client from the Google Cloud console (Google Auth Platform → Clients).
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
+  // Comma-separated emails exempt from the per-account AI spend cap (worker/spend.ts).
+  OWNER_EMAILS?: string;
 }

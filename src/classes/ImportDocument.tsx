@@ -6,7 +6,7 @@ import { DOCUMENT_TYPES, fileInit } from "../api";
 import FilePicker from "../FilePicker";
 import NoteItem from "../NoteItem";
 import { kinds } from "../noteKinds";
-import { useDemo } from "../auth/demoStore";
+import { useAllowance } from "../auth/allowanceStore";
 import { useNotes } from "../notes/notesStore";
 import Tags from "../notes/Tags";
 import { documentHeadline, documentLines } from "../students/importText";
@@ -56,7 +56,7 @@ async function postDocument(url: string, file: File, onStep: (step: DocumentStep
 // teacher has said it.
 function useDocumentImport(onImported: (imported: DocumentImport) => void) {
   const { add, classNames } = useNotes();
-  const { refreshDemo } = useDemo();
+  const { refreshAllowance } = useAllowance();
   const [progress, setProgress] = useState<Progress | null>(null);
   const action = useAction(async (file: File, classIds: string[], as?: DocumentKind) => {
     const query = new URLSearchParams({ name: file.name, classIds: classIds.join(",") });
@@ -74,7 +74,7 @@ function useDocumentImport(onImported: (imported: DocumentImport) => void) {
       onImported({ result, file });
     } finally {
       setProgress(null);
-      refreshDemo();
+      refreshAllowance();
     }
   });
   return { ...action, progress };

@@ -112,6 +112,7 @@ export async function cloneDemo(db: Db): Promise<User> {
     demo: 1,
     demoNotesUsed: 0,
     demoReportsUsed: 0,
+    aiSpentMicro: 0,
   };
   user.googleSub = `demo:${user.id}`;
 

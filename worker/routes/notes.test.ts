@@ -1,6 +1,7 @@
 import { expect, test, vi } from "vitest";
 import app from "../index";
-import { CLASS_B_ID, NOTE_ID, OTHER_CLASS_ID, OTHER_STUDENT_ID, OTHER_USER_ID, SEED_CLASS_ID as CLASS_ID, SEED_CLASS_NAMES, SEED_STUDENT_COUNT, STUDENT, UNKNOWN_ID, fakeAi, jsonInit, quietErrors, setupTestDb, signedIn } from "../test-db";
+import { CLASS_B_ID, DEV_USER_ID, NOTE_ID, OTHER_CLASS_ID, OTHER_STUDENT_ID, OTHER_USER_ID, SEED_CLASS_ID as CLASS_ID, SEED_CLASS_NAMES, SEED_STUDENT_COUNT, STUDENT, UNKNOWN_ID, fakeAi, jsonInit, quietErrors, setupTestDb, signedIn } from "../test-db";
+import { ACCOUNT_CAP_MICRO } from "../spend";
 import { tagNote, type TagResult } from "../tagging";
 import type { NoteWithTags, SessionUser, TaggedNoteResponse as Created } from "../api-types";
 
@@ -119,6 +120,15 @@ test("POST /api/notes stores a text note and GET lists it newest first", async (
   expect(created.id).toMatch(/^[0-9a-f-]{36}$/);
 
   expect((await listOf(CLASS_ID)).map((n) => n.body)).toEqual(["Newer note", "Older note"]);
+});
+
+test("an account over its AI spend cap still saves its notes, untagged", async () => {
+  tagNoteMock.mockReset();
+  await db.setSpent(DEV_USER_ID, ACCOUNT_CAP_MICRO);
+  const res = await postNote({ body: BODY, classId: CLASS_ID }, keyed());
+  expect(res.status).toBe(201);
+  expect(await res.json()).toMatchObject({ classId: CLASS_ID, students: [], mentions: [], tagging: "failed" });
+  expect(tagNoteMock).not.toHaveBeenCalled();
 });
 
 test("POST /api/notes without a class saves it unassigned when nothing is inferable", async () => {

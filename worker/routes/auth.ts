@@ -3,17 +3,18 @@
 // The state cookie ties the two together so a callback the app did not start is refused.
 // POST /demo is the other way in: an account with no Google behind it (worker/demo.ts).
 // Everything else under /api needs the session cookie these routes set (worker/auth.ts).
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { z } from "zod";
 import * as schema from "../db/schema";
 import type { User } from "../db/schema";
 import type { AppEnv } from "../db/client";
-import type { SessionUser } from "../api-types";
+import type { AiAllowance, SessionUser } from "../api-types";
 import { SESSION_COOKIE, STATE_COOKIE, cookieOptions, createSession, deleteSession, newToken, requireUser, setSessionCookie } from "../auth";
 import { DEMO_MAX_LIVE, DEMO_SESSION_DAYS, allowanceOf, cloneDemo, deleteDemoUser, liveDemoCount, purgeExpiredDemos } from "../demo";
 import { authorizeUrl, googleProfile } from "../google";
+import { aiOf, spendState } from "../spend";
 import { validate } from "../validate";
 
 const STATE_MAX_AGE = 10 * 60; // seconds: long enough to pick an account, not to be replayed later
@@ -25,8 +26,10 @@ const callbackQuery = z.object({ code: z.string().optional(), state: z.string().
 // deployed host in production. Each is registered as a redirect URI on the OAuth client.
 const callbackUri = (url: string) => `${new URL(url).origin}/api/auth/callback`;
 
-// What the browser may know about who is signed in.
-const sessionUser = (user: User): SessionUser => ({ id: user.id, email: user.email, name: user.name, pictureUrl: user.pictureUrl, demo: allowanceOf(user) });
+// What the browser may know about who is signed in: the demo's allowance and where the
+// account stands against the AI spend cap, never the Google id behind it.
+const sessionUser = (user: User, ai: AiAllowance): SessionUser => ({ id: user.id, email: user.email, name: user.name, pictureUrl: user.pictureUrl, demo: allowanceOf(user), ai });
+const me = async (c: Context<AppEnv>, user: User) => sessionUser(user, aiOf(await spendState(c.var.db, user, c.env)));
 
 const auth = new Hono<AppEnv>();
 
@@ -73,17 +76,17 @@ auth.get("/callback", validate("query", callbackQuery), async (c) => {
 // second tap) gets who it is, 200. 503 when the demo is full or not set up on this database.
 // Expired visitors are cleared out on the way, since nothing else runs on a schedule.
 auth.post("/demo", async (c) => {
-  if (c.var.user) return c.json(sessionUser(c.var.user));
+  if (c.var.user) return c.json(await me(c, c.var.user));
   await purgeExpiredDemos(c.var.db);
   if ((await liveDemoCount(c.var.db)) >= DEMO_MAX_LIVE) throw new HTTPException(503, { message: "the demo is busy; try again later" });
   const user = await cloneDemo(c.var.db);
   const token = await createSession(c.var.db, user.id, DEMO_SESSION_DAYS);
   setSessionCookie(c, token, DEMO_SESSION_DAYS);
-  return c.json(sessionUser(user), 201);
+  return c.json(await me(c, user), 201);
 });
 
 // GET /api/auth/me → the signed-in teacher or demo visitor, or 401.
-auth.get("/me", requireUser, (c) => c.json(sessionUser(c.var.user!)));
+auth.get("/me", requireUser, async (c) => c.json(await me(c, c.var.user!)));
 
 // POST /api/auth/signout → ends this browser's session on the server, not just the cookie.
 auth.post("/signout", requireUser, async (c) => {

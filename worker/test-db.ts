@@ -14,6 +14,7 @@ import seed from "../scripts/seed-dev.sql?raw";
 // one class of their own is added before every test, so ownership tests have someone to
 // be shut out of. A session for each is stored, and request() presents the dev one by default.
 export const DEV_USER_ID = "00000000-0000-4000-8000-000000000001";
+export const DEV_EMAIL = "dev@example.test";
 export const OTHER_USER_ID = "00000000-0000-4000-8000-000000000002";
 export const OTHER_CLASS_ID = "11111111-1111-4111-8111-111111119999";
 export const OTHER_STUDENT_ID = "22222222-2222-4222-8222-222222222299";
@@ -126,6 +127,8 @@ export function setupTestDb() {
     // Spend some of a demo visitor's allowance directly, for tests at the limit.
     setUsed: (userId: string, used: { notes?: number; reports?: number }) =>
       prepare("UPDATE users SET demo_notes_used = coalesce(?, demo_notes_used), demo_reports_used = coalesce(?, demo_reports_used) WHERE id = ?", used.notes ?? null, used.reports ?? null, userId).run(),
+    // Set what an account has spent of its AI allowance, in micro-dollars, for tests at the cap.
+    setSpent: (userId: string, micro: number) => prepare("UPDATE users SET ai_spent_micro = ? WHERE id = ?", micro, userId).run(),
     // Raw inserts for tests that need rows without going through tagging.
     insertNote: (id: string, classId: string | null, notedAt: string, ownerId = DEV_USER_ID) =>
       prepare("INSERT INTO notes (id, owner_id, class_id, kind, body, noted_at, created_at) VALUES (?, ?, ?, 'text', ?, ?, ?)", id, ownerId, classId, `note ${id.slice(-2)}`, notedAt, notedAt),

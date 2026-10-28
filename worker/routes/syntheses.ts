@@ -4,7 +4,6 @@
 // changes; the Reports tab only offers Generate when it has. See DECISIONS.md.
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import Anthropic from "@anthropic-ai/sdk";
 import { and, eq, getTableColumns, inArray } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "../db/schema";
@@ -15,6 +14,7 @@ import { notFound, ownedClasses, requireClass } from "../db/helpers";
 import { refund, reserve } from "../demo";
 import { buildEvidence, loadEvidence, type Range } from "../evidence";
 import { dateField, idParam } from "../fields";
+import { modelAccess } from "../spend";
 import { SYNTHESIS_VERSION, inputHash, synthesise } from "../synthesis-model";
 import { validate } from "../validate";
 
@@ -69,7 +69,8 @@ syntheses.get("/", validate("query", listQuery), async (c) => {
 // newest one for this range read exactly the evidence there is now (no model call); otherwise
 // Opus is asked and the new one is stored, 201. 422 when the range holds no notes and no
 // grades, 503 without an API key, 502 when the model fails; nothing is stored on a failure.
-// 403 for a demo visitor who has used their summaries (a cached one is still served).
+// 403 for a demo visitor who has used their summaries, or an account (or the whole app) over
+// its AI spend cap; a cached one is still served to both.
 syntheses.post("/", validate("json", createBody), async (c) => {
   const { studentId, from, to } = c.req.valid("json");
   const db = c.var.db;
@@ -88,12 +89,12 @@ syntheses.post("/", validate("json", createBody), async (c) => {
   const saved = loaded.latest(studentId);
   if (saved?.inputHash === hash) return c.json({ ...view(saved), cached: true } satisfies SynthesisResult);
 
-  const apiKey = c.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new HTTPException(503, { message: "summaries need ANTHROPIC_API_KEY" });
+  const access = await modelAccess(c);
+  if (!access.client) throw access.denied;
   await reserve(db, c.var.user, "reports");
   let result: Awaited<ReturnType<typeof synthesise>>;
   try {
-    result = await synthesise({ evidence, client: new Anthropic({ apiKey }) });
+    result = await synthesise({ evidence, client: access.client });
   } catch (err) {
     await refund(db, c.var.user, "reports");
     console.error("synthesis failed for student", studentId, err);

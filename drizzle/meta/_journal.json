@@ -78,6 +78,13 @@
       "when": 1793145063587,
       "tag": "0010_silky_gateway",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1793148171009,
+      "tag": "0011_military_nextwave",
+      "breakpoints": true
     }
   ]
 }

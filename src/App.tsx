@@ -6,7 +6,7 @@ import type { ClassRow } from "../worker/db/schema";
 import type { SessionUser } from "../worker/api-types";
 import { api, messageOf } from "./api";
 import { AccountCard } from "./auth/Account";
-import { DemoProvider } from "./auth/DemoProvider";
+import { AllowanceProvider } from "./auth/AllowanceProvider";
 import SignIn from "./auth/SignIn";
 import { useSession } from "./auth/useSession";
 import { useOnline } from "./offline/useOnline";
@@ -148,7 +148,7 @@ function Shell({ user, onSignOut }: Account) {
   const recordHome = useMatch("/notes") !== null;
 
   return (
-    <DemoProvider user={user}>
+    <AllowanceProvider user={user}>
       <NotesProvider classes={classes ?? NO_CLASSES}>
         <ReportsProvider>
           <div className="min-h-svh md:flex">
@@ -191,7 +191,7 @@ function Shell({ user, onSignOut }: Account) {
           </div>
         </ReportsProvider>
       </NotesProvider>
-    </DemoProvider>
+    </AllowanceProvider>
   );
 }
 

@@ -5,6 +5,8 @@ import type { Citation, Coverage, Gap, GoalStatus, GradeSummary, SynthesisView, 
 import { api, fileInit, jsonInit, messageOf } from "../api";
 import { calendarDay, caption, errorText, dateFormat, mmss, pct, plural, shortDateFormat } from "../ui";
 import { useElapsed, useRecorder } from "../useRecorder";
+import { AiPaused } from "../auth/AiPaused";
+import { useAllowance } from "../auth/allowanceStore";
 import { SignInNudge } from "../auth/SignInNudge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -235,12 +237,13 @@ export default function Summary({
   classId: string;
   stale: boolean;
   newNotes: number;
-  /** A demo visitor with no summaries left: the way on is to sign in. */
+  /** No fresh summary can be made: a demo visitor with none left (the way on is to sign in), or the AI is paused. */
   capped: boolean;
   regenerating: boolean;
   onRegenerate: () => void;
   onRecorded: () => void;
 }) {
+  const { ai } = useAllowance();
   const s = synthesis.json;
   const label = LABEL[s.coverage.label];
   const made = dateFormat.format(new Date(synthesis.createdAt));
@@ -252,7 +255,11 @@ export default function Summary({
             {newNotes > 0 ? `${plural(newNotes, "new note")} since ${made}.` : `The evidence has changed since ${made}.`}
           </p>
           {capped && !regenerating ? (
-            <SignInNudge size="sm" variant="default" className="bg-foreground text-background hover:bg-foreground/90" />
+            ai.off ? (
+              <AiPaused off={ai.off} />
+            ) : (
+              <SignInNudge size="sm" variant="default" className="bg-foreground text-background hover:bg-foreground/90" />
+            )
           ) : (
             <Button type="button" size="sm" className="bg-foreground text-background hover:bg-foreground/90" disabled={regenerating} onClick={onRegenerate}>
               {regenerating && <span className="size-3 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden />}

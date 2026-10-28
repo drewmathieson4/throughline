@@ -5,9 +5,13 @@ import type { ClassMaterial, ClassRow, Note, NoteKind, NoteMention, NoteStudent,
 
 // What a demo visitor has left of the demo's allowance (worker/demo.ts).
 export type DemoAllowance = { notesLeft: number; reportsLeft: number };
+// What the account's model calls have cost against its cap (worker/spend.ts). off says
+// why the models are switched off: this account is over its cap, or the whole app is over
+// its total; null while they run.
+export type AiAllowance = { spentUsd: number; capUsd: number; off: "account" | "total" | null };
 // Who is signed in, as /api/auth/me reports it: never the Google id behind the account.
 // demo is null for a teacher.
-export type SessionUser = Pick<User, "id" | "email" | "name" | "pictureUrl"> & { demo: DemoAllowance | null };
+export type SessionUser = Pick<User, "id" | "email" | "name" | "pictureUrl"> & { demo: DemoAllowance | null; ai: AiAllowance };
 
 // What the upload routes read; the file pickers in the browser offer the same set.
 export type UploadExtension = "pdf" | "docx" | "txt" | "md";

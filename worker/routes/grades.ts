@@ -3,7 +3,7 @@
 // class roster, fills in categories, and upserts one row per student per assignment. No
 // preview: the summary says what was written and what was skipped. See DECISIONS.md.
 import { Hono } from "hono";
-import Anthropic from "@anthropic-ai/sdk";
+import type Anthropic from "@anthropic-ai/sdk";
 import { sql } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "../db/schema";
@@ -13,6 +13,7 @@ import { requireClass, selectRoster } from "../db/helpers";
 import { OTHER, categorise, defaultCategories, matchStudents, parseGradebook, type MatchedEntry } from "../gradebook";
 import { categoriseAssignments } from "../gradebook-model";
 import { gradingWeights, selectMaterialSummaries } from "../materials";
+import { modelAccess } from "../spend";
 import { validate } from "../validate";
 
 // A term's grade book: a few hundred rows of students or scores, a column per assignment.
@@ -32,7 +33,7 @@ const UPSERT_CHUNK = 12;
 // Categories for the entries whose file did not state one: the rules on the title, then
 // Haiku for the titles left (titles only, never scores or names), then "other". A model
 // failure is logged and costs only the categories, like the roster's column mapping.
-async function fillCategories(entries: MatchedEntry[], syllabus: string[] | null, apiKey: string | undefined): Promise<void> {
+async function fillCategories(entries: MatchedEntry[], syllabus: string[] | null, client: Anthropic | null): Promise<void> {
   const unplaced = new Set<string>();
   for (const e of entries) {
     if (e.category !== null) continue;
@@ -40,9 +41,9 @@ async function fillCategories(entries: MatchedEntry[], syllabus: string[] | null
     if (e.category === null) unplaced.add(e.assignment);
   }
   let fromModel = new Map<string, string>();
-  if (unplaced.size > 0 && apiKey) {
+  if (unplaced.size > 0 && client) {
     try {
-      fromModel = await categoriseAssignments({ titles: [...unplaced], categories: syllabus ?? defaultCategories, client: new Anthropic({ apiKey }) });
+      fromModel = await categoriseAssignments({ titles: [...unplaced], categories: syllabus ?? defaultCategories, client });
     } catch (err) {
       console.error("categorising assignments failed", err);
     }
@@ -69,7 +70,7 @@ grades.post("/import", validate("json", importBody), async (c) => {
 
   const { matched, skipped } = matchStudents(parsed.entries, roster);
   const weights = gradingWeights(materials);
-  await fillCategories(matched, weights ? weights.map((w) => w.category) : null, c.env.ANTHROPIC_API_KEY);
+  await fillCategories(matched, weights ? weights.map((w) => w.category) : null, (await modelAccess(c)).client);
 
   // The last line wins when a file names the same student and assignment twice.
   const byKey = new Map<string, MatchedEntry>();

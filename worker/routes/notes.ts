@@ -7,14 +7,15 @@
 //
 // Tagging runs inside the create request (one Haiku call, roughly 1 to 3 s) so the response
 // already carries the suggestions. A failed call never loses the note: it is saved first and
-// comes back with `tagging: "failed"`; POST /:noteId/retag tries again.
+// comes back with `tagging: "failed"`; POST /:noteId/retag tries again. The same when the
+// model cannot be called at all (no key, or the account is over its spend cap).
 //
 // Text and voice notes may carry a clientId the browser minted when the note was captured.
 // A second send with the same id (the offline queue flushing again, or a retry after a lost
 // response) gets the stored note back with a 200 and makes no Whisper or Haiku call.
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import Anthropic from "@anthropic-ai/sdk";
+import type Anthropic from "@anthropic-ai/sdk";
 import { and, desc, eq, isNull, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "../db/schema";
@@ -25,6 +26,7 @@ import { requireClass, requireNote, requireStudent, selectClasses, selectRoster 
 import { assertAllowance, refund, reserve } from "../demo";
 import { MAX_BODY_CHARS, mentionRow, noteRow, type NoteValues } from "../note-rows";
 import { pastDatetime } from "../fields";
+import { modelAccess } from "../spend";
 import { validate } from "../validate";
 import { quoteLocator, tagNote, union, type TagResult } from "../tagging";
 import { transcribe } from "../transcribe";
@@ -132,14 +134,14 @@ const existingTag = (db: Db, noteId: string, studentId: string) =>
 // Ask the model which students the note is about, across every class of the teacher's. null
 // when it could not be asked or did not answer usably; the caller decides what that means
 // for existing rows.
-async function suggestTags(db: Db, apiKey: string | undefined, userId: string, note: Note): Promise<TagResult | null> {
-  if (!apiKey) {
-    console.warn("ANTHROPIC_API_KEY is not set; note saved without tags", note.id);
+async function suggestTags(db: Db, client: Anthropic | null, userId: string, note: Note): Promise<TagResult | null> {
+  if (!client) {
+    console.warn("no model access (no API key, or over the spend cap); note saved without tags", note.id);
     return null;
   }
   const [roster, classes] = await db.batch([selectRoster(db, userId), selectClasses(db, userId)]);
   try {
-    return await tagNote({ body: note.body, roster, classes, client: new Anthropic({ apiKey }) });
+    return await tagNote({ body: note.body, roster, classes, client });
   } catch (err) {
     console.error("tagging failed for note", note.id, err);
     return null;
@@ -175,8 +177,8 @@ async function storeTags(db: Db, note: Note, result: TagResult): Promise<Note> {
 
 // Suggest and store. "failed" means the note's tags are untouched: either the model could not
 // be asked, or the rows could not be written (logged; the note itself is already saved).
-async function runTagging(db: Db, apiKey: string | undefined, userId: string, note: Note): Promise<TaggedNoteResponse> {
-  const result = await suggestTags(db, apiKey, userId, note);
+async function runTagging(db: Db, client: Anthropic | null, userId: string, note: Note): Promise<TaggedNoteResponse> {
+  const result = await suggestTags(db, client, userId, note);
   let tagging: TaggingStatus = "failed";
   if (result) {
     try {
@@ -192,24 +194,24 @@ async function runTagging(db: Db, apiKey: string | undefined, userId: string, no
 // Store and tag a captured note: 201. Two sends of one clientId that both got past
 // sentBefore meet at the unique index; the later one writes nothing and returns the first
 // one's note: 200.
-async function saveCaptured(db: Db, apiKey: string | undefined, values: NoteValues): Promise<[TaggedNoteResponse, 200 | 201]> {
+async function saveCaptured(db: Db, client: Anthropic | null, values: NoteValues): Promise<[TaggedNoteResponse, 200 | 201]> {
   const note = await db
     .insert(schema.notes)
     .values(noteRow(values))
     .onConflictDoNothing({ target: [schema.notes.ownerId, schema.notes.clientId] })
     .returning()
     .get();
-  if (note) return [await runTagging(db, apiKey, values.ownerId, note), 201];
+  if (note) return [await runTagging(db, client, values.ownerId, note), 201];
   return [(await sentBefore(db, values.ownerId, values.clientId))!, 200];
 }
 
 // saveCaptured against a demo visitor's allowance: one note reserved first, given back when
 // nothing new was written (a repeat, or a failure). A teacher's allowance is unlimited.
-async function saveCounted(db: Db, apiKey: string | undefined, user: schema.User, values: Omit<NoteValues, "ownerId">): Promise<[TaggedNoteResponse, 200 | 201]> {
+async function saveCounted(db: Db, client: Anthropic | null, user: schema.User, values: Omit<NoteValues, "ownerId">): Promise<[TaggedNoteResponse, 200 | 201]> {
   await reserve(db, user, "notes");
   let saved: [TaggedNoteResponse, 200 | 201];
   try {
-    saved = await saveCaptured(db, apiKey, { ownerId: user.id, ...values });
+    saved = await saveCaptured(db, client, { ownerId: user.id, ...values });
   } catch (err) {
     await refund(db, user, "notes");
     throw err;
@@ -245,7 +247,7 @@ notes.post("/", validate("json", createNote), async (c) => {
   const repeat = await sentBefore(c.var.db, uid, clientId);
   if (repeat) return c.json(repeat, 200);
   if (classId) await requireClass(c.var.db, uid, classId);
-  const [note, status] = await saveCounted(c.var.db, c.env.ANTHROPIC_API_KEY, c.var.user, { classId, kind: "text", body, notedAt, clientId });
+  const [note, status] = await saveCounted(c.var.db, (await modelAccess(c)).client, c.var.user, { classId, kind: "text", body, notedAt, clientId });
   return c.json(note, status);
 });
 
@@ -284,7 +286,7 @@ notes.post("/voice", validate("query", voiceQuery), audioLimit, async (c) => {
   // Only reachable by uploading a long audio file; the browser stops at five minutes.
   if (text.length > MAX_BODY_CHARS) throw new HTTPException(400, { message: "transcript is too long" });
 
-  const [note, status] = await saveCounted(c.var.db, c.env.ANTHROPIC_API_KEY, c.var.user, { classId, kind: "voice", body: text, notedAt, clientId });
+  const [note, status] = await saveCounted(c.var.db, (await modelAccess(c)).client, c.var.user, { classId, kind: "voice", body: text, notedAt, clientId });
   return c.json(note, status);
 });
 
@@ -296,7 +298,7 @@ notes.post("/:noteId/retag", validate("param", noteParam), async (c) => {
   const note = await requireNote(c.var.db, uid, c.req.valid("param").noteId);
   const current = await withTags(c.var.db, note);
   if (current.students.length > 0 || current.mentions.length > 0) throw new HTTPException(409, { message: "note is already tagged" });
-  return c.json(await runTagging(c.var.db, c.env.ANTHROPIC_API_KEY, uid, note));
+  return c.json(await runTagging(c.var.db, (await modelAccess(c)).client, uid, note));
 });
 
 // POST /api/notes/:noteId/students { studentId, quotes? } → the teacher adds a student the
