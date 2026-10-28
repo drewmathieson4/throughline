@@ -1,7 +1,7 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import app from "../index";
 import type { CourseSummary } from "../db/schema";
-import type { DocumentImportResult, DocumentKind, DocumentProgress, MaterialRow, NoteWithTags } from "../api-types";
+import type { DocumentImportResult, DocumentKind, DocumentProgress, MaterialRow, NoteWithTags, SessionUser } from "../api-types";
 import { sortDocument } from "../document-kind";
 import { splitDocument, type SplitResult } from "../documents";
 import { summariseMaterial } from "../materials-model";
@@ -416,6 +416,38 @@ test("POST /api/documents needs at least one known class, and checks them before
   expect(unknown.status).toBe(404);
   expect(ai.toMarkdown).not.toHaveBeenCalled();
   expect(await listMaterials(CLASS_ID)).toEqual([]);
+});
+
+test("a demo visitor's import pays for the notes it writes; at the limit nothing is read, and one that would go over writes nothing", async () => {
+  const demo = await db.startDemo();
+  const [cls] = await demo.json<{ id: string }[]>("/api/classes");
+  const [first, second] = await demo.json<{ id: string }[]>(`/api/students?classId=${cls!.id}`);
+  const section = (s: { id: string }) => ({ studentId: s.id, classId: cls!.id, quotes: ["Reads widely."] });
+  const left = async () => (await demo.json<SessionUser>("/api/auth/me")).demo!.notesLeft;
+  const post = (name: string) =>
+    app.request(`/api/documents?${new URLSearchParams({ name, classIds: cls!.id })}`, signedIn({ method: "POST", headers: { "content-type": "application/octet-stream" }, body: "Reads widely." }, { token: demo.token }), {
+      ...keyed(),
+      AI: fakeAi("") as unknown as Ai,
+    });
+  const outcome = async (res: Response) => JSON.parse((await res.text()).trim().split("\n").at(-1)!) as { status: number };
+  const before = (await demo.json<NoteWithTags[]>("/api/notes")).length;
+
+  await db.setUsed(demo.userId, { notes: 28 });
+  splitMock.mockResolvedValueOnce(splitResult([section(first!), section(second!)]));
+  expect((await outcome(await post("term-1.txt"))).status).toBe(201);
+  expect(await left()).toBe(0);
+  expect(await demo.json<NoteWithTags[]>("/api/notes")).toHaveLength(before + 2);
+
+  const refused = await post("term-2.txt");
+  expect(refused.status).toBe(403);
+  expect(refused.headers.get("content-type")).not.toBe("application/x-ndjson");
+  expect(splitMock).toHaveBeenCalledTimes(1);
+
+  await db.setUsed(demo.userId, { notes: 29 });
+  splitMock.mockResolvedValueOnce(splitResult([section(first!), section(second!)]));
+  expect(await outcome(await post("term-3.txt"))).toEqual({ status: 403, error: "The demo allows 30 notes; sign in with Google to use your own classes" });
+  expect(await demo.json<NoteWithTags[]>("/api/notes")).toHaveLength(before + 2);
+  expect(await left()).toBe(1);
 });
 
 test("a document cannot be imported into another teacher's class", async () => {

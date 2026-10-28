@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { ClassRow } from "../../worker/db/schema";
 import type { NoteWithTags, RosterStudent, TaggedNoteResponse } from "../../worker/api-types";
 import { api, fileInit, jsonInit, messageOf } from "../api";
+import { useDemo } from "../auth/demoStore";
 import { createQueue, type QueuedNote } from "../offline/queue";
 import { idbStore } from "../offline/store";
 import { useOnline } from "../offline/useOnline";
@@ -47,6 +48,13 @@ export function NotesProvider({ classes, children }: { classes: ClassRow[]; chil
   const [waiting, setWaiting] = useState(0);
   const onNotes = useMatch("/notes/*") !== null;
   const online = useOnline();
+  // The queue is made once, so it cannot call the store; it counts what it settled and an
+  // effect asks for a demo visitor's allowance again after each one.
+  const { refreshDemo } = useDemo();
+  const [settled, setSettled] = useState(0);
+  useEffect(() => {
+    if (settled > 0) refreshDemo();
+  }, [settled, refreshDemo]);
 
   const [queue] = useState(() => {
     // Queued notes that uploaded while nobody was waiting on them, summed into one toast.
@@ -59,6 +67,7 @@ export function NotesProvider({ classes, children }: { classes: ClassRow[]; chil
       onCount: setWaiting,
       onSettled: (note, outcome, awaited) => {
         if (outcome.status === "sent") setNotes((prev) => merge(prev, [outcome.note], []));
+        setSettled((n) => n + 1); // sent or refused, a demo visitor's allowance may have moved
         // The capture that queued the note reports it itself.
         if (awaited) return;
         if (outcome.status === "refused") {

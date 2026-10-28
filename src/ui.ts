@@ -17,6 +17,8 @@ export const shortDateFormat = new Intl.DateTimeFormat(undefined, { month: "shor
 export const calendarDay = (iso: string, format = dateFormat) => format.format(new Date(`${iso.slice(0, 10)}T00:00:00`));
 
 export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+// What a demo visitor has left: "12 notes · 2 reports left".
+export const allowanceLine = (a: { notesLeft: number; reportsLeft: number }) => `${plural(a.notesLeft, "note")} · ${plural(a.reportsLeft, "report")} left`;
 export const pct = (n: number) => `${Math.round(n)}%`;
 // "1 needs you", "3 need you": notes with a name to settle.
 export const needsYou = (n: number) => `${n} ${n === 1 ? "needs" : "need"} you`;

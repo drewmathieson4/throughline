@@ -1,6 +1,8 @@
 import { Sparkles } from "lucide-react";
 import { Link } from "react-router";
 import type { ClassRow } from "../../worker/db/schema";
+import { useDemo } from "../auth/demoStore";
+import { SignInNudge } from "../auth/SignInNudge";
 import { useNotes } from "../notes/notesStore";
 import { chipOff, chipOn, chipRow, errorText, plural } from "../ui";
 import { runBusy, sameRange, validRange, wholeYear, type ClassRun, type Range } from "./reportsStore";
@@ -13,7 +15,8 @@ import { cn } from "@/lib/utils";
 
 // The top of Reports: the class pills (the only class switcher in the app), the period, and
 // the class run. The count on the button is the only warning before a run, per the
-// no-confirm rule.
+// no-confirm rule. A demo visitor's count stops at what they have left; at none, the way on
+// is to sign in.
 export default function ReportsControls({
   classes,
   cls,
@@ -36,10 +39,13 @@ export default function ReportsControls({
   onGenerateClass: () => void;
 }) {
   const { colourOf } = useNotes();
+  const { demo } = useDemo();
   const year = wholeYear(cls);
   const isYear = sameRange(range, year);
   const busyRun = runBusy(run) ? run : null;
   const busy = busyRun !== null;
+  const count = demo ? Math.min(pending, demo.reportsLeft) : pending;
+  const capped = demo?.reportsLeft === 0 && pending > 0 && !busy;
 
   return (
     <>
@@ -79,10 +85,14 @@ export default function ReportsControls({
           Whole year
         </button>
         <span className="flex-1" />
-        <Button type="button" className="min-h-11" disabled={!validRange(range) || !ready || busy || pending === 0} onClick={onGenerateClass}>
-          <Sparkles aria-hidden />
-          {busy ? `Generating ${busyRun.done} of ${busyRun.total}…` : `Generate for class (${pending})`}
-        </Button>
+        {capped ? (
+          <SignInNudge className="min-h-11" />
+        ) : (
+          <Button type="button" className="min-h-11" disabled={!validRange(range) || !ready || busy || count === 0} onClick={onGenerateClass}>
+            <Sparkles aria-hidden />
+            {busy ? `Generating ${busyRun.done} of ${busyRun.total}…` : `Generate for class (${count})`}
+          </Button>
+        )}
       </div>
       {!validRange(range) && <p className={cn("mt-2", errorText)}>Pick a start date on or before the end date.</p>}
       {busy && (

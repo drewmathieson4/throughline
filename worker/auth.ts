@@ -3,7 +3,7 @@
 // script on the page can use it. withUser reads it on every /api request; requireUser is the
 // guard the resource routes sit behind. See DECISIONS.md.
 import { createMiddleware } from "hono/factory";
-import { getCookie } from "hono/cookie";
+import { getCookie, setCookie } from "hono/cookie";
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { and, eq, gt } from "drizzle-orm";
@@ -12,8 +12,8 @@ import type { AppEnv, Db } from "./db/client";
 
 export const SESSION_COOKIE = "session";
 export const STATE_COOKIE = "oauth_state";
-export const SESSION_DAYS = 30;
-const SESSION_MS = SESSION_DAYS * 24 * 60 * 60 * 1000;
+export const SESSION_DAYS = 30; // a teacher's; a demo visitor's is shorter (worker/demo.ts)
+const DAY_S = 24 * 60 * 60;
 
 // 32 random bytes as URL-safe text: the session token, and the OAuth state.
 export const newToken = () => crypto.getRandomValues(new Uint8Array(32)).toBase64({ alphabet: "base64url", omitPadding: true });
@@ -33,18 +33,21 @@ export const cookieOptions = (c: Context) => ({
   secure: new URL(c.req.url).protocol === "https:",
 });
 
-// A new session for the user; returns the raw token the cookie carries.
-export async function createSession(db: Db, userId: string): Promise<string> {
+// A new session for the user, lasting `days`; returns the raw token the cookie carries.
+export async function createSession(db: Db, userId: string, days = SESSION_DAYS): Promise<string> {
   const token = newToken();
   const now = Date.now();
   await db.insert(schema.sessions).values({
     tokenHash: await hashToken(token),
     userId,
     createdAt: new Date(now).toISOString(),
-    expiresAt: new Date(now + SESSION_MS).toISOString(),
+    expiresAt: new Date(now + days * DAY_S * 1000).toISOString(),
   });
   return token;
 }
+
+// The cookie that carries the token, living as long as the session does.
+export const setSessionCookie = (c: Context, token: string, days = SESSION_DAYS) => setCookie(c, SESSION_COOKIE, token, { ...cookieOptions(c), maxAge: days * DAY_S });
 
 export async function deleteSession(db: Db, token: string): Promise<void> {
   await db.delete(schema.sessions).where(eq(schema.sessions.tokenHash, await hashToken(token)));

@@ -7,7 +7,7 @@ import { z } from "zod";
 import * as schema from "../db/schema";
 import type { UserEnv } from "../db/client";
 import type { ImportedClass, RosterImportResult, RosterStudent, StudentDetail } from "../api-types";
-import { notFound, ownedClasses, requireClass, selectClasses, selectRoster } from "../db/helpers";
+import { insertChunks, notFound, ownedClasses, requireClass, selectClasses, selectRoster } from "../db/helpers";
 import { classIdQuery, dateField, idParam, nameField, notInFuture } from "../fields";
 import { summarise } from "../grades";
 import { gradingWeights, selectMaterialSummaries } from "../materials";
@@ -121,7 +121,7 @@ students.post("/import", validate("json", importBody), async (c) => {
   // Classes first (students reference them), then students in chunks, all in one transaction.
   const statements = [
     ...newClasses.map((k) => db.insert(schema.classes).values(k)),
-    ...Array.from({ length: Math.ceil(inserts.length / INSERT_CHUNK) }, (_, i) => db.insert(schema.students).values(inserts.slice(i * INSERT_CHUNK, (i + 1) * INSERT_CHUNK))),
+    ...insertChunks(db, schema.students, inserts, INSERT_CHUNK),
   ];
   if (statements.length > 0) await db.batch([statements[0]!, ...statements.slice(1)]);
   skipped.sort((a, b) => a.line - b.line);

@@ -6,12 +6,20 @@
 // nothing. Classes and notes carry owner_id; everything else is owned through its class.
 import { HTTPException } from "hono/http-exception";
 import { and, asc, eq, inArray } from "drizzle-orm";
+import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import * as schema from "./schema";
 import type { Note } from "./schema";
 import type { Db } from "./client";
 import type { RosterEntry, TagClass } from "../tagging";
 
 export const notFound = (what: string) => new HTTPException(404, { message: `${what} not found` });
+
+// A multi-row insert as statements of `perStatement` rows each: D1 binds at most 100
+// parameters per statement, so the caller picks the count from the table's column count.
+// Nothing for an empty list; the caller batches what comes back.
+export function insertChunks<T extends SQLiteTable>(db: Db, table: T, rows: T["$inferInsert"][], perStatement: number) {
+  return Array.from({ length: Math.ceil(rows.length / perStatement) }, (_, i) => db.insert(table).values(rows.slice(i * perStatement, (i + 1) * perStatement)));
+}
 
 // The ids of the user's classes, as a subquery for rows that are owned through their class.
 export const ownedClasses = (db: Db, userId: string) => db.select({ id: schema.classes.id }).from(schema.classes).where(eq(schema.classes.ownerId, userId));

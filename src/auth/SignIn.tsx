@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { messageOf } from "../api";
 import { LogoWave } from "@/components/page";
 
 // Google's four-colour G, the mark their sign-in button guidelines ask for.
@@ -12,9 +14,21 @@ function GoogleG({ className }: { className?: string }) {
   );
 }
 
-// The only screen a signed-out teacher sees. The button is a plain link: the browser has to
-// leave for Google and come back, which a fetch cannot do.
-export default function SignIn() {
+// The only screen a signed-out teacher sees. The Google button is a plain link: the browser
+// has to leave for Google and come back, which a fetch cannot do. The demo is a request.
+export default function SignIn({ onDemo }: { onDemo: () => Promise<void> }) {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function tryDemo() {
+    setPending(true);
+    setError(null);
+    try {
+      await onDemo();
+    } catch (e) {
+      setError(messageOf(e));
+      setPending(false);
+    }
+  }
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-8 bg-primary px-6 pt-[calc(var(--statusbar-h)+18px)] pb-[max(40px,env(safe-area-inset-bottom))] text-white">
       <div className="flex items-center gap-3">
@@ -28,6 +42,10 @@ export default function SignIn() {
         <GoogleG className="size-6" />
         Sign in with Google
       </a>
+      <button type="button" disabled={pending} onClick={tryDemo} className="inline-flex min-h-12 items-center rounded-full border border-white/50 px-6 text-[15px] font-bold text-white disabled:opacity-60">
+        {pending ? "Setting up the demo…" : "Try the demo"}
+      </button>
+      {error && <p className="text-sm font-semibold text-white/85">{error}</p>}
     </main>
   );
 }

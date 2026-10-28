@@ -5,6 +5,7 @@ import type { Citation, Coverage, Gap, GoalStatus, GradeSummary, SynthesisView, 
 import { api, fileInit, jsonInit, messageOf } from "../api";
 import { calendarDay, caption, errorText, dateFormat, mmss, pct, plural, shortDateFormat } from "../ui";
 import { useElapsed, useRecorder } from "../useRecorder";
+import { SignInNudge } from "../auth/SignInNudge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -225,6 +226,7 @@ export default function Summary({
   classId,
   stale,
   newNotes,
+  capped,
   regenerating,
   onRegenerate,
   onRecorded,
@@ -233,6 +235,8 @@ export default function Summary({
   classId: string;
   stale: boolean;
   newNotes: number;
+  /** A demo visitor with no summaries left: the way on is to sign in. */
+  capped: boolean;
   regenerating: boolean;
   onRegenerate: () => void;
   onRecorded: () => void;
@@ -247,10 +251,14 @@ export default function Summary({
           <p className="min-w-[160px] flex-1 text-sm font-bold text-sunny-ink">
             {newNotes > 0 ? `${plural(newNotes, "new note")} since ${made}.` : `The evidence has changed since ${made}.`}
           </p>
-          <Button type="button" size="sm" className="bg-foreground text-background hover:bg-foreground/90" disabled={regenerating} onClick={onRegenerate}>
-            {regenerating && <span className="size-3 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden />}
-            {regenerating ? "Regenerating…" : "Regenerate"}
-          </Button>
+          {capped && !regenerating ? (
+            <SignInNudge size="sm" variant="default" className="bg-foreground text-background hover:bg-foreground/90" />
+          ) : (
+            <Button type="button" size="sm" className="bg-foreground text-background hover:bg-foreground/90" disabled={regenerating} onClick={onRegenerate}>
+              {regenerating && <span className="size-3 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden />}
+              {regenerating ? "Regenerating…" : "Regenerate"}
+            </Button>
+          )}
         </div>
       )}
 

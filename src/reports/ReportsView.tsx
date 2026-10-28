@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from "react-router";
 import type { ClassRow } from "../../worker/db/schema";
 import type { SynthesisRosterRow } from "../../worker/api-types";
 import { api, messageOf } from "../api";
+import { useDemo } from "../auth/demoStore";
 import { useNotes } from "../notes/notesStore";
 import { errorText } from "../ui";
 import ReportPane from "./ReportPane";
@@ -97,6 +98,7 @@ function ClassReports({ classes, cls, studentId }: { classes: ClassRow[]; cls: C
 
   const rows = roster?.rows ?? null;
   // Between a date change and its roster arriving, the roster shows the old range.
+  const { demo } = useDemo();
   const ready = roster !== null && sameRange(roster.range, range);
   const run = reports.runOf(cls.id);
   const busy = runBusy(run);
@@ -119,14 +121,12 @@ function ClassReports({ classes, cls, studentId }: { classes: ClassRow[]; cls: C
     }
   }
 
+  // A demo visitor's run stops at what they have left.
   function generateClass() {
     if (!roster) return;
     setError(null);
-    reports.generateClass(
-      cls.id,
-      roster.range,
-      roster.rows.filter(needsRun).map((r) => r.studentId),
-    );
+    const ids = roster.rows.filter(needsRun).map((r) => r.studentId);
+    reports.generateClass(cls.id, roster.range, demo ? ids.slice(0, demo.reportsLeft) : ids);
   }
 
   const pane = selected && roster && (

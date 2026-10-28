@@ -29,5 +29,12 @@ export function useSession() {
     setSession({ status: "out" });
   }, []);
 
-  return { session, signOut };
+  // The demo: the server makes a visitor's account and its cookie on the spot. A failure
+  // (the demo is full) is the caller's to show.
+  const startDemo = useCallback(async () => {
+    const user = await api<SessionUser>("/api/auth/demo", { method: "POST" });
+    setSession({ status: "in", user });
+  }, []);
+
+  return { session, signOut, startDemo };
 }

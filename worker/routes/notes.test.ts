@@ -2,7 +2,7 @@ import { expect, test, vi } from "vitest";
 import app from "../index";
 import { CLASS_B_ID, NOTE_ID, OTHER_CLASS_ID, OTHER_STUDENT_ID, OTHER_USER_ID, SEED_CLASS_ID as CLASS_ID, SEED_CLASS_NAMES, SEED_STUDENT_COUNT, STUDENT, UNKNOWN_ID, fakeAi, jsonInit, quietErrors, setupTestDb, signedIn } from "../test-db";
 import { tagNote, type TagResult } from "../tagging";
-import type { NoteWithTags, TaggedNoteResponse as Created } from "../api-types";
+import type { NoteWithTags, SessionUser, TaggedNoteResponse as Created } from "../api-types";
 
 // The tagger is stubbed: route tests never call the API.
 // (wrangler's proxy reads .dev.vars, so once a real key exists an un-stubbed run would make
@@ -74,6 +74,28 @@ async function createTagged(
   expect(res.status).toBe(201);
   return (await res.json()) as Created;
 }
+
+test("a demo visitor's notes are counted and stop at 30; a repeat send and a refused recording cost nothing", async () => {
+  const demo = await db.startDemo();
+  const left = async () => (await demo.json<SessionUser>("/api/auth/me")).demo!.notesLeft;
+  const as = { token: demo.token };
+  await db.setUsed(demo.userId, { notes: 29 });
+  const clientId = crypto.randomUUID();
+  expect((await app.request("/api/notes", signedIn(jsonInit("POST", { body: "Last one.", clientId }), as), db.env)).status).toBe(201);
+  expect(await left()).toBe(0);
+
+  const refused = await app.request("/api/notes", signedIn(jsonInit("POST", { body: "One more." }), as), db.env);
+  expect(refused.status).toBe(403);
+  expect(await refused.json()).toEqual({ error: "The demo allows 30 notes; sign in with Google to use your own classes" });
+  expect((await app.request("/api/notes", signedIn(jsonInit("POST", { body: "Last one.", clientId }), as), db.env)).status).toBe(200);
+
+  const ai = fakeAi("Transcribed.");
+  const voice = await app.request("/api/notes/voice", signedIn({ method: "POST", headers: { "content-type": "audio/webm" }, body: "audio" }, as), { ...db.env, AI: ai as unknown as Ai });
+  expect(voice.status).toBe(403);
+  expect(ai.run).not.toHaveBeenCalled();
+  expect(await demo.json<NoteWithTags[]>("/api/notes")).toHaveLength((await demo.json<NoteWithTags[]>("/api/notes")).length);
+  expect(await left()).toBe(0);
+});
 
 test("GET /api/notes rejects a malformed classId and 404s an unknown one", async () => {
   expect((await getNotes("not-a-uuid")).status).toBe(400);

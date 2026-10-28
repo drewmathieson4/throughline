@@ -2,12 +2,19 @@ import { expect, test, vi } from "vitest";
 import app from "../index";
 import type { SessionUser } from "../api-types";
 import { hashToken } from "../auth";
+import { liveDemoCount } from "../demo";
 import { googleProfile, type GoogleProfile } from "../google";
 import { DEV_USER_ID, setupTestDb, signedIn } from "../test-db";
 
 // The calls to Google are stubbed: the flow is exercised up to and after them.
 vi.mock(import("../google"), async (importOriginal) => ({ ...(await importOriginal()), googleProfile: vi.fn() }));
 const profileMock = vi.mocked(googleProfile);
+// The count of live demo visitors runs for real unless a test fills the demo up.
+vi.mock(import("../demo"), async (importOriginal) => {
+  const real = await importOriginal();
+  return { ...real, liveDemoCount: vi.fn(real.liveDemoCount) };
+});
+const liveCountMock = vi.mocked(liveDemoCount);
 
 const db = setupTestDb();
 const configured = (): Env => ({ ...db.env, GOOGLE_CLIENT_ID: "client-id", GOOGLE_CLIENT_SECRET: "client-secret" });
@@ -85,7 +92,54 @@ test("the callback makes the user, starts a session the cookie carries, and /me 
 
   const me = await app.request("/api/auth/me", { headers: { cookie: `session=${session.value}` } }, db.env);
   expect(me.status).toBe(200);
-  expect(await me.json()).toEqual({ id: user!.id, email: PROFILE.email, name: "Tess Teacher", pictureUrl: "https://example.test/tess.png" } satisfies SessionUser);
+  expect(await me.json()).toEqual({ id: user!.id, email: PROFILE.email, name: "Tess Teacher", pictureUrl: "https://example.test/tess.png", demo: null } satisfies SessionUser);
+});
+
+test("POST /api/auth/demo makes a visitor with a week-long session, and says so on /me", async () => {
+  const res = await app.request("/api/auth/demo", { method: "POST" }, db.env);
+  expect(res.status).toBe(201);
+  const session = cookie(res, "session")!;
+  expect(session.attrs).toMatchObject({ httponly: "", path: "/", samesite: "Lax", "max-age": String(7 * 24 * 60 * 60) });
+  const made = (await res.json()) as SessionUser;
+  expect(made).toEqual({ id: made.id, email: "", name: "Demo", pictureUrl: null, demo: { notesLeft: 30, reportsLeft: 3 } } satisfies SessionUser);
+  const stored = await db.env.DB.prepare("SELECT user_id, expires_at FROM sessions WHERE token_hash = ?").bind(await hashToken(session.value)).first<{ user_id: string; expires_at: string }>();
+  expect(stored?.user_id).toBe(made.id);
+  expect(Date.parse(stored!.expires_at) - Date.now()).toBeLessThanOrEqual(7 * 24 * 60 * 60 * 1000);
+  const me = await app.request("/api/auth/me", { headers: { cookie: `session=${session.value}` } }, db.env);
+  expect(await me.json()).toEqual(made);
+
+  // Asked again by the same browser: the same visitor, nothing new made. A teacher gets themselves.
+  const again = await app.request("/api/auth/demo", { method: "POST", headers: { cookie: `session=${session.value}` } }, db.env);
+  expect(again.status).toBe(200);
+  expect(((await again.json()) as SessionUser).id).toBe(made.id);
+  expect(cookie(again, "session")).toBeUndefined();
+  const dev = await db.request("/api/auth/demo", { method: "POST" });
+  expect(dev.status).toBe(200);
+  expect(((await dev.json()) as SessionUser).id).toBe(DEV_USER_ID);
+  expect((await db.env.DB.prepare("SELECT count(*) AS n FROM users WHERE demo = 1").first<{ n: number }>())!.n).toBe(1);
+});
+
+test("POST /api/auth/demo is a 503 while the demo is full", async () => {
+  liveCountMock.mockResolvedValueOnce(100);
+  const res = await app.request("/api/auth/demo", { method: "POST" }, db.env);
+  expect(res.status).toBe(503);
+  expect((await db.env.DB.prepare("SELECT count(*) AS n FROM users WHERE demo = 1").first<{ n: number }>())!.n).toBe(0);
+});
+
+test("signing in with Google from the demo makes the teacher and deletes the visitor's copy", async () => {
+  const demo = await db.startDemo();
+  const [cls] = await demo.json<{ id: string }[]>("/api/classes");
+  profileMock.mockResolvedValueOnce(PROFILE);
+  const { state, cookie: c } = await start();
+  const res = await callback({ code: "the-code", state }, `${c}; session=${demo.token}`);
+  expect(res.status).toBe(302);
+  const [user] = await userRows();
+  expect(user!.name).toBe("Tess Teacher");
+  expect(await sessionCount(user!.id)).toBe(1);
+  expect(await db.env.DB.prepare("SELECT id FROM users WHERE id = ?").bind(demo.userId).first()).toBeNull();
+  expect(await db.env.DB.prepare("SELECT id FROM classes WHERE id = ?").bind(cls!.id).first()).toBeNull();
+  expect((await db.env.DB.prepare("SELECT count(*) AS n FROM notes WHERE owner_id = ?").bind(demo.userId).first<{ n: number }>())!.n).toBe(0);
+  expect((await demo.request("/api/auth/me")).status).toBe(401);
 });
 
 test("signing in again with the same Google account refreshes the user rather than adding one", async () => {
@@ -143,8 +197,9 @@ test("POST /api/auth/signout ends the session on the server and clears the cooki
   expect((await db.request("/api/auth/signout", { method: "POST" })).status).toBe(401);
 });
 
-test("health and sign-in need no session; every other /api route does", async () => {
+test("health, sign-in and the demo need no session; every other /api route does", async () => {
   expect((await db.request("/api/health", undefined, "anon")).status).toBe(200);
+  expect((await db.request("/api/auth/demo", { method: "POST" }, "anon")).status).toBe(201);
   const res = await db.request("/api/classes", undefined, "anon");
   expect(res.status).toBe(401);
   expect(await res.json()).toEqual({ error: "sign in" });

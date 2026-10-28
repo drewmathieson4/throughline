@@ -12,6 +12,7 @@ import type { SynthesisRow } from "../db/schema";
 import type { UserEnv } from "../db/client";
 import type { SynthesisResult, SynthesisRosterRow, SynthesisStatus, SynthesisView } from "../api-types";
 import { notFound, ownedClasses, requireClass } from "../db/helpers";
+import { refund, reserve } from "../demo";
 import { buildEvidence, loadEvidence, type Range } from "../evidence";
 import { dateField, idParam } from "../fields";
 import { SYNTHESIS_VERSION, inputHash, synthesise } from "../synthesis-model";
@@ -68,6 +69,7 @@ syntheses.get("/", validate("query", listQuery), async (c) => {
 // newest one for this range read exactly the evidence there is now (no model call); otherwise
 // Opus is asked and the new one is stored, 201. 422 when the range holds no notes and no
 // grades, 503 without an API key, 502 when the model fails; nothing is stored on a failure.
+// 403 for a demo visitor who has used their summaries (a cached one is still served).
 syntheses.post("/", validate("json", createBody), async (c) => {
   const { studentId, from, to } = c.req.valid("json");
   const db = c.var.db;
@@ -88,10 +90,12 @@ syntheses.post("/", validate("json", createBody), async (c) => {
 
   const apiKey = c.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new HTTPException(503, { message: "summaries need ANTHROPIC_API_KEY" });
+  await reserve(db, c.var.user, "reports");
   let result: Awaited<ReturnType<typeof synthesise>>;
   try {
     result = await synthesise({ evidence, client: new Anthropic({ apiKey }) });
   } catch (err) {
+    await refund(db, c.var.user, "reports");
     console.error("synthesis failed for student", studentId, err);
     throw new HTTPException(502, { message: "the summary could not be made; try again" });
   }

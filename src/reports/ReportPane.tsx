@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import type { SynthesisRosterRow, SynthesisView } from "../../worker/api-types";
 import { api, messageOf } from "../api";
+import { useDemo } from "../auth/demoStore";
+import { SignInNudge } from "../auth/SignInNudge";
 import { calendarDay, dateFormat, errorText } from "../ui";
 import { needsRun, type Range } from "./reportsStore";
 import Summary from "./Summary";
@@ -34,6 +36,8 @@ export default function ReportPane({
 }) {
   const [loaded, setLoaded] = useState<SynthesisView | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { demo } = useDemo();
+  const capped = demo?.reportsLeft === 0;
   const id = row.synthesisId;
 
   useEffect(() => {
@@ -72,6 +76,7 @@ export default function ReportPane({
           classId={classId}
           stale={row.status === "stale"}
           newNotes={row.newNotes}
+          capped={capped}
           regenerating={running}
           onRegenerate={() => onGenerate({ from: shown.periodStart, to: shown.periodEnd })}
           onRecorded={onRecorded}
@@ -90,10 +95,14 @@ export default function ReportPane({
           ) : needsRun(row) ? (
             <>
               <p className="mt-3 text-base font-extrabold">No summary yet</p>
-              <Button type="button" className="mt-4" disabled={disabled} onClick={() => onGenerate(range)}>
-                <Sparkles aria-hidden />
-                Generate
-              </Button>
+              {capped ? (
+                <SignInNudge className="mt-4" />
+              ) : (
+                <Button type="button" className="mt-4" disabled={disabled} onClick={() => onGenerate(range)}>
+                  <Sparkles aria-hidden />
+                  Generate
+                </Button>
+              )}
             </>
           ) : (
             <p className="mt-3 text-base font-extrabold">No evidence in this period</p>

@@ -16,10 +16,11 @@ import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import { z } from "zod";
 import * as schema from "../db/schema";
-import type { CourseSummary } from "../db/schema";
+import type { CourseSummary, User } from "../db/schema";
 import type { DocumentImportResult, DocumentKind, DocumentProgress, DocumentStep, MaterialRow, NoteWithTags } from "../api-types";
 import type { Db, UserEnv } from "../db/client";
 import { requireClass, selectClasses, selectRoster } from "../db/helpers";
+import { assertAllowance, refund, reserve } from "../demo";
 import { sortDocument } from "../document-kind";
 import { splitDocument, type SplitResult } from "../documents";
 import { pastDatetime } from "../fields";
@@ -135,12 +136,15 @@ documents.post("/", validate("query", documentQuery), uploadLimit, async (c) => 
   }
   const uid = c.var.user.id;
   await Promise.all(classIds.map((id) => requireClass(db, uid, id)));
+  // A demo visitor with no notes left is told before the file is read or the model asked;
+  // what the import would write is counted at the save.
+  await assertAllowance(db, c.var.user, "notes");
 
   c.header("content-type", "application/x-ndjson");
   return stream(c, async (out) => {
     const send = (line: DocumentProgress) => out.write(`${JSON.stringify(line)}\n`);
     try {
-      const { status, result } = await importDocument(c.req.valid("query"), db, uid, c.env.ANTHROPIC_API_KEY, () => readUpload(c, name), send);
+      const { status, result } = await importDocument(c.req.valid("query"), db, c.var.user, c.env.ANTHROPIC_API_KEY, () => readUpload(c, name), send);
       await send({ status, result });
     } catch (err) {
       // Past the first byte the HTTP status is spent, so failures travel in the last line.
@@ -157,11 +161,12 @@ documents.post("/", validate("query", documentQuery), uploadLimit, async (c) => 
 async function importDocument(
   { name, classIds, modified, as }: z.infer<typeof documentQuery>,
   db: Db,
-  userId: string,
+  user: User,
   apiKey: string | undefined,
   read: () => Promise<string>,
   send: (line: DocumentProgress) => Promise<unknown>,
 ): Promise<{ status: 200 | 201; result: DocumentImportResult }> {
+  const userId = user.id;
   const step = async <T>(id: DocumentStep, work: () => Promise<T>): Promise<T> => {
     await send({ step: id });
     const value = await work();
@@ -241,8 +246,15 @@ async function importDocument(
   const removeMaterials = db.delete(schema.classMaterials).where(and(eq(schema.classMaterials.name, name), inArray(schema.classMaterials.classId, classIds)));
 
   // One transaction: the earlier set goes even when this import found nobody, because the
-  // file is what the teacher just said these classes should hold.
-  const [deleted] = await step("save", () => db.batch([removeNotes, removeMaterials, ...inserts]));
+  // file is what the teacher just said these classes should hold. A demo visitor's allowance
+  // pays for the notes written plus one for a course document, however many classes it went
+  // to; the notes an earlier import made are not given back.
+  const counted = written.length + (wantsMaterial ? 1 : 0);
+  await reserve(db, user, "notes", counted);
+  const [deleted] = await step("save", () => db.batch([removeNotes, removeMaterials, ...inserts])).catch(async (err: unknown) => {
+    await refund(db, user, "notes", counted);
+    throw err;
+  });
   const result: DocumentImportResult = { name, kind, classIds, materials, notes: written, replaced: deleted.map((r) => r.id), ...(splitFailed && { splitFailed: true }) };
   return { status: materials.length + written.length > 0 ? 201 : 200, result };
 }

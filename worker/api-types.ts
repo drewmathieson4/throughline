@@ -3,8 +3,11 @@
 // both places instead of drifting. Kept free of Hono and Env imports for that reason.
 import type { ClassMaterial, ClassRow, Note, NoteKind, NoteMention, NoteStudent, Student, SynthesisRow, User } from "./db/schema";
 
+// What a demo visitor has left of the demo's allowance (worker/demo.ts).
+export type DemoAllowance = { notesLeft: number; reportsLeft: number };
 // Who is signed in, as /api/auth/me reports it: never the Google id behind the account.
-export type SessionUser = Pick<User, "id" | "email" | "name" | "pictureUrl">;
+// demo is null for a teacher.
+export type SessionUser = Pick<User, "id" | "email" | "name" | "pictureUrl"> & { demo: DemoAllowance | null };
 
 // What the upload routes read; the file pickers in the browser offer the same set.
 export type UploadExtension = "pdf" | "docx" | "txt" | "md";

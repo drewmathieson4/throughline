@@ -23,6 +23,12 @@ export const users = sqliteTable(
     pictureUrl: text("picture_url"),
     createdAt: text("created_at").notNull(),
     lastSigninAt: text("last_signin_at").notNull(),
+    // Demo mode (worker/demo.ts): 1 for an anonymous visitor's account, which owns a private
+    // copy of the synthetic classes and goes once its session has expired. The counters are
+    // what the visitor has spent of the demo's allowance of notes and summaries.
+    demo: integer("demo").notNull().default(0),
+    demoNotesUsed: integer("demo_notes_used").notNull().default(0),
+    demoReportsUsed: integer("demo_reports_used").notNull().default(0),
   },
   (t) => [uniqueIndex("users_google_sub_idx").on(t.googleSub)],
 );

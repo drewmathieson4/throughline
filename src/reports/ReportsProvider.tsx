@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import type { SynthesisResult } from "../../worker/api-types";
 import { api, jsonInit } from "../api";
+import { useDemo } from "../auth/demoStore";
 import { ReportsContext, runBusy, runQueue, wholeYear, type ClassRun, type Range, type ReportsStore } from "./reportsStore";
 
 // Summary runs live above the routes, so a "Generate for class" run keeps going and keeps its
@@ -16,6 +17,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
   const [runs, setRuns] = useState<Map<string, ClassRun>>(new Map());
   const [version, setVersion] = useState(0);
   const refresh = () => setVersion((v) => v + 1);
+  const { refreshDemo } = useDemo();
 
   const mark = (id: string, on: boolean) =>
     setRunning((prev) => {
@@ -25,7 +27,8 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-  // Refreshes after each one, so the roster and an open report catch up as a run goes.
+  // Refreshes after each one, so the roster and an open report catch up as a run goes, and
+  // a demo visitor's count of what is left follows.
   async function generate(studentId: string, range: Range) {
     mark(studentId, true);
     try {
@@ -33,6 +36,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     } finally {
       mark(studentId, false);
       refresh();
+      refreshDemo();
     }
   }
 

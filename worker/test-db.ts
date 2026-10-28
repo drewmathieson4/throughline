@@ -6,6 +6,7 @@ import { getPlatformProxy, unstable_splitSqlQuery as splitSql } from "wrangler";
 import { drizzle } from "drizzle-orm/d1";
 import { migrate } from "drizzle-orm/d1/migrator";
 import app from "./index";
+import type { SessionUser } from "./api-types";
 import { hashToken } from "./auth";
 import seed from "../scripts/seed-dev.sql?raw";
 
@@ -17,13 +18,14 @@ export const OTHER_USER_ID = "00000000-0000-4000-8000-000000000002";
 export const OTHER_CLASS_ID = "11111111-1111-4111-8111-111111119999";
 export const OTHER_STUDENT_ID = "22222222-2222-4222-8222-222222222299";
 const TOKENS = { dev: "test-session-dev", other: "test-session-other" } as const;
-export type Who = keyof typeof TOKENS | "anon";
+// A named account, nobody, or a session token a test was given (a demo visitor's).
+export type Who = keyof typeof TOKENS | "anon" | { token: string };
 
 // The request as `who` would send it: with their session cookie, or none.
 export function signedIn(init: RequestInit = {}, who: Who = "dev"): RequestInit {
   if (who === "anon") return init;
   const headers = new Headers(init.headers);
-  headers.set("cookie", `session=${TOKENS[who]}`);
+  headers.set("cookie", `session=${typeof who === "string" ? TOKENS[who] : who.token}`);
   return { ...init, headers };
 }
 
@@ -40,10 +42,15 @@ export const STUDENT = {
   avery: "22222222-2222-4222-8222-222222222201",
   rowan: "22222222-2222-4222-8222-222222222202",
   juniper: "22222222-2222-4222-8222-222222222204",
+  marlowe: "22222222-2222-4222-8222-222222222205",
+  ember: "22222222-2222-4222-8222-222222222206",
   alexMarsh: "22222222-2222-4222-8222-222222222209",
   alexRuiz: "22222222-2222-4222-8222-222222222210",
   nola: "22222222-2222-4222-8222-222222222211",
   cassius: "22222222-2222-4222-8222-222222222212",
+  ronan: "22222222-2222-4222-8222-222222222213",
+  theo: "22222222-2222-4222-8222-222222222214",
+  imogen: "22222222-2222-4222-8222-222222222215",
 } as const;
 export const UNKNOWN_ID = "99999999-9999-4999-8999-999999999999";
 // Ids for notes and mentions a test inserts directly.
@@ -96,12 +103,29 @@ export function setupTestDb() {
 
   // As the dev teacher unless told otherwise; "anon" sends no cookie.
   const request = (url: string, init?: RequestInit, who: Who = "dev") => app.request(url, signedIn(init, who), env);
+  const json = async <T>(url: string, init?: RequestInit, who: Who = "dev") => (await request(url, init, who)).json() as Promise<T>;
   return {
     get env() {
       return env;
     },
     request,
-    json: async <T>(url: string, init?: RequestInit, who: Who = "dev") => (await request(url, init, who)).json() as Promise<T>,
+    json,
+    // A demo visitor: starts one, keeps its cookie, and sends requests as it.
+    startDemo: async () => {
+      const res = await app.request("/api/auth/demo", { method: "POST" }, env);
+      if (res.status !== 201) throw new Error(`demo start → ${res.status} ${await res.text()}`);
+      const token = res.headers
+        .getSetCookie()
+        .find((line) => line.startsWith("session="))!
+        .split(";")[0]!
+        .slice("session=".length);
+      const me = (await res.json()) as SessionUser;
+      const who: Who = { token };
+      return { me, userId: me.id, token, request: (url: string, init?: RequestInit) => request(url, init, who), json: <T>(url: string, init?: RequestInit) => json<T>(url, init, who) };
+    },
+    // Spend some of a demo visitor's allowance directly, for tests at the limit.
+    setUsed: (userId: string, used: { notes?: number; reports?: number }) =>
+      prepare("UPDATE users SET demo_notes_used = coalesce(?, demo_notes_used), demo_reports_used = coalesce(?, demo_reports_used) WHERE id = ?", used.notes ?? null, used.reports ?? null, userId).run(),
     // Raw inserts for tests that need rows without going through tagging.
     insertNote: (id: string, classId: string | null, notedAt: string, ownerId = DEV_USER_ID) =>
       prepare("INSERT INTO notes (id, owner_id, class_id, kind, body, noted_at, created_at) VALUES (?, ?, ?, 'text', ?, ?, ?)", id, ownerId, classId, `note ${id.slice(-2)}`, notedAt, notedAt),
@@ -123,6 +147,22 @@ export function setupTestDb() {
         noteId,
         JSON.stringify(candidateIds),
         "2026-10-01T00:00:00.000Z",
+      ),
+    // One score, undated, so it counts in any period.
+    insertGrade: (id: string, studentId: string, assignment: string, score: number | null, position: number) =>
+      prepare("INSERT INTO grade_entries (id, student_id, assignment, score, max_score, position) VALUES (?, ?, ?, ?, 10, ?)", id, studentId, assignment, score, position),
+    // A saved summary for a period. The hash is wrong on purpose unless given: a test that
+    // wants it current computes the real one.
+    insertSynthesis: (id: string, studentId: string, range: { from: string; to: string }, json: object, inputHash = "not-the-real-hash", createdAt = "2026-10-20T00:00:00.000Z") =>
+      prepare(
+        "INSERT INTO syntheses (id, student_id, period_start, period_end, version, input_hash, model, json, created_at) VALUES (?, ?, ?, ?, 1, ?, 'claude-opus-5-5', ?, ?)",
+        id,
+        studentId,
+        range.from,
+        range.to,
+        inputHash,
+        JSON.stringify(json),
+        createdAt,
       ),
   };
 }

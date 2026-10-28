@@ -22,6 +22,7 @@ import type { Note, NoteStudent } from "../db/schema";
 import type { NoteWithTags, TaggedNoteResponse, TaggingStatus } from "../api-types";
 import type { Db, UserEnv } from "../db/client";
 import { requireClass, requireNote, requireStudent, selectClasses, selectRoster } from "../db/helpers";
+import { assertAllowance, refund, reserve } from "../demo";
 import { MAX_BODY_CHARS, mentionRow, noteRow, type NoteValues } from "../note-rows";
 import { pastDatetime } from "../fields";
 import { validate } from "../validate";
@@ -202,6 +203,21 @@ async function saveCaptured(db: Db, apiKey: string | undefined, values: NoteValu
   return [(await sentBefore(db, values.ownerId, values.clientId))!, 200];
 }
 
+// saveCaptured against a demo visitor's allowance: one note reserved first, given back when
+// nothing new was written (a repeat, or a failure). A teacher's allowance is unlimited.
+async function saveCounted(db: Db, apiKey: string | undefined, user: schema.User, values: Omit<NoteValues, "ownerId">): Promise<[TaggedNoteResponse, 200 | 201]> {
+  await reserve(db, user, "notes");
+  let saved: [TaggedNoteResponse, 200 | 201];
+  try {
+    saved = await saveCaptured(db, apiKey, { ownerId: user.id, ...values });
+  } catch (err) {
+    await refund(db, user, "notes");
+    throw err;
+  }
+  if (saved[1] === 200) await refund(db, user, "notes");
+  return saved;
+}
+
 const notes = new Hono<UserEnv>();
 
 // GET /api/notes[?classId=…] → the teacher's notes, newest first, each with its students and
@@ -229,7 +245,7 @@ notes.post("/", validate("json", createNote), async (c) => {
   const repeat = await sentBefore(c.var.db, uid, clientId);
   if (repeat) return c.json(repeat, 200);
   if (classId) await requireClass(c.var.db, uid, classId);
-  const [note, status] = await saveCaptured(c.var.db, c.env.ANTHROPIC_API_KEY, { ownerId: uid, classId, kind: "text", body, notedAt, clientId });
+  const [note, status] = await saveCounted(c.var.db, c.env.ANTHROPIC_API_KEY, c.var.user, { classId, kind: "text", body, notedAt, clientId });
   return c.json(note, status);
 });
 
@@ -252,6 +268,8 @@ notes.post("/voice", validate("query", voiceQuery), audioLimit, async (c) => {
   const repeat = await sentBefore(c.var.db, uid, clientId);
   if (repeat) return c.json(repeat, 200);
   if (classId) await requireClass(c.var.db, uid, classId);
+  // A visitor with no notes left is told before the transcription, not after.
+  await assertAllowance(c.var.db, c.var.user, "notes");
   const audio = await c.req.arrayBuffer();
   if (audio.byteLength === 0) throw new HTTPException(400, { message: "nothing was heard" });
 
@@ -266,7 +284,7 @@ notes.post("/voice", validate("query", voiceQuery), audioLimit, async (c) => {
   // Only reachable by uploading a long audio file; the browser stops at five minutes.
   if (text.length > MAX_BODY_CHARS) throw new HTTPException(400, { message: "transcript is too long" });
 
-  const [note, status] = await saveCaptured(c.var.db, c.env.ANTHROPIC_API_KEY, { ownerId: uid, classId, kind: "voice", body: text, notedAt, clientId });
+  const [note, status] = await saveCounted(c.var.db, c.env.ANTHROPIC_API_KEY, c.var.user, { classId, kind: "voice", body: text, notedAt, clientId });
   return c.json(note, status);
 });
 

@@ -1,6 +1,6 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import app from "../index";
-import type { SynthesisResult, SynthesisRosterRow, SynthesisView } from "../api-types";
+import type { SessionUser, SynthesisResult, SynthesisRosterRow, SynthesisView } from "../api-types";
 import { synthesise, tidy } from "../synthesis-model";
 import { ModelError } from "../model";
 import { NOTE_ID, OTHER_CLASS_ID, OTHER_STUDENT_ID, PERIOD_3_COUNT, SEED_CLASS_ID as CLASS_ID, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb, signedIn } from "../test-db";
@@ -117,6 +117,38 @@ test("bad ranges are 400s; an unknown student or class is a 404", async () => {
   expect((await requestWith(keyed(), { studentId: UNKNOWN_ID, ...RANGE })).status).toBe(404);
   expect((await db.request(`/api/syntheses?${new URLSearchParams({ classId: UNKNOWN_ID, ...RANGE })}`)).status).toBe(404);
   expect((await db.request(`/api/syntheses?${new URLSearchParams({ classId: CLASS_ID, from: "2026-12-01", to: "2026-09-01" })}`)).status).toBe(400);
+});
+
+test("a demo visitor gets three summaries; a cached one is free, and a failed one is given back", async () => {
+  const demo = await db.startDemo();
+  const [cls] = await demo.json<{ id: string }[]>("/api/classes");
+  const [student] = await demo.json<{ id: string }[]>(`/api/students?classId=${cls!.id}`);
+  const note = async (n: number, day: string) =>
+    db.env.DB.batch([
+      db.env.DB.prepare("INSERT INTO notes (id, owner_id, class_id, kind, body, noted_at, created_at) VALUES (?, ?, ?, 'text', 'Spoke up.', ?, ?)").bind(NOTE_ID(n), demo.userId, cls!.id, `${day}T15:00:00.000Z`, `${day}T15:00:00.000Z`),
+      db.env.DB.prepare("INSERT INTO note_students (note_id, student_id, quotes) VALUES (?, ?, ?)").bind(NOTE_ID(n), student!.id, JSON.stringify(["Spoke up."])),
+    ]);
+  const post = () => app.request("/api/syntheses", signedIn(jsonInit("POST", { studentId: student!.id, ...RANGE }), { token: demo.token }), keyed());
+  const left = async () => (await demo.json<SessionUser>("/api/auth/me")).demo!.reportsLeft;
+
+  await note(1, "2026-09-10");
+  await db.setUsed(demo.userId, { reports: 2 });
+  expect((await post()).status).toBe(201);
+  expect(await left()).toBe(0);
+  const cached = await post();
+  expect(cached.status).toBe(200);
+  expect(((await cached.json()) as SynthesisResult).cached).toBe(true);
+
+  await note(2, "2026-09-11");
+  const refused = await post();
+  expect(refused.status).toBe(403);
+  expect(await refused.json()).toEqual({ error: "The demo allows 3 reports; sign in with Google to use your own classes" });
+  expect(synthesiseMock).toHaveBeenCalledTimes(1);
+
+  await db.setUsed(demo.userId, { reports: 2 });
+  synthesiseMock.mockRejectedValueOnce(new ModelError("model refused synthesis"));
+  expect((await quietErrors(post)).status).toBe(502);
+  expect(await left()).toBe(1);
 });
 
 test("a student who has left is not listed", async () => {

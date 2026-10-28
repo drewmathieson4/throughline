@@ -6,6 +6,7 @@ import type { ClassRow } from "../worker/db/schema";
 import type { SessionUser } from "../worker/api-types";
 import { api, messageOf } from "./api";
 import { AccountCard } from "./auth/Account";
+import { DemoProvider } from "./auth/DemoProvider";
 import SignIn from "./auth/SignIn";
 import { useSession } from "./auth/useSession";
 import { useOnline } from "./offline/useOnline";
@@ -26,7 +27,8 @@ const tabs: { to: string; label: string; icon: LucideIcon }[] = [
   { to: "/reports", label: "Reports", icon: Sparkles },
 ];
 
-const DEMO_NOTICE = "Demo with synthetic students. No real student data.";
+// Shown to a demo visitor only; a teacher's own classes are theirs.
+const DEMO_NOTICE = "Demo with synthetic students. Your notes stay for 7 days.";
 // A stable empty list while classes load, so the notes store does not refetch rosters twice.
 const NO_CLASSES: ClassRow[] = [];
 
@@ -60,7 +62,7 @@ function SideNav({ user, onSignOut }: Account) {
         <SideTab key={tab.to} {...tab} />
       ))}
       <AccountCard user={user} onSignOut={onSignOut} className="mt-auto" />
-      <p className="mt-2 rounded-[14px] bg-muted px-3.5 py-3 text-[12.5px] leading-normal text-muted-foreground">{DEMO_NOTICE}</p>
+      {user?.demo && <p className="mt-2 rounded-[14px] bg-muted px-3.5 py-3 text-[12.5px] leading-normal text-muted-foreground">{DEMO_NOTICE}</p>}
     </nav>
   );
 }
@@ -146,9 +148,10 @@ function Shell({ user, onSignOut }: Account) {
   const recordHome = useMatch("/notes") !== null;
 
   return (
-    <NotesProvider classes={classes ?? NO_CLASSES}>
-      <ReportsProvider>
-        <div className="min-h-svh md:flex">
+    <DemoProvider user={user}>
+      <NotesProvider classes={classes ?? NO_CLASSES}>
+        <ReportsProvider>
+          <div className="min-h-svh md:flex">
           {/* The home-screen app draws under the iPhone status bar, whose text iOS makes white:
               Record is cobalt up to the top edge, every other phone screen gets a cobalt strip. */}
           {!recordHome && <div aria-hidden className="fixed inset-x-0 top-0 z-40 h-(--statusbar-h) bg-primary md:hidden" />}
@@ -179,24 +182,26 @@ function Shell({ user, onSignOut }: Account) {
               {!recordHome && (
                 <div className="mt-10 md:hidden">
                   <AccountCard user={user} onSignOut={onSignOut} />
-                  <p className="mt-4 text-center text-xs text-muted-foreground">{DEMO_NOTICE}</p>
+                  {user?.demo && <p className="mt-4 text-center text-xs text-muted-foreground">{DEMO_NOTICE}</p>}
                 </div>
               )}
             </div>
           </main>
           <TabBar />
-        </div>
-      </ReportsProvider>
-    </NotesProvider>
+          </div>
+        </ReportsProvider>
+      </NotesProvider>
+    </DemoProvider>
   );
 }
 
 // Nothing shows until the server has said who this is: the sign-in screen for nobody, the
-// app for a teacher, and the app with no name on it when the server could not be reached.
+// app for a teacher or demo visitor, and the app with no name on it when the server could
+// not be reached.
 function App() {
-  const { session, signOut } = useSession();
+  const { session, signOut, startDemo } = useSession();
   if (session.status === "loading") return null;
-  if (session.status === "out") return <SignIn />;
+  if (session.status === "out") return <SignIn onDemo={startDemo} />;
   return <Shell user={session.status === "in" ? session.user : null} onSignOut={signOut} />;
 }
 
