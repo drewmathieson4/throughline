@@ -5,7 +5,7 @@ import { hashToken } from "../auth";
 import { liveDemoCount } from "../demo";
 import { googleProfile, type GoogleProfile } from "../google";
 import { ACCOUNT_CAP_MICRO } from "../spend";
-import { DEV_EMAIL, DEV_USER_ID, setupTestDb, signedIn } from "../test-db";
+import { DEV_EMAIL, DEV_USER_ID, cookie, setupTestDb, signedIn } from "../test-db";
 
 // The calls to Google are stubbed: the flow is exercised up to and after them.
 vi.mock(import("../google"), async (importOriginal) => ({ ...(await importOriginal()), googleProfile: vi.fn() }));
@@ -22,22 +22,6 @@ const configured = (): Env => ({ ...db.env, GOOGLE_CLIENT_ID: "client-id", GOOGL
 // A new account has spent nothing of its $10.
 const FRESH_AI = { spentUsd: 0, capUsd: 10, off: null } as const;
 const PROFILE: GoogleProfile = { sub: "google-123", email: "tess@example.test", email_verified: true, name: "Tess Teacher", picture: "https://example.test/tess.png" };
-
-type Cookie = { name: string; value: string; attrs: Record<string, string> };
-// Every Set-Cookie on a response, split into name, value and lower-cased attributes.
-function cookies(res: Response): Cookie[] {
-  return res.headers.getSetCookie().map((line) => {
-    const [pair, ...rest] = line.split(";").map((s) => s.trim());
-    const [name, value] = pair!.split("=", 2) as [string, string];
-    const attrs: Record<string, string> = {};
-    for (const a of rest) {
-      const [k, v = ""] = a.split("=", 2) as [string, string];
-      attrs[k.toLowerCase()] = v;
-    }
-    return { name, value, attrs };
-  });
-}
-const cookie = (res: Response, name: string) => cookies(res).find((c) => c.name === name);
 
 // Start sign-in and return what the callback needs: the state and the cookie that carries it.
 async function start() {
@@ -93,7 +77,7 @@ test("the callback makes the user, starts a session the cookie carries, and /me 
   const stored = await db.env.DB.prepare("SELECT user_id FROM sessions WHERE token_hash = ?").bind(await hashToken(session.value)).first<{ user_id: string }>();
   expect(stored?.user_id).toBe(user!.id);
 
-  const me = await app.request("/api/auth/me", { headers: { cookie: `session=${session.value}` } }, db.env);
+  const me = await app.request("/api/auth/me", signedIn(undefined, { token: session.value }), db.env);
   expect(me.status).toBe(200);
   expect(await me.json()).toEqual({ id: user!.id, email: PROFILE.email, name: "Tess Teacher", pictureUrl: "https://example.test/tess.png", demo: null, ai: FRESH_AI } satisfies SessionUser);
 });
@@ -108,11 +92,11 @@ test("POST /api/auth/demo makes a visitor with a week-long session, and says so 
   const stored = await db.env.DB.prepare("SELECT user_id, expires_at FROM sessions WHERE token_hash = ?").bind(await hashToken(session.value)).first<{ user_id: string; expires_at: string }>();
   expect(stored?.user_id).toBe(made.id);
   expect(Date.parse(stored!.expires_at) - Date.now()).toBeLessThanOrEqual(7 * 24 * 60 * 60 * 1000);
-  const me = await app.request("/api/auth/me", { headers: { cookie: `session=${session.value}` } }, db.env);
+  const me = await app.request("/api/auth/me", signedIn(undefined, { token: session.value }), db.env);
   expect(await me.json()).toEqual(made);
 
   // Asked again by the same browser: the same visitor, nothing new made. A teacher gets themselves.
-  const again = await app.request("/api/auth/demo", { method: "POST", headers: { cookie: `session=${session.value}` } }, db.env);
+  const again = await app.request("/api/auth/demo", signedIn({ method: "POST" }, { token: session.value }), db.env);
   expect(again.status).toBe(200);
   expect(((await again.json()) as SessionUser).id).toBe(made.id);
   expect(cookie(again, "session")).toBeUndefined();
@@ -183,11 +167,11 @@ test("an account whose email Google has not verified is refused", async () => {
 
 test("GET /api/auth/me is a 401 with no cookie, an unknown token, or an expired session", async () => {
   expect((await db.request("/api/auth/me", undefined, "anon")).status).toBe(401);
-  expect((await app.request("/api/auth/me", { headers: { cookie: "session=not-a-session" } }, db.env)).status).toBe(401);
+  expect((await db.request("/api/auth/me", undefined, { token: "not-a-session" })).status).toBe(401);
   await db.env.DB.prepare("INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)")
     .bind(await hashToken("stale"), DEV_USER_ID, "2026-01-01T00:00:00.000Z", "2026-01-31T00:00:00.000Z")
     .run();
-  expect((await app.request("/api/auth/me", { headers: { cookie: "session=stale" } }, db.env)).status).toBe(401);
+  expect((await db.request("/api/auth/me", undefined, { token: "stale" })).status).toBe(401);
 });
 
 test("GET /api/auth/me says where the account stands against the AI spend cap", async () => {

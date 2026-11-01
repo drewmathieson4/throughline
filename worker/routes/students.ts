@@ -7,7 +7,7 @@ import { z } from "zod";
 import * as schema from "../db/schema";
 import type { UserEnv } from "../db/client";
 import type { ImportedClass, RosterImportResult, RosterStudent, StudentDetail } from "../api-types";
-import { insertChunks, notFound, ownedClasses, requireClass, selectClasses, selectRoster } from "../db/helpers";
+import { insertChunks, notFound, ownedClasses, ownedStudent, requireClass, selectClasses, selectRoster } from "../db/helpers";
 import { classIdQuery, dateField, idParam, nameField, notInFuture } from "../fields";
 import { summarise } from "../grades";
 import { gradingWeights, selectMaterialSummaries } from "../materials";
@@ -209,7 +209,7 @@ students.patch("/:id", validate("param", idParam), validate("json", patchStudent
   const row = await c.var.db
     .update(schema.students)
     .set(patch)
-    .where(and(eq(schema.students.id, id), inArray(schema.students.classId, ownedClasses(c.var.db, c.var.user.id))))
+    .where(ownedStudent(c.var.db, c.var.user.id, id))
     .returning()
     .get();
   if (!row) throw notFound("student");

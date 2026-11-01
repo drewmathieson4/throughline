@@ -33,8 +33,9 @@ export const cookieOptions = (c: Context) => ({
   secure: new URL(c.req.url).protocol === "https:",
 });
 
-// A new session for the user, lasting `days`; returns the raw token the cookie carries.
-export async function createSession(db: Db, userId: string, days = SESSION_DAYS): Promise<string> {
+// Start a session for the user, lasting `days`: the row, and the cookie that carries its
+// token for as long.
+export async function startSession(c: Context, db: Db, userId: string, days = SESSION_DAYS): Promise<void> {
   const token = newToken();
   const now = Date.now();
   await db.insert(schema.sessions).values({
@@ -43,11 +44,11 @@ export async function createSession(db: Db, userId: string, days = SESSION_DAYS)
     createdAt: new Date(now).toISOString(),
     expiresAt: new Date(now + days * DAY_S * 1000).toISOString(),
   });
-  return token;
+  setCookie(c, SESSION_COOKIE, token, { ...cookieOptions(c), maxAge: days * DAY_S });
 }
 
-// The cookie that carries the token, living as long as the session does.
-export const setSessionCookie = (c: Context, token: string, days = SESSION_DAYS) => setCookie(c, SESSION_COOKIE, token, { ...cookieOptions(c), maxAge: days * DAY_S });
+// A session that has not expired.
+export const sessionLive = () => gt(schema.sessions.expiresAt, new Date().toISOString());
 
 export async function deleteSession(db: Db, token: string): Promise<void> {
   await db.delete(schema.sessions).where(eq(schema.sessions.tokenHash, await hashToken(token)));
@@ -60,7 +61,7 @@ async function userOf(db: Db, token: string | undefined): Promise<schema.User | 
     .select({ user: schema.users })
     .from(schema.sessions)
     .innerJoin(schema.users, eq(schema.users.id, schema.sessions.userId))
-    .where(and(eq(schema.sessions.tokenHash, await hashToken(token)), gt(schema.sessions.expiresAt, new Date().toISOString())))
+    .where(and(eq(schema.sessions.tokenHash, await hashToken(token)), sessionLive()))
     .get();
   return row?.user ?? null;
 }

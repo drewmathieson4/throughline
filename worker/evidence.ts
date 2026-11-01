@@ -159,6 +159,10 @@ function gradeSummaryLines(g: GradeSummary): string {
   return lines.join("\n");
 }
 
+// The UTC calendar day: what coverage counts silence up to. The roster check, a synthesis
+// run and the demo clone all hash evidence built from it, so they share one definition.
+export const todayUtc = () => new Date().toISOString().slice(0, 10);
+
 export function buildEvidence(rows: EvidenceRows, today: string): Evidence {
   const { student, range } = rows;
   const name = student.firstName;

@@ -17,12 +17,22 @@ export const onUnauthorized = (fn: (() => void) | null) => {
   unauthorized = fn;
 };
 
+// Told once, by the allowance store, after any answered call that may have moved what the
+// account has left (a note sent, a summary made, a document imported, or one of those
+// refused), so no caller asks for the allowance again itself. Reads never spend.
+let spent: (() => void) | null = null;
+export const onSpent = (fn: (() => void) | null) => {
+  spent = fn;
+};
+export const notifySpent = () => spent?.();
+
 // Every /api error response is { error: string }; surface that message when present. The
 // session cookie rides along on its own: every call is same-origin.
 export async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   const data = await res.json().catch(() => ({}));
   if (res.status === 401) unauthorized?.();
+  if (init?.method && init.method !== "GET") notifySpent();
   if (!res.ok) throw new ApiError((data as { error?: string }).error ?? `${url} → ${res.status}`, res.status);
   return data as T;
 }

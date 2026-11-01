@@ -87,20 +87,16 @@ export function isOwner(user: Pick<User, "email">, env: Pick<Env, "OWNER_EMAILS"
   return owners.includes(user.email.toLowerCase());
 }
 
-export type SpendState = { spentMicro: number; capMicro: number; off: AiAllowance["off"] };
-
-// Where the account stands. The total is a sum over every account rather than a counter of
-// its own: one source of truth, and a reset is one UPDATE.
-export async function spendState(db: Db, user: User, env: Pick<Env, "OWNER_EMAILS">): Promise<SpendState> {
+// Where the account stands, as /api/auth/me reports it. The total is a sum over every
+// account rather than a counter of its own: one source of truth, and a reset is one UPDATE.
+export async function spendState(db: Db, user: User, env: Pick<Env, "OWNER_EMAILS">): Promise<AiAllowance> {
   const total = await db
     .select({ n: sql<number>`coalesce(sum(${schema.users.aiSpentMicro}), 0)` })
     .from(schema.users)
     .get();
   const off = (total?.n ?? 0) >= TOTAL_CAP_MICRO ? "total" : !isOwner(user, env) && user.aiSpentMicro >= ACCOUNT_CAP_MICRO ? "account" : null;
-  return { spentMicro: user.aiSpentMicro, capMicro: ACCOUNT_CAP_MICRO, off };
+  return { spentUsd: user.aiSpentMicro / MICRO, capUsd: ACCOUNT_CAP_USD, off };
 }
-
-export const aiOf = (state: SpendState): AiAllowance => ({ spentUsd: state.spentMicro / MICRO, capUsd: ACCOUNT_CAP_USD, off: state.off });
 
 // What a route says when it cannot call a model. "account" and "total" are 403s: the
 // offline queue drops a 403 with the server's reason rather than retrying it forever.

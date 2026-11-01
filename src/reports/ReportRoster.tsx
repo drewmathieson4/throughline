@@ -1,8 +1,7 @@
 import { Link } from "react-router";
 import type { SynthesisRosterRow } from "../../worker/api-types";
-import { AiPaused } from "../auth/AiPaused";
+import { CappedNotice } from "../auth/CappedNotice";
 import { useAllowance } from "../auth/allowanceStore";
-import { SignInNudge } from "../auth/SignInNudge";
 import { dateFormat, plural } from "../ui";
 import { needsRun } from "./reportsStore";
 import { Avatar } from "@/components/Avatar";
@@ -45,8 +44,7 @@ export default function ReportRoster({
   disabled: boolean;
   onGenerate: (studentId: string) => void;
 }) {
-  const { demo, ai } = useAllowance();
-  const capped = ai.off !== null || demo?.reportsLeft === 0;
+  const { capped } = useAllowance();
   if (rows.length === 0) {
     return (
       <div className="rounded-[22px] border border-border bg-card px-5 py-8 text-center">
@@ -82,13 +80,7 @@ export default function ReportRoster({
             </Link>
             {needsRun(r) &&
               (capped && !busy ? (
-                ai.off ? (
-                  <AiPaused off={ai.off} short className="max-w-32 text-right" />
-                ) : (
-                  <SignInNudge size="sm" className="border-ring/60 text-accent-foreground">
-                    Sign in
-                  </SignInNudge>
-                )
+                <CappedNotice short className="max-w-32 text-right" nudge={{ size: "sm", className: "border-ring/60 text-accent-foreground" }} />
               ) : (
                 <Button type="button" variant="outline" size="sm" className="border-ring/60 text-accent-foreground" disabled={busy || disabled} onClick={() => onGenerate(r.studentId)}>
                   {busy && <span className="size-3 animate-spin rounded-full border-2 border-accent border-t-primary" aria-hidden />}

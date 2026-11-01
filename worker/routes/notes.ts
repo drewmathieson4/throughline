@@ -23,7 +23,7 @@ import type { Note, NoteStudent } from "../db/schema";
 import type { NoteWithTags, TaggedNoteResponse, TaggingStatus } from "../api-types";
 import type { Db, UserEnv } from "../db/client";
 import { requireClass, requireNote, requireStudent, selectClasses, selectRoster } from "../db/helpers";
-import { assertAllowance, refund, reserve } from "../demo";
+import { assertAllowance, reserved } from "../demo";
 import { MAX_BODY_CHARS, mentionRow, noteRow, type NoteValues } from "../note-rows";
 import { pastDatetime } from "../fields";
 import { modelAccess } from "../spend";
@@ -205,20 +205,9 @@ async function saveCaptured(db: Db, client: Anthropic | null, values: NoteValues
   return [(await sentBefore(db, values.ownerId, values.clientId))!, 200];
 }
 
-// saveCaptured against a demo visitor's allowance: one note reserved first, given back when
-// nothing new was written (a repeat, or a failure). A teacher's allowance is unlimited.
-async function saveCounted(db: Db, client: Anthropic | null, user: schema.User, values: Omit<NoteValues, "ownerId">): Promise<[TaggedNoteResponse, 200 | 201]> {
-  await reserve(db, user, "notes");
-  let saved: [TaggedNoteResponse, 200 | 201];
-  try {
-    saved = await saveCaptured(db, client, { ownerId: user.id, ...values });
-  } catch (err) {
-    await refund(db, user, "notes");
-    throw err;
-  }
-  if (saved[1] === 200) await refund(db, user, "notes");
-  return saved;
-}
+// saveCaptured against a demo visitor's allowance: one note, kept only when the note was new.
+const saveCounted = (db: Db, client: Anthropic | null, user: schema.User, values: Omit<NoteValues, "ownerId">) =>
+  reserved(db, user, "notes", 1, () => saveCaptured(db, client, { ownerId: user.id, ...values }), ([, status]) => status === 201);
 
 const notes = new Hono<UserEnv>();
 
@@ -271,7 +260,7 @@ notes.post("/voice", validate("query", voiceQuery), audioLimit, async (c) => {
   if (repeat) return c.json(repeat, 200);
   if (classId) await requireClass(c.var.db, uid, classId);
   // A visitor with no notes left is told before the transcription, not after.
-  await assertAllowance(c.var.db, c.var.user, "notes");
+  assertAllowance(c.var.user, "notes");
   const audio = await c.req.arrayBuffer();
   if (audio.byteLength === 0) throw new HTTPException(400, { message: "nothing was heard" });
 

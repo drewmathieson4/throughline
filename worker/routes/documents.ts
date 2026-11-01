@@ -22,7 +22,7 @@ import type { CourseSummary, User } from "../db/schema";
 import type { DocumentImportResult, DocumentKind, DocumentProgress, DocumentStep, MaterialRow, NoteWithTags } from "../api-types";
 import type { Db, UserEnv } from "../db/client";
 import { requireClass, selectClasses, selectRoster } from "../db/helpers";
-import { assertAllowance, refund, reserve } from "../demo";
+import { assertAllowance, reserved } from "../demo";
 import { sortDocument } from "../document-kind";
 import { splitDocument, type SplitResult } from "../documents";
 import { pastDatetime } from "../fields";
@@ -144,7 +144,7 @@ documents.post("/", validate("query", documentQuery), uploadLimit, async (c) => 
   await Promise.all(classIds.map((id) => requireClass(db, uid, id)));
   // A demo visitor with no notes left is told before the file is read or the model asked;
   // what the import would write is counted at the save.
-  await assertAllowance(db, c.var.user, "notes");
+  assertAllowance(c.var.user, "notes");
 
   c.header("content-type", "application/x-ndjson");
   return stream(c, async (out) => {
@@ -256,11 +256,7 @@ async function importDocument(
   // pays for the notes written plus one for a course document, however many classes it went
   // to; the notes an earlier import made are not given back.
   const counted = written.length + (wantsMaterial ? 1 : 0);
-  await reserve(db, user, "notes", counted);
-  const [deleted] = await step("save", () => db.batch([removeNotes, removeMaterials, ...inserts])).catch(async (err: unknown) => {
-    await refund(db, user, "notes", counted);
-    throw err;
-  });
+  const [deleted] = await reserved(db, user, "notes", counted, () => step("save", () => db.batch([removeNotes, removeMaterials, ...inserts])));
   const result: DocumentImportResult = { name, kind, classIds, materials, notes: written, replaced: deleted.map((r) => r.id), ...(splitFailed && { splitFailed: true }) };
   return { status: materials.length + written.length > 0 ? 201 : 200, result };
 }

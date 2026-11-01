@@ -10,11 +10,11 @@ import { z } from "zod";
 import * as schema from "../db/schema";
 import type { User } from "../db/schema";
 import type { AppEnv } from "../db/client";
-import type { AiAllowance, SessionUser } from "../api-types";
-import { SESSION_COOKIE, STATE_COOKIE, cookieOptions, createSession, deleteSession, newToken, requireUser, setSessionCookie } from "../auth";
+import type { SessionUser } from "../api-types";
+import { SESSION_COOKIE, STATE_COOKIE, cookieOptions, deleteSession, newToken, requireUser, startSession } from "../auth";
 import { DEMO_MAX_LIVE, DEMO_SESSION_DAYS, allowanceOf, cloneDemo, deleteDemoUser, liveDemoCount, purgeExpiredDemos } from "../demo";
 import { authorizeUrl, googleProfile } from "../google";
-import { aiOf, spendState } from "../spend";
+import { spendState } from "../spend";
 import { validate } from "../validate";
 
 const STATE_MAX_AGE = 10 * 60; // seconds: long enough to pick an account, not to be replayed later
@@ -28,8 +28,14 @@ const callbackUri = (url: string) => `${new URL(url).origin}/api/auth/callback`;
 
 // What the browser may know about who is signed in: the demo's allowance and where the
 // account stands against the AI spend cap, never the Google id behind it.
-const sessionUser = (user: User, ai: AiAllowance): SessionUser => ({ id: user.id, email: user.email, name: user.name, pictureUrl: user.pictureUrl, demo: allowanceOf(user), ai });
-const me = async (c: Context<AppEnv>, user: User) => sessionUser(user, aiOf(await spendState(c.var.db, user, c.env)));
+const me = async (c: Context<AppEnv>, user: User): Promise<SessionUser> => ({
+  id: user.id,
+  email: user.email,
+  name: user.name,
+  pictureUrl: user.pictureUrl,
+  demo: allowanceOf(user),
+  ai: await spendState(c.var.db, user, c.env),
+});
 
 const auth = new Hono<AppEnv>();
 
@@ -65,8 +71,7 @@ auth.get("/callback", validate("query", callbackQuery), async (c) => {
     .returning()
     .get();
 
-  const token = await createSession(c.var.db, user.id);
-  setSessionCookie(c, token);
+  await startSession(c, c.var.db, user.id);
   if (was?.demo) await deleteDemoUser(c.var.db, was.id);
   return c.redirect("/");
 });
@@ -80,8 +85,7 @@ auth.post("/demo", async (c) => {
   await purgeExpiredDemos(c.var.db);
   if ((await liveDemoCount(c.var.db)) >= DEMO_MAX_LIVE) throw new HTTPException(503, { message: "the demo is busy; try again later" });
   const user = await cloneDemo(c.var.db);
-  const token = await createSession(c.var.db, user.id, DEMO_SESSION_DAYS);
-  setSessionCookie(c, token, DEMO_SESSION_DAYS);
+  await startSession(c, c.var.db, user.id, DEMO_SESSION_DAYS);
   return c.json(await me(c, user), 201);
 });
 

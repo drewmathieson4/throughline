@@ -10,9 +10,9 @@ import * as schema from "../db/schema";
 import type { SynthesisRow } from "../db/schema";
 import type { UserEnv } from "../db/client";
 import type { SynthesisResult, SynthesisRosterRow, SynthesisStatus, SynthesisView } from "../api-types";
-import { notFound, ownedClasses, requireClass } from "../db/helpers";
-import { refund, reserve } from "../demo";
-import { buildEvidence, loadEvidence, type Range } from "../evidence";
+import { notFound, ownedClasses, requireClass, requireStudent } from "../db/helpers";
+import { reserved } from "../demo";
+import { buildEvidence, loadEvidence, todayUtc, type Range } from "../evidence";
 import { dateField, idParam } from "../fields";
 import { modelAccess } from "../spend";
 import { SYNTHESIS_VERSION, inputHash, synthesise } from "../synthesis-model";
@@ -27,8 +27,6 @@ const createBody = z.object({ studentId: z.uuid(), ...range }).refine(ordered, "
 const { inputHash: _hash, version: _version, ...listed } = getTableColumns(schema.syntheses);
 const view = ({ inputHash: _h, version: _v, ...row }: SynthesisRow): SynthesisView => row;
 
-// The UTC calendar day: what coverage counts silence up to.
-const today = () => new Date().toISOString().slice(0, 10);
 const byName = new Intl.Collator("en");
 
 const syntheses = new Hono<UserEnv>();
@@ -40,8 +38,7 @@ syntheses.get("/", validate("query", listQuery), async (c) => {
   const { classId, from, to } = c.req.valid("query");
   await requireClass(c.var.db, c.var.user.id, classId);
   const loaded = await loadEvidence(c.var.db, classId, { from, to });
-  if (loaded.className === null) throw notFound("class");
-  const day = today();
+  const day = todayUtc();
   const rows = await Promise.all(
     loaded.students
       .filter((s) => !s.leftAt)
@@ -74,15 +71,10 @@ syntheses.get("/", validate("query", listQuery), async (c) => {
 syntheses.post("/", validate("json", createBody), async (c) => {
   const { studentId, from, to } = c.req.valid("json");
   const db = c.var.db;
-  const student = await db
-    .select({ classId: schema.students.classId })
-    .from(schema.students)
-    .where(and(eq(schema.students.id, studentId), inArray(schema.students.classId, ownedClasses(db, c.var.user.id))))
-    .get();
-  if (!student) throw notFound("student");
+  const student = await requireStudent(db, c.var.user.id, studentId);
   const loaded = await loadEvidence(db, student.classId, { from, to });
   const s = loaded.students.find((x) => x.id === studentId)!;
-  const evidence = buildEvidence(loaded.rowsFor(s), today());
+  const evidence = buildEvidence(loaded.rowsFor(s), todayUtc());
   if (evidence.empty) throw new HTTPException(422, { message: "nothing to summarise: no notes or grades for this student in that period" });
 
   const hash = await inputHash(evidence);
@@ -91,12 +83,12 @@ syntheses.post("/", validate("json", createBody), async (c) => {
 
   const access = await modelAccess(c);
   if (!access.client) throw access.denied;
-  await reserve(db, c.var.user, "reports");
+  const client = access.client;
   let result: Awaited<ReturnType<typeof synthesise>>;
   try {
-    result = await synthesise({ evidence, client: access.client });
+    result = await reserved(db, c.var.user, "reports", 1, () => synthesise({ evidence, client }));
   } catch (err) {
-    await refund(db, c.var.user, "reports");
+    if (err instanceof HTTPException) throw err; // a demo visitor with no summaries left
     console.error("synthesis failed for student", studentId, err);
     throw new HTTPException(502, { message: "the summary could not be made; try again" });
   }

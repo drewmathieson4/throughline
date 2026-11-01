@@ -1,9 +1,8 @@
 import { Sparkles } from "lucide-react";
 import { Link } from "react-router";
 import type { ClassRow } from "../../worker/db/schema";
-import { AiPaused } from "../auth/AiPaused";
+import { CappedNotice } from "../auth/CappedNotice";
 import { useAllowance } from "../auth/allowanceStore";
-import { SignInNudge } from "../auth/SignInNudge";
 import { useNotes } from "../notes/notesStore";
 import { chipOff, chipOn, chipRow, errorText, plural } from "../ui";
 import { runBusy, sameRange, validRange, wholeYear, type ClassRun, type Range } from "./reportsStore";
@@ -40,13 +39,13 @@ export default function ReportsControls({
   onGenerateClass: () => void;
 }) {
   const { colourOf } = useNotes();
-  const { demo, ai } = useAllowance();
+  const { demo, capped: noFresh } = useAllowance();
   const year = wholeYear(cls);
   const isYear = sameRange(range, year);
   const busyRun = runBusy(run) ? run : null;
   const busy = busyRun !== null;
   const count = demo ? Math.min(pending, demo.reportsLeft) : pending;
-  const capped = (ai.off !== null || demo?.reportsLeft === 0) && pending > 0 && !busy;
+  const capped = noFresh && pending > 0 && !busy;
 
   return (
     <>
@@ -87,7 +86,7 @@ export default function ReportsControls({
         </button>
         <span className="flex-1" />
         {capped ? (
-          ai.off ? <AiPaused off={ai.off} className="min-h-11" /> : <SignInNudge className="min-h-11" />
+          <CappedNotice className="min-h-11" />
         ) : (
           <Button type="button" className="min-h-11" disabled={!validRange(range) || !ready || busy || count === 0} onClick={onGenerateClass}>
             <Sparkles aria-hidden />

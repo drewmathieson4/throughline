@@ -6,13 +6,14 @@
 // current from the first visit. Everything is a new row under a new user, so the ordinary
 // ownership checks keep each visitor to their own copy. See DECISIONS.md.
 import { HTTPException } from "hono/http-exception";
-import { and, desc, eq, exists, gt, inArray, isNull, notExists, or, sql } from "drizzle-orm";
+import { and, desc, eq, exists, inArray, isNull, notExists, or, sql } from "drizzle-orm";
 import * as schema from "./db/schema";
 import type { Note, NoteMention, NoteStudent, SynthesisRow, User } from "./db/schema";
 import type { Db } from "./db/client";
 import { insertChunks } from "./db/helpers";
 import type { DemoAllowance } from "./api-types";
-import { buildEvidence, loadEvidence } from "./evidence";
+import { sessionLive } from "./auth";
+import { buildEvidence, loadEvidence, todayUtc } from "./evidence";
 import { inputHash } from "./synthesis-model";
 
 export const DEMO_SESSION_DAYS = 7;
@@ -28,7 +29,7 @@ export const DEMO_MAX_LIVE = 100;
 // Marsh and Alex Ruiz are kept on purpose: a note that says just "Alex" is the tagger's
 // showcase, an open mention for the visitor to settle.
 const seedStudent = (n: string) => `22222222-2222-4222-8222-2222222222${n}`;
-export const DEMO_TEMPLATE = [
+const DEMO_TEMPLATE = [
   // Period 3 Humanities: Rowan Pell, Ember Castellane, Marlowe Finchley, Alex Marsh
   { classId: "11111111-1111-4111-8111-111111111111", students: ["02", "06", "05", "09"].map(seedStudent) },
   // B Block Humanities: Imogen Hale, Theo Brightwater, Ronan Pike, Alex Ruiz
@@ -39,8 +40,6 @@ const TEMPLATE_STUDENTS = DEMO_TEMPLATE.flatMap((t) => t.students);
 
 // Rows per insert statement, under D1's 100 bound parameters: 100 / columns, rounded down.
 const CHUNK = { students: 12, notes: 10, noteStudents: 33, noteMentions: 16, gradeEntries: 12, syntheses: 11 };
-
-const today = () => new Date().toISOString().slice(0, 10);
 
 // Which of the template owner's notes the copy takes. In a template class: the class-level
 // ones (no tags) and any tagged to a kept student. Not yet assigned to a class: any tagged to
@@ -101,9 +100,10 @@ export async function cloneDemo(db: Db): Promise<User> {
   if (classes.length !== TEMPLATE_CLASSES.length) throw new HTTPException(503, { message: "the demo is not set up" });
 
   const now = new Date().toISOString();
+  const id = crypto.randomUUID();
   const user: User = {
-    id: crypto.randomUUID(),
-    googleSub: "",
+    id,
+    googleSub: `demo:${id}`,
     email: "",
     name: "Demo",
     pictureUrl: null,
@@ -114,7 +114,6 @@ export async function cloneDemo(db: Db): Promise<User> {
     demoReportsUsed: 0,
     aiSpentMicro: 0,
   };
-  user.googleSub = `demo:${user.id}`;
 
   // Old id → new id, one map per table that something else points at.
   const fresh = <T extends { id: string }>(rows: T[]) => new Map(rows.map((r) => [r.id, crypto.randomUUID()]));
@@ -174,21 +173,25 @@ export async function cloneDemo(db: Db): Promise<User> {
     const key = `${classOfNew.get(row.studentId)}|${row.periodStart}|${row.periodEnd}`;
     groups.set(key, [...(groups.get(key) ?? []), row]);
   }
-  const updates = [];
-  for (const rows of groups.values()) {
-    const first = rows[0]!;
-    const loaded = await loadEvidence(db, classOfNew.get(first.studentId)!, { from: first.periodStart, to: first.periodEnd });
-    for (const row of rows) {
-      const student = loaded.students.find((st) => st.id === row.studentId)!;
-      const hash = await inputHash(buildEvidence(loaded.rowsFor(student), today()));
-      updates.push(db.update(schema.syntheses).set({ inputHash: hash }).where(eq(schema.syntheses.id, row.id)));
-    }
-  }
+  const hashes = await Promise.all(
+    [...groups.values()].map(async (rows) => {
+      const first = rows[0]!;
+      const loaded = await loadEvidence(db, classOfNew.get(first.studentId)!, { from: first.periodStart, to: first.periodEnd });
+      return Promise.all(
+        rows.map(async (row) => {
+          const student = loaded.students.find((st) => st.id === row.studentId)!;
+          return { id: row.id, hash: await inputHash(buildEvidence(loaded.rowsFor(student), todayUtc())) };
+        }),
+      );
+    }),
+  );
+  const updates = hashes.flat().map(({ id, hash }) => db.update(schema.syntheses).set({ inputHash: hash }).where(eq(schema.syntheses.id, id)));
   if (updates.length > 0) await db.batch([updates[0]!, ...updates.slice(1)]);
   return user;
 }
 
-const used = { notes: schema.users.demoNotesUsed, reports: schema.users.demoReportsUsed } as const;
+// The users column that counts each kind.
+const USED = { notes: "demoNotesUsed", reports: "demoReportsUsed" } as const satisfies Record<Allowance, keyof User>;
 const capReached = (kind: Allowance) =>
   new HTTPException(403, { message: `The demo allows ${DEMO_LIMITS[kind]} ${kind}; sign in with Google to use your own classes` });
 
@@ -197,10 +200,11 @@ const capReached = (kind: Allowance) =>
 // happens for a teacher.
 export async function reserve(db: Db, user: User, kind: Allowance, n = 1): Promise<void> {
   if (!user.demo || n === 0) return;
-  const col = used[kind];
+  const key = USED[kind];
+  const col = schema.users[key];
   const row = await db
     .update(schema.users)
-    .set({ [kind === "notes" ? "demoNotesUsed" : "demoReportsUsed"]: sql`${col} + ${n}` })
+    .set({ [key]: sql`${col} + ${n}` })
     .where(and(eq(schema.users.id, user.id), sql`${col} + ${n} <= ${DEMO_LIMITS[kind]}`))
     .returning({ id: schema.users.id })
     .get();
@@ -211,19 +215,35 @@ export async function reserve(db: Db, user: User, kind: Allowance, n = 1): Promi
 // that turned out to be a repeat).
 export async function refund(db: Db, user: User, kind: Allowance, n = 1): Promise<void> {
   if (!user.demo || n === 0) return;
-  const col = used[kind];
+  const key = USED[kind];
+  const col = schema.users[key];
   await db
     .update(schema.users)
-    .set({ [kind === "notes" ? "demoNotesUsed" : "demoReportsUsed"]: sql`${col} - ${n}` })
+    .set({ [key]: sql`${col} - ${n}` })
     .where(and(eq(schema.users.id, user.id), sql`${col} >= ${n}`));
 }
 
+// Run `work` against `n` of a demo visitor's allowance: reserved first, given back when the
+// work throws or `kept` says nothing new was written (a resend that was a repeat). A teacher's
+// allowance is unlimited, so for them this is just `work()`.
+export async function reserved<T>(db: Db, user: User, kind: Allowance, n: number, work: () => Promise<T>, kept: (result: T) => boolean = () => true): Promise<T> {
+  await reserve(db, user, kind, n);
+  let result: T;
+  try {
+    result = await work();
+  } catch (err) {
+    await refund(db, user, kind, n);
+    throw err;
+  }
+  if (!kept(result)) await refund(db, user, kind, n);
+  return result;
+}
+
 // 403 when a demo visitor has nothing left, checked before work that would be wasted (a
-// transcription, reading a document). reserve() still decides at the write.
-export async function assertAllowance(db: Db, user: User, kind: Allowance): Promise<void> {
-  if (!user.demo) return;
-  const row = await db.select({ n: used[kind] }).from(schema.users).where(eq(schema.users.id, user.id)).get();
-  if (!row || row.n >= DEMO_LIMITS[kind]) throw capReached(kind);
+// transcription, reading a document). Reads the row the request already loaded; reserve()
+// still decides at the write.
+export function assertAllowance(user: User, kind: Allowance): void {
+  if (user.demo && user[USED[kind]] >= DEMO_LIMITS[kind]) throw capReached(kind);
 }
 
 // What is left, for /api/auth/me. Null for a teacher.
@@ -235,7 +255,7 @@ const liveSession = (db: Db) =>
   db
     .select({ one: sql`1` })
     .from(schema.sessions)
-    .where(and(eq(schema.sessions.userId, schema.users.id), gt(schema.sessions.expiresAt, new Date().toISOString())));
+    .where(and(eq(schema.sessions.userId, schema.users.id), sessionLive()));
 
 export async function liveDemoCount(db: Db): Promise<number> {
   const row = await db

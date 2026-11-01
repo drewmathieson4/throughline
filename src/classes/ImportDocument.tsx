@@ -2,11 +2,10 @@ import { useState } from "react";
 import { AlertCircle, Check, Upload } from "lucide-react";
 import { toast } from "sonner";
 import type { DocumentImportResult, DocumentKind, DocumentProgress, DocumentStep } from "../../worker/api-types";
-import { DOCUMENT_TYPES, fileInit } from "../api";
+import { DOCUMENT_TYPES, fileInit, notifySpent } from "../api";
 import FilePicker from "../FilePicker";
 import NoteItem from "../NoteItem";
 import { kinds } from "../noteKinds";
-import { useAllowance } from "../auth/allowanceStore";
 import { useNotes } from "../notes/notesStore";
 import Tags from "../notes/Tags";
 import { documentHeadline, documentLines } from "../students/importText";
@@ -46,6 +45,7 @@ async function postDocument(url: string, file: File, onStep: (step: DocumentStep
       else outcome = parsed;
     }
   }
+  notifySpent(); // the stream is the answer: what the import wrote is counted by now
   if (!outcome || "step" in outcome) throw new Error("The import stopped before it finished.");
   if ("error" in outcome) throw new Error(outcome.error);
   return outcome.result;
@@ -56,7 +56,6 @@ async function postDocument(url: string, file: File, onStep: (step: DocumentStep
 // teacher has said it.
 function useDocumentImport(onImported: (imported: DocumentImport) => void) {
   const { add, classNames } = useNotes();
-  const { refreshAllowance } = useAllowance();
   const [progress, setProgress] = useState<Progress | null>(null);
   const action = useAction(async (file: File, classIds: string[], as?: DocumentKind) => {
     const query = new URLSearchParams({ name: file.name, classIds: classIds.join(",") });
@@ -74,7 +73,6 @@ function useDocumentImport(onImported: (imported: DocumentImport) => void) {
       onImported({ result, file });
     } finally {
       setProgress(null);
-      refreshAllowance();
     }
   });
   return { ...action, progress };

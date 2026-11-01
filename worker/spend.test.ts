@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
 import * as schema from "./db/schema";
-import { ACCOUNT_CAP_MICRO, TOTAL_CAP_MICRO, charge, costMicro, isOwner, meteredFetch, spendState } from "./spend";
+import { ACCOUNT_CAP_MICRO, ACCOUNT_CAP_USD, TOTAL_CAP_MICRO, charge, costMicro, isOwner, meteredFetch, spendState } from "./spend";
 import { DEV_USER_ID, OTHER_USER_ID, quietErrors, setupTestDb } from "./test-db";
 
 const db = setupTestDb();
@@ -63,7 +63,7 @@ test("charge adds up; spendState switches off at the account cap, exempts owners
   await charge(client(), DEV_USER_ID, "claude-haiku-5-5", { input_tokens: 10_000, output_tokens: 1000 });
   let dev = (await userRow(DEV_USER_ID))!;
   expect(dev.aiSpentMicro).toBe(15_500);
-  expect(await spendState(client(), dev, {})).toEqual({ spentMicro: 15_500, capMicro: ACCOUNT_CAP_MICRO, off: null });
+  expect(await spendState(client(), dev, {})).toEqual({ spentUsd: 0.0155, capUsd: ACCOUNT_CAP_USD, off: null });
 
   await db.setSpent(DEV_USER_ID, ACCOUNT_CAP_MICRO);
   dev = (await userRow(DEV_USER_ID))!;

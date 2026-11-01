@@ -7,7 +7,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { migrate } from "drizzle-orm/d1/migrator";
 import app from "./index";
 import type { SessionUser } from "./api-types";
-import { hashToken } from "./auth";
+import { SESSION_COOKIE, hashToken } from "./auth";
 import seed from "../scripts/seed-dev.sql?raw";
 
 // Who is signed in. The seed's Dev Teacher owns the seeded classes; a second teacher with
@@ -26,9 +26,25 @@ export type Who = keyof typeof TOKENS | "anon" | { token: string };
 export function signedIn(init: RequestInit = {}, who: Who = "dev"): RequestInit {
   if (who === "anon") return init;
   const headers = new Headers(init.headers);
-  headers.set("cookie", `session=${typeof who === "string" ? TOKENS[who] : who.token}`);
+  headers.set("cookie", `${SESSION_COOKIE}=${typeof who === "string" ? TOKENS[who] : who.token}`);
   return { ...init, headers };
 }
+
+export type Cookie = { name: string; value: string; attrs: Record<string, string> };
+// Every Set-Cookie on a response, split into name, value and lower-cased attributes.
+export function cookies(res: Response): Cookie[] {
+  return res.headers.getSetCookie().map((line) => {
+    const [pair, ...rest] = line.split(";").map((s) => s.trim());
+    const [name, value] = pair!.split("=", 2) as [string, string];
+    const attrs: Record<string, string> = {};
+    for (const a of rest) {
+      const [k, v = ""] = a.split("=", 2) as [string, string];
+      attrs[k.toLowerCase()] = v;
+    }
+    return { name, value, attrs };
+  });
+}
+export const cookie = (res: Response, name: string) => cookies(res).find((c) => c.name === name);
 
 // The seeded roster (scripts/seed-dev.sql): three classes, 20 students. Tests that count rows
 // derive from these so a roster change is a one-line edit here.
@@ -115,14 +131,10 @@ export function setupTestDb() {
     startDemo: async () => {
       const res = await app.request("/api/auth/demo", { method: "POST" }, env);
       if (res.status !== 201) throw new Error(`demo start → ${res.status} ${await res.text()}`);
-      const token = res.headers
-        .getSetCookie()
-        .find((line) => line.startsWith("session="))!
-        .split(";")[0]!
-        .slice("session=".length);
-      const me = (await res.json()) as SessionUser;
+      const token = cookie(res, SESSION_COOKIE)!.value;
+      const userId = ((await res.json()) as SessionUser).id;
       const who: Who = { token };
-      return { me, userId: me.id, token, request: (url: string, init?: RequestInit) => request(url, init, who), json: <T>(url: string, init?: RequestInit) => json<T>(url, init, who) };
+      return { userId, token, request: (url: string, init?: RequestInit) => request(url, init, who), json: <T>(url: string, init?: RequestInit) => json<T>(url, init, who) };
     },
     // Spend some of a demo visitor's allowance directly, for tests at the limit.
     setUsed: (userId: string, used: { notes?: number; reports?: number }) =>

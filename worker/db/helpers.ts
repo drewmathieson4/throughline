@@ -43,14 +43,14 @@ export async function requireNote(db: Db, userId: string, noteId: string): Promi
   return row;
 }
 
-// A student the teacher names must be in one of their classes. Any of them: a note may span classes.
-export async function requireStudent(db: Db, userId: string, studentId: string) {
-  const row = await db
-    .select({ id: schema.students.id })
-    .from(schema.students)
-    .where(and(eq(schema.students.id, studentId), inArray(schema.students.classId, ownedClasses(db, userId))))
-    .get();
+// A student the teacher names must be in one of their classes. Any of them: a note may span
+// classes. The predicate is for routes that fold the check into their own statement.
+export const ownedStudent = (db: Db, userId: string, studentId: string) => and(eq(schema.students.id, studentId), inArray(schema.students.classId, ownedClasses(db, userId)));
+
+export async function requireStudent(db: Db, userId: string, studentId: string): Promise<{ id: string; classId: string }> {
+  const row = await db.select({ id: schema.students.id, classId: schema.students.classId }).from(schema.students).where(ownedStudent(db, userId, studentId)).get();
   if (!row) throw notFound("student");
+  return row;
 }
 
 // What the tagger sees about each student: the given classes, or every class of the user's
