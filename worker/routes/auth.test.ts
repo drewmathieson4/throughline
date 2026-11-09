@@ -88,7 +88,7 @@ test("POST /api/auth/demo makes a visitor with a week-long session, and says so 
   const session = cookie(res, "session")!;
   expect(session.attrs).toMatchObject({ httponly: "", path: "/", samesite: "Lax", "max-age": String(7 * 24 * 60 * 60) });
   const made = (await res.json()) as SessionUser;
-  expect(made).toEqual({ id: made.id, email: "", name: "Demo", pictureUrl: null, demo: { notesLeft: 30, reportsLeft: 3 }, ai: FRESH_AI } satisfies SessionUser);
+  expect(made).toEqual({ id: made.id, email: "", name: "Demo", pictureUrl: null, demo: { notesLeft: 30, reportsLeft: 4 }, ai: FRESH_AI } satisfies SessionUser);
   const stored = await db.env.DB.prepare("SELECT user_id, expires_at FROM sessions WHERE token_hash = ?").bind(await hashToken(session.value)).first<{ user_id: string; expires_at: string }>();
   expect(stored?.user_id).toBe(made.id);
   expect(Date.parse(stored!.expires_at) - Date.now()).toBeLessThanOrEqual(7 * 24 * 60 * 60 * 1000);

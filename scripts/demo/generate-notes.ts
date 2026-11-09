@@ -15,7 +15,7 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import { SYSTEM_PROMPT, locateQuote, rosterLabels, rosterLines, type TagClass } from "../../worker/tagging.ts";
 import { messageOf, pool } from "../eval/shared.ts";
-import { NOTES_PATH, baseUrlOption, classSlug, fetchRoster, loadNotes, type DemoNote } from "./shared.ts";
+import { NOTES_PATH, baseUrlOption, classSlug, cleanBaseUrl, fetchRoster, loadNotes, type DemoNote } from "./shared.ts";
 
 const { values: args } = parseArgs({
   options: { class: { type: "string" }, per: { type: "string", default: "45" }, "base-url": baseUrlOption },
@@ -25,7 +25,7 @@ const TERM_START = "2026-09-01";
 const today = new Date();
 const TERM_END = today.toLocaleDateString("en-CA"); // local YYYY-MM-DD; a note dated tomorrow is rejected on load
 
-const { students, classes } = await fetchRoster(args["base-url"]);
+const { students, classes } = await fetchRoster(cleanBaseUrl(args["base-url"]));
 const wanted = args.class ? classes.filter((c) => c.name === args.class) : classes;
 if (wanted.length === 0) throw new Error(`no class named ${args.class}; have: ${classes.map((c) => c.name).join(", ")}`);
 

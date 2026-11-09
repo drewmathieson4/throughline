@@ -8,7 +8,9 @@
     // Vite bundles the Worker, so resolve imports the way a bundler does (no .js suffixes).
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    // worker/demo-template.json, the demo's data, is imported as a module.
+    "resolveJsonModule": true
   },
   "include": ["worker"]
 }

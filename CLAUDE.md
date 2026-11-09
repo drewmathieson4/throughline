@@ -23,6 +23,7 @@ npm run db:migrate:remote  # apply migrations to production D1
 npm run db:claim:local     # give the seed classes to whoever signed in to the local dev server last
 npm run cf-typegen         # regenerate worker-configuration.d.ts after editing wrangler.jsonc bindings
 npm run spend -- show      # what each account has spent of its AI allowance; `reset <email>` or `reset --all` zeroes it (add --remote for production)
+npm run demo:snapshot      # rewrite worker/demo-template.json (what every demo visitor gets) from the seed classes in the local D1; --remote reads production
 ```
 
 Schema change workflow: edit `worker/db/schema.ts`, run `db:generate`, run `db:migrate:local`, run `typecheck`. Never hand-edit files under `drizzle/` or the live database; commit the generated SQL and `drizzle/meta/` together.

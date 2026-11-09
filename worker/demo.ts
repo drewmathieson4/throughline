@@ -1,65 +1,74 @@
 // Demo mode: a visitor with no account gets their own copy of two small synthetic classes
 // and a capped allowance of notes and summaries, so the product can be tried without
-// signing in and without an open-ended bill. The copy is cut from the seed classes by their
-// fixed ids (scripts/seed-dev.sql), whoever owns them: four students each, the notes about
-// them, their grades, the course material, and the saved summaries, so Reports reads as
-// current from the first visit. Everything is a new row under a new user, so the ordinary
+// signing in and without an open-ended bill. The copy is cut from worker/demo-template.json,
+// a snapshot of the seed classes written by `npm run demo:snapshot`: four students each, the
+// notes about them, their grades, the course material and the saved summaries, so every
+// visitor sees the same demo and Reports reads as current from the first visit. Every date
+// in the copy is moved forward by whole weeks so the newest note is in the last seven days
+// and each note keeps its weekday. Everything is a new row under a new user, so the ordinary
 // ownership checks keep each visitor to their own copy. See DECISIONS.md.
 import { HTTPException } from "hono/http-exception";
-import { and, desc, eq, exists, inArray, isNull, notExists, or, sql } from "drizzle-orm";
+import { and, eq, exists, inArray, notExists, sql } from "drizzle-orm";
 import * as schema from "./db/schema";
-import type { Note, NoteMention, NoteStudent, SynthesisRow, User } from "./db/schema";
+import type { ClassMaterial, ClassRow, GradeEntry, Note, NoteMention, NoteStudent, Student, SynthesisRow, User } from "./db/schema";
 import type { Db } from "./db/client";
 import { insertChunks } from "./db/helpers";
 import type { DemoAllowance } from "./api-types";
 import { sessionLive } from "./auth";
-import { buildEvidence, loadEvidence, todayUtc } from "./evidence";
+import { buildEvidence, daysBetween, loadEvidence, shiftDay, shiftIso, todayUtc } from "./evidence";
 import { inputHash } from "./synthesis-model";
+import templateJson from "./demo-template.json";
 
 export const DEMO_SESSION_DAYS = 7;
 // Per visitor: notes created (typed, spoken or cut from a document; a course document counts
-// one) and summaries that called Opus. A summary served from the cache is free.
-export const DEMO_LIMITS = { notes: 30, reports: 3 } as const;
+// one) and summaries that called Opus. A summary served from the cache is free. Four summaries
+// is the half of the template that has none saved, so a visitor can finish the class.
+export const DEMO_LIMITS = { notes: 30, reports: 4 } as const;
 export type Allowance = keyof typeof DEMO_LIMITS;
 // Visitors with a live session at once. Beyond this the demo says it is busy: the per-visitor
 // caps bound one visitor, this bounds all of them.
 export const DEMO_MAX_LIVE = 100;
 
-// The template: two seed classes and four students of each, by the seed's fixed ids. Alex
-// Marsh and Alex Ruiz are kept on purpose: a note that says just "Alex" is the tagger's
-// showcase, an open mention for the visitor to settle.
-const seedStudent = (n: string) => `22222222-2222-4222-8222-2222222222${n}`;
-const DEMO_TEMPLATE = [
-  // Period 3 Humanities: Rowan Pell, Ember Castellane, Marlowe Finchley, Alex Marsh
-  { classId: "11111111-1111-4111-8111-111111111111", students: ["02", "06", "05", "09"].map(seedStudent) },
-  // B Block Humanities: Imogen Hale, Theo Brightwater, Ronan Pike, Alex Ruiz
-  { classId: "11111111-1111-4111-8111-111111112222", students: ["15", "14", "13", "10"].map(seedStudent) },
-];
-const TEMPLATE_CLASSES = DEMO_TEMPLATE.map((t) => t.classId);
-const TEMPLATE_STUDENTS = DEMO_TEMPLATE.flatMap((t) => t.students);
+// What scripts/demo/snapshot.ts writes: the rows as Drizzle reads them, minus the columns the
+// clone sets for each copy (owner_id, client_id, input_hash). Ids are the source's; the clone
+// mints new ones.
+export type DemoTemplate = {
+  snapshotDay: string;
+  classes: Omit<ClassRow, "ownerId">[];
+  students: Student[];
+  notes: Omit<Note, "ownerId" | "clientId">[];
+  tags: NoteStudent[];
+  mentions: NoteMention[];
+  materials: ClassMaterial[];
+  grades: GradeEntry[];
+  settings: (typeof schema.settings.$inferSelect)[];
+  syntheses: Omit<SynthesisRow, "inputHash">[];
+};
+export const template = templateJson as unknown as DemoTemplate;
 
 // Rows per insert statement, under D1's 100 bound parameters: 100 / columns, rounded down.
 const CHUNK = { students: 12, notes: 10, noteStudents: 33, noteMentions: 16, gradeEntries: 12, syntheses: 11 };
 
-// Which of the template owner's notes the copy takes. In a template class: the class-level
-// ones (no tags) and any tagged to a kept student. Not yet assigned to a class: any tagged to
-// a kept student, or with an open mention a kept student is a candidate for (a note that only
-// says "Alex", or one spanning both classes). Only the template owner can tag or be offered
-// these students, so no owner check is needed.
-function templateNotes(db: Db) {
-  const n = schema.notes;
-  const ns = schema.noteStudents;
-  const m = schema.noteMentions;
-  const anyTag = db.select({ one: sql`1` }).from(ns).where(eq(ns.noteId, n.id));
-  const keptTag = db
-    .select({ one: sql`1` })
-    .from(ns)
-    .where(and(eq(ns.noteId, n.id), inArray(ns.studentId, TEMPLATE_STUDENTS)));
-  const keptCandidate = sql`exists (select 1 from ${m}, json_each(${m.candidateIds}) where ${m.noteId} = ${n.id} and json_each.value in ${TEMPLATE_STUDENTS})`;
-  return or(
-    and(inArray(n.classId, TEMPLATE_CLASSES), or(notExists(anyTag), exists(keptTag))),
-    and(isNull(n.classId), or(exists(keptTag), keptCandidate)),
-  );
+// How many days to move the template forward so its newest note falls in the week before
+// `today`: whole weeks only, so a Tuesday note is still on a Tuesday. Never backwards.
+export function shiftFor(newestDay: string, today: string): number {
+  const toYesterday = daysBetween(newestDay, shiftDay(today, -1));
+  return toYesterday < 0 ? 0 : Math.floor(toYesterday / 7) * 7;
+}
+
+// A date string moved by `days`: a YYYY-MM-DD day or a full ISO instant.
+const shifted = (value: string, days: number) => (value.length === 10 ? shiftDay(value, days) : shiftIso(value, days));
+const shiftedOrNull = (value: string | null, days: number) => (value === null ? null : shifted(value, days));
+
+// Dates inside a saved summary's JSON: the citations' notedAt and dueDate and the coverage's
+// lastNotedAt. Prose that names a date is left alone (DECISIONS.md: accepted drift).
+const DATE_KEYS = new Set(["notedAt", "dueDate", "lastNotedAt"]);
+export function shiftDates<T>(value: T, days: number): T {
+  if (Array.isArray(value)) return value.map((v) => shiftDates(v, days)) as T;
+  if (value === null || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([k, v]) => [k, DATE_KEYS.has(k) && typeof v === "string" ? shifted(v, days) : shiftDates(v, days)]),
+  ) as T;
 }
 
 // The class that every kept tag of a note points at, when they agree; how tagging settles a
@@ -76,28 +85,14 @@ function remapJson(json: SynthesisRow["json"], ids: Map<string, string>): Synthe
   return JSON.parse(text) as SynthesisRow["json"];
 }
 
-// A new user owning a fresh copy of the template, written in one transaction so a failure
-// leaves nothing behind. Then the copied summaries' hashes are recomputed: a hash covers the
-// ids of the notes a summary read, which are new in the copy, and without this every summary
-// would show as out of date. 503 when the template classes are not in this database.
+// A new user owning a fresh copy of the template, dated to this week, written in one
+// transaction so a failure leaves nothing behind. Then the copied summaries' hashes are
+// computed: a hash covers the ids and dates of the notes a summary read, which are new in
+// the copy, and without this every summary would show as out of date.
 export async function cloneDemo(db: Db): Promise<User> {
-  const s = schema.students;
-  const [classes, students, notes, tags, mentions, materials, grades, settings, saved] = await db.batch([
-    db.select().from(schema.classes).where(inArray(schema.classes.id, TEMPLATE_CLASSES)),
-    db.select().from(s).where(inArray(s.id, TEMPLATE_STUDENTS)),
-    db.select().from(schema.notes).where(templateNotes(db)),
-    db.select().from(schema.noteStudents).where(inArray(schema.noteStudents.studentId, TEMPLATE_STUDENTS)),
-    db
-      .select({ row: schema.noteMentions })
-      .from(schema.noteMentions)
-      .innerJoin(schema.notes, eq(schema.notes.id, schema.noteMentions.noteId))
-      .where(templateNotes(db)),
-    db.select().from(schema.classMaterials).where(inArray(schema.classMaterials.classId, TEMPLATE_CLASSES)),
-    db.select().from(schema.gradeEntries).where(inArray(schema.gradeEntries.studentId, TEMPLATE_STUDENTS)),
-    db.select().from(schema.settings).where(inArray(schema.settings.classId, TEMPLATE_CLASSES)),
-    db.select().from(schema.syntheses).where(inArray(schema.syntheses.studentId, TEMPLATE_STUDENTS)).orderBy(desc(schema.syntheses.createdAt)),
-  ]);
-  if (classes.length !== TEMPLATE_CLASSES.length) throw new HTTPException(503, { message: "the demo is not set up" });
+  const { classes, students, notes, tags, mentions, materials, grades, settings, syntheses } = template;
+  const today = todayUtc();
+  const days = shiftFor(notes.reduce((max, n) => (n.notedAt > max ? n.notedAt : max), "").slice(0, 10), today);
 
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
@@ -125,38 +120,51 @@ export async function cloneDemo(db: Db): Promise<User> {
   const tagsByNote = new Map<string, NoteStudent[]>();
   for (const t of tags) if (noteIds.has(t.noteId)) tagsByNote.set(t.noteId, [...(tagsByNote.get(t.noteId) ?? []), t]);
 
-  const newClasses = classes.map((k) => ({ ...k, id: classIds.get(k.id)!, ownerId: user.id }));
-  const newStudents = students.map((st) => ({ ...st, id: studentIds.get(st.id)!, classId: classIds.get(st.classId)! }));
+  const newClasses: ClassRow[] = classes.map((k) => ({
+    ...k,
+    id: classIds.get(k.id)!,
+    ownerId: user.id,
+    termStart: shiftedOrNull(k.termStart, days),
+    termEnd: shiftedOrNull(k.termEnd, days),
+    createdAt: shifted(k.createdAt, days),
+  }));
+  const newStudents = students.map((st) => ({ ...st, id: studentIds.get(st.id)!, classId: classIds.get(st.classId)!, createdAt: shifted(st.createdAt, days) }));
   const newNotes: Note[] = notes.map((n) => ({
     ...n,
     id: noteIds.get(n.id)!,
     ownerId: user.id,
     classId: classIds.get(n.classId ?? settledClass(tagsByNote.get(n.id) ?? [], classOf) ?? "") ?? null,
     clientId: null,
+    notedAt: shifted(n.notedAt, days),
+    createdAt: shifted(n.createdAt, days),
   }));
   const newTags = [...tagsByNote.values()].flat().map((t) => ({ ...t, noteId: noteIds.get(t.noteId)!, studentId: studentIds.get(t.studentId)! }));
-  const newMentions: NoteMention[] = mentions.map(({ row: m }) => ({
+  const newMentions: NoteMention[] = mentions.map((m) => ({
     ...m,
     id: crypto.randomUUID(),
     noteId: noteIds.get(m.noteId)!,
-    candidateIds: m.candidateIds.flatMap((id) => studentIds.get(id) ?? []),
+    candidateIds: m.candidateIds.flatMap((cid) => studentIds.get(cid) ?? []),
+    createdAt: shifted(m.createdAt, days),
   }));
-  const newMaterials = materials.map((mat) => ({ ...mat, id: crypto.randomUUID(), classId: classIds.get(mat.classId)! }));
-  const newGrades = grades.map((g) => ({ ...g, id: crypto.randomUUID(), studentId: studentIds.get(g.studentId)! }));
+  const newMaterials = materials.map((mat) => ({ ...mat, id: crypto.randomUUID(), classId: classIds.get(mat.classId)!, createdAt: shifted(mat.createdAt, days) }));
+  const newGrades = grades.map((g) => ({ ...g, id: crypto.randomUUID(), studentId: studentIds.get(g.studentId)!, dueDate: shiftedOrNull(g.dueDate, days) }));
   const newSettings = settings.map((row) => ({ ...row, classId: classIds.get(row.classId)! }));
-  // The newest summary per student and period is the one Reports shows; older runs stay behind.
-  const seen = new Set<string>();
-  const newSyntheses = saved
-    .filter((row) => {
-      const key = `${row.studentId}|${row.periodStart}|${row.periodEnd}`;
-      return !seen.has(key) && seen.add(key);
-    })
-    .map((row) => ({ ...row, id: crypto.randomUUID(), studentId: studentIds.get(row.studentId)!, json: remapJson(row.json, noteIds) }));
+  // The hash is filled in below, once the copy is written and its evidence can be read back.
+  const newSyntheses: SynthesisRow[] = syntheses.map((row) => ({
+    ...row,
+    id: crypto.randomUUID(),
+    studentId: studentIds.get(row.studentId)!,
+    periodStart: shifted(row.periodStart, days),
+    periodEnd: shifted(row.periodEnd, days),
+    createdAt: shifted(row.createdAt, days),
+    json: shiftDates(remapJson(row.json, noteIds), days),
+    inputHash: "",
+  }));
 
   await db.batch([
     db.insert(schema.users).values(user),
     db.insert(schema.classes).values(newClasses),
-    ...insertChunks(db, s, newStudents, CHUNK.students),
+    ...insertChunks(db, schema.students, newStudents, CHUNK.students),
     ...insertChunks(db, schema.notes, newNotes, CHUNK.notes),
     ...insertChunks(db, schema.noteStudents, newTags, CHUNK.noteStudents),
     ...insertChunks(db, schema.noteMentions, newMentions, CHUNK.noteMentions),
@@ -167,7 +175,7 @@ export async function cloneDemo(db: Db): Promise<User> {
   ]);
 
   // Hashes: one evidence load per class and period, then one update per copied summary.
-  const groups = new Map<string, typeof newSyntheses>();
+  const groups = new Map<string, SynthesisRow[]>();
   const classOfNew = new Map(newStudents.map((st) => [st.id, st.classId]));
   for (const row of newSyntheses) {
     const key = `${classOfNew.get(row.studentId)}|${row.periodStart}|${row.periodEnd}`;
@@ -180,12 +188,12 @@ export async function cloneDemo(db: Db): Promise<User> {
       return Promise.all(
         rows.map(async (row) => {
           const student = loaded.students.find((st) => st.id === row.studentId)!;
-          return { id: row.id, hash: await inputHash(buildEvidence(loaded.rowsFor(student), todayUtc())) };
+          return { id: row.id, hash: await inputHash(buildEvidence(loaded.rowsFor(student), today)) };
         }),
       );
     }),
   );
-  const updates = hashes.flat().map(({ id, hash }) => db.update(schema.syntheses).set({ inputHash: hash }).where(eq(schema.syntheses.id, id)));
+  const updates = hashes.flat().map(({ id: sid, hash }) => db.update(schema.syntheses).set({ inputHash: hash }).where(eq(schema.syntheses.id, sid)));
   if (updates.length > 0) await db.batch([updates[0]!, ...updates.slice(1)]);
   return user;
 }

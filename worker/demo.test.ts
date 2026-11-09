@@ -1,9 +1,11 @@
-import { expect, test } from "vitest";
-import type { NoteWithTags, StudentDetail, Synthesis, SynthesisRosterRow, SynthesisView } from "./api-types";
+import { describe, expect, test } from "vitest";
+import type { NoteWithTags, Synthesis, SynthesisRosterRow, SynthesisView } from "./api-types";
 import type { ClassRow, Student, User } from "./db/schema";
-import { DEMO_LIMITS, refund, reserve } from "./demo";
+import { DEMO_LIMITS, refund, reserve, shiftDates, shiftFor, template as bundled } from "./demo";
+import { daysBetween, shiftDay, todayUtc } from "./evidence";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./db/schema";
+import { TEMPLATE_QUERIES } from "../scripts/demo/template-sql.ts";
 import { CLASS_C_ID, DEV_USER_ID, MENTION_ID, NOTE_ID, PERIOD_3_COUNT, SEED_CLASS_ID as CLASS_ID, STUDENT, setupTestDb } from "./test-db";
 
 const db = setupTestDb();
@@ -27,7 +29,8 @@ const summary = (noteId: string): Synthesis => ({
   grades: null,
 });
 
-// The template owner's rows the clone has to choose from. Each note's number says what it is for.
+// A template owner's rows for the snapshot's SQL to choose from. Each note's number says what
+// it is for. (The clone itself reads the bundled file, not these.)
 function template() {
   return db.env.DB.batch([
     db.insertNote(NOTE_ID(1), CLASS_ID, at("2026-09-10")), // Period 3, class-level: copied
@@ -76,57 +79,66 @@ test("a visitor gets their own two classes of four, invisible to the template's 
   expect(await db.json<Student[]>(`/api/students?classId=${CLASS_ID}`)).toHaveLength(PERIOD_3_COUNT);
 });
 
-test("the copy takes the class-level notes and those about kept students, with new ids and tags only to kept students", async () => {
+test("the snapshot takes the class-level notes and those about kept students, tags to kept students, and the newest summary per student", async () => {
   await template();
+  const rows = async <T>(sql: string) => (await db.env.DB.prepare(sql).all<T>()).results;
+  expect((await rows<{ body: string }>(TEMPLATE_QUERIES.notes)).map((n) => n.body).sort()).toEqual(["note 01", "note 02", "note 04", "note 05", "note 06", "note 07"]);
+  const tags = await rows<{ note_id: string; student_id: string }>(TEMPLATE_QUERIES.tags);
+  expect(tags.filter((t) => t.note_id === NOTE_ID(4)).map((t) => t.student_id)).toEqual([STUDENT.rowan]);
+  expect(tags.some((t) => t.student_id === STUDENT.avery || t.student_id === STUDENT.juniper)).toBe(false);
+  expect(tags.filter((t) => t.note_id === NOTE_ID(6)).map((t) => t.student_id).sort()).toEqual([STUDENT.rowan, STUDENT.theo].sort());
+  expect((await rows<{ id: string }>(TEMPLATE_QUERIES.mentions)).map((m) => m.id)).toEqual([MENTION_ID(1)]);
+  expect((await rows<{ id: string }>(TEMPLATE_QUERIES.syntheses)).map((r) => r.id)).toEqual([SYNTHESIS_ID(1)]);
+  expect((await rows<{ id: string }>(TEMPLATE_QUERIES.grades)).map((r) => r.id)).toEqual([GRADE_ID(1)]);
+  expect(await rows(TEMPLATE_QUERIES.materials)).toHaveLength(1);
+  expect((await rows<{ id: string }>(TEMPLATE_QUERIES.classes)).map((c) => c.id)).toEqual(["11111111-1111-4111-8111-111111111111", "11111111-1111-4111-8111-111111112222"]);
+  expect(await rows(TEMPLATE_QUERIES.students)).toHaveLength(8);
+});
+
+test("a copy is the bundled template moved to the week before today, weekdays kept, summaries current and citing copied notes, the same for every visitor", async () => {
   const demo = await db.startDemo();
-  const [p3, bb] = await demo.json<ClassRow[]>("/api/classes");
-  const roster = await demo.json<Student[]>(`/api/students?classId=${p3!.id}`);
-  const idOf = (first: string) => roster.find((s) => s.firstName === first)!.id;
-  const bbAlex = (await demo.json<Student[]>(`/api/students?classId=${bb!.id}`)).find((s) => s.firstName === "Alex")!.id;
-  const notes = await demo.json<NoteWithTags[]>("/api/notes");
-  const byBody = new Map(notes.map((n) => [n.body, n]));
-  expect([...byBody.keys()].sort()).toEqual(["note 01", "note 02", "note 04", "note 05", "note 06", "note 07"]);
-
-  expect(byBody.get("note 01")).toMatchObject({ classId: p3!.id, students: [], mentions: [] });
-  expect(byBody.get("note 02")!.students).toEqual([{ studentId: idOf("Rowan"), quotes: [] }]);
-  expect(byBody.get("note 04")!.students).toEqual([{ studentId: idOf("Rowan"), quotes: [] }]);
-  expect(byBody.get("note 05")).toMatchObject({ classId: null, students: [] });
-  expect(byBody.get("note 05")!.mentions[0]!.candidateIds.sort()).toEqual([idOf("Alex"), bbAlex].sort());
-  expect(byBody.get("note 05")!.mentions[0]!.id).not.toBe(MENTION_ID(1));
-  expect(byBody.get("note 06")!.classId).toBeNull();
-  expect(byBody.get("note 06")!.students).toHaveLength(2);
-  expect(byBody.get("note 07")).toMatchObject({ classId: p3!.id, students: [{ studentId: idOf("Ember"), quotes: [] }] });
-
+  const notes = await demo.json<NoteWithTags[]>("/api/notes"); // newest first
+  expect(notes).toHaveLength(bundled.notes.length);
+  const today = todayUtc();
+  const age = daysBetween(notes[0]!.notedAt.slice(0, 10), today);
+  expect(age).toBeGreaterThanOrEqual(1);
+  expect(age).toBeLessThanOrEqual(7);
+  const weekdays = (rows: { notedAt: string }[]) => rows.map((n) => new Date(n.notedAt).getUTCDay()).sort();
+  expect(weekdays(notes)).toEqual(weekdays(bundled.notes));
   for (const n of notes) {
     expect(n.ownerId).toBe(demo.userId);
     expect(n.clientId).toBeNull();
-    expect(n.id.startsWith("33333333")).toBe(false);
-    expect(n.createdAt).toBe(n.notedAt); // kept as the template had it
   }
-  // The template is as it was.
-  expect(await count("SELECT count(*) AS n FROM notes WHERE owner_id = ?", DEV_USER_ID)).toBe(9);
-  expect(await count("SELECT count(*) AS n FROM note_students WHERE note_id = ?", NOTE_ID(4))).toBe(2);
-});
+  expect(bundled.notes.map((n) => n.id)).not.toContain(notes[0]!.id);
+  // Nothing was read from or written to anyone else's rows.
+  expect(await count("SELECT count(*) AS n FROM notes WHERE owner_id = ?", DEV_USER_ID)).toBe(0);
 
-test("the copy's saved summary reads as current, cites the copied note, and comes with the grades and material", async () => {
-  await template();
-  const demo = await db.startDemo();
-  const [p3] = await demo.json<ClassRow[]>("/api/classes");
-  const roster = await demo.json<SynthesisRosterRow[]>(`/api/syntheses?${new URLSearchParams({ classId: p3!.id, ...RANGE })}`);
-  const rowan = roster.find((r) => r.firstName === "Rowan")!;
-  expect(rowan.status).toBe("current");
-  expect(roster.filter((r) => r.firstName !== "Rowan").every((r) => r.status === "empty" || r.status === "none")).toBe(true);
-  expect(await count("SELECT count(*) AS n FROM syntheses WHERE student_id = ?", rowan.studentId)).toBe(1);
+  // Every summary in the template reads as current for its (moved) period, and its citations
+  // name the copied notes.
+  const days = shiftFor(bundled.notes.map((n) => n.notedAt.slice(0, 10)).sort().at(-1)!, today);
+  const classes = await demo.json<ClassRow[]>("/api/classes");
+  const classIdByName = new Map(classes.map((c) => [c.name, c.id]));
+  const templateClassName = new Map(bundled.classes.map((c) => [c.id, c.name]));
+  const noteIds = new Set(notes.map((n) => n.id));
+  expect(bundled.syntheses.length).toBeGreaterThan(0);
+  for (const saved of bundled.syntheses) {
+    const student = bundled.students.find((st) => st.id === saved.studentId)!;
+    const classId = classIdByName.get(templateClassName.get(student.classId)!)!;
+    const range = { from: shiftDay(saved.periodStart, days), to: shiftDay(saved.periodEnd, days) };
+    const roster = await demo.json<SynthesisRosterRow[]>(`/api/syntheses?${new URLSearchParams({ classId, ...range })}`);
+    const row = roster.find((r) => r.firstName === student.firstName && r.lastName === student.lastName)!;
+    expect(row.status).toBe("current");
+    const view = await demo.json<SynthesisView>(`/api/syntheses/${row.synthesisId}`);
+    const cited = [...view.json.highlights, ...view.json.strengths, ...view.json.growth, ...view.json.change, ...view.json.goals].flatMap((p) => p.evidence);
+    for (const c of cited) if (c.type === "note") expect(noteIds.has(c.noteId)).toBe(true);
+    expect(view.periodStart).toBe(range.from);
+  }
+  expect(classes.every((c) => c.termEnd! >= today)).toBe(true);
 
-  const saved = await demo.json<SynthesisView>(`/api/syntheses/${rowan.synthesisId}`);
-  const note02 = (await demo.json<NoteWithTags[]>("/api/notes")).find((n) => n.body === "note 02")!;
-  expect(saved.json.strengths[0]!.evidence[0]).toMatchObject({ type: "note", noteId: note02.id });
-  expect(saved.createdAt).toBe("2026-10-20T00:00:00.000Z");
-
-  const detail = await demo.json<StudentDetail>(`/api/students/${rowan.studentId}`);
-  expect(detail.grades?.count).toBe(1);
-  expect(await demo.json<unknown[]>(`/api/materials?classId=${p3!.id}`)).toHaveLength(1);
-  expect(await count("SELECT count(*) AS n FROM syntheses")).toBe(4);
+  // A second visitor gets exactly the same notes.
+  const other = await db.startDemo();
+  const bodies = (rows: { body: string }[]) => rows.map((n) => n.body).sort();
+  expect(bodies(await other.json<NoteWithTags[]>("/api/notes"))).toEqual(bodies(notes));
 });
 
 test("starting a demo removes visitors whose sessions have all expired, and nothing else", async () => {
@@ -167,4 +179,53 @@ test("reserve lets exactly one of two requests at the limit through, refund give
   const teacher = { id: DEV_USER_ID, demo: 0 } as User;
   await reserve(client, teacher, "notes", 1000);
   expect(await count("SELECT demo_notes_used AS n FROM users WHERE id = ?", DEV_USER_ID)).toBe(0);
+});
+
+describe("shiftFor", () => {
+  test("moves the newest note into the week before today by whole weeks, never backwards", () => {
+    // Newest Wednesday 2026-10-21; today Monday 2026-11-09: 19 days to yesterday, so two weeks.
+    expect(shiftFor("2026-10-21", "2026-11-09")).toBe(14);
+    expect(shiftFor("2026-10-21", "2026-10-29")).toBe(7);
+    expect(shiftFor("2026-10-21", "2026-10-22")).toBe(0);
+    expect(shiftFor("2026-10-21", "2026-10-21")).toBe(0);
+    expect(shiftFor("2026-10-21", "2025-01-01")).toBe(0);
+  });
+
+  test("lands the newest note 1–7 days ago whatever the day", () => {
+    const DAY = 86_400_000;
+    for (let i = 0; i < 400; i++) {
+      const today = new Date(Date.UTC(2026, 10, 9) + i * DAY).toISOString().slice(0, 10);
+      const days = shiftFor("2026-10-21", today);
+      const age = Math.round((Date.parse(today) - (Date.UTC(2026, 9, 21) + days * DAY)) / DAY);
+      expect(days % 7).toBe(0);
+      expect(age).toBeGreaterThanOrEqual(1);
+      expect(age).toBeLessThanOrEqual(7);
+    }
+  });
+});
+
+test("shiftDates moves the dated fields inside a summary and nothing else", () => {
+  const json = {
+    overview: "On 14 October Rowan led the seminar.",
+    highlights: [{ title: "Seminar", story: "…", evidence: [{ type: "note", noteId: "n1", notedAt: "2026-10-14T15:30:00.000Z", kind: "text", sourceName: null, quotes: ["led"] }] }],
+    grades: { entries: [{ assignment: "Map", dueDate: "2026-09-10" }, { assignment: "Quiz", dueDate: null }] },
+    coverage: { lastNotedAt: "2026-10-14T15:30:00.000Z", daysSinceLastNote: 3 },
+  };
+  expect(shiftDates(json, 14)).toEqual({
+    overview: "On 14 October Rowan led the seminar.",
+    highlights: [{ title: "Seminar", story: "…", evidence: [{ type: "note", noteId: "n1", notedAt: "2026-10-28T15:30:00.000Z", kind: "text", sourceName: null, quotes: ["led"] }] }],
+    grades: { entries: [{ assignment: "Map", dueDate: "2026-09-24" }, { assignment: "Quiz", dueDate: null }] },
+    coverage: { lastNotedAt: "2026-10-28T15:30:00.000Z", daysSinceLastNote: 3 },
+  });
+});
+
+test("the bundled template is two classes of four, with tags and summaries only for them", () => {
+  expect(bundled.classes).toHaveLength(2);
+  expect(bundled.students).toHaveLength(8);
+  const studentIds = new Set(bundled.students.map((s) => s.id));
+  expect(bundled.tags.every((t) => studentIds.has(t.studentId))).toBe(true);
+  expect(bundled.grades.every((g) => studentIds.has(g.studentId))).toBe(true);
+  expect(bundled.syntheses.every((s) => studentIds.has(s.studentId))).toBe(true);
+  const noteIds = new Set(bundled.notes.map((n) => n.id));
+  expect(bundled.tags.every((t) => noteIds.has(t.noteId))).toBe(true);
 });

@@ -10,10 +10,10 @@
 // are not theirs yet.
 import { parseArgs } from "node:util";
 import { candidateKey, labelMaps, messageOf, pool } from "../eval/shared.ts";
-import { authHeaders, baseUrlOption, checkResponse, fetchRoster, loadNotes, type DemoNote } from "./shared.ts";
+import { authHeaders, baseUrlOption, checkResponse, cleanBaseUrl, fetchRoster, loadNotes, type DemoNote } from "./shared.ts";
 
 const { values: args } = parseArgs({ options: { limit: { type: "string" }, "base-url": baseUrlOption } });
-const baseUrl = args["base-url"];
+const baseUrl = cleanBaseUrl(args["base-url"]);
 const CONCURRENCY = 4;
 
 const { students } = await fetchRoster(baseUrl);

@@ -78,7 +78,7 @@ auth.get("/callback", validate("query", callbackQuery), async (c) => {
 
 // POST /api/auth/demo → a new demo account with its own copy of the synthetic classes, and
 // a session for it: 201 with the same shape as /me. A browser that is already signed in (a
-// second tap) gets who it is, 200. 503 when the demo is full or not set up on this database.
+// second tap) gets who it is, 200. 503 when the demo is full.
 // Expired visitors are cleared out on the way, since nothing else runs on a schedule.
 auth.post("/demo", async (c) => {
   if (c.var.user) return c.json(await me(c, c.var.user));

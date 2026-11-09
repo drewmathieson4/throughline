@@ -7,6 +7,9 @@ import { Expected, messageOf } from "../eval/shared.ts";
 
 export const NOTES_PATH = new URL("notes.json", import.meta.url);
 export const baseUrlOption = { type: "string", default: "http://localhost:5173" } as const;
+// Without the trailing slash: `${baseUrl}/api/…` with one would be `//api/…`, which the
+// deployed asset layer answers itself (a 405 for a POST) before the Worker sees it.
+export const cleanBaseUrl = (url: string) => url.replace(/\/+$/, "");
 
 export const DemoNote = z.object({
   id: z.string(),

@@ -1,0 +1,4467 @@
+{
+  "snapshotDay": "2026-11-09",
+  "classes": [
+    {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "name": "Period 3 Humanities",
+      "termStart": "2026-09-01",
+      "termEnd": "2027-06-15",
+      "createdAt": "2026-09-01T08:00:00.000Z"
+    },
+    {
+      "id": "11111111-1111-4111-8111-111111112222",
+      "name": "B Block Humanities",
+      "termStart": "2026-09-01",
+      "termEnd": "2027-06-15",
+      "createdAt": "2026-09-01T08:00:01.000Z"
+    }
+  ],
+  "students": [
+    {
+      "id": "22222222-2222-4222-8222-222222222202",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "firstName": "Rowan",
+      "lastName": "Pell",
+      "pseudonym": null,
+      "createdAt": "2026-09-01T08:00:00.000Z",
+      "leftAt": null,
+      "aliases": [
+        "Ro"
+      ]
+    },
+    {
+      "id": "22222222-2222-4222-8222-222222222205",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "firstName": "Marlowe",
+      "lastName": "Finchley",
+      "pseudonym": null,
+      "createdAt": "2026-09-01T08:00:00.000Z",
+      "leftAt": null,
+      "aliases": [
+        "Marlo"
+      ]
+    },
+    {
+      "id": "22222222-2222-4222-8222-222222222206",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "firstName": "Ember",
+      "lastName": "Castellane",
+      "pseudonym": null,
+      "createdAt": "2026-09-01T08:00:00.000Z",
+      "leftAt": null,
+      "aliases": [
+        "Em"
+      ]
+    },
+    {
+      "id": "22222222-2222-4222-8222-222222222209",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "firstName": "Alex",
+      "lastName": "Marsh",
+      "pseudonym": null,
+      "createdAt": "2026-09-01T08:00:00.000Z",
+      "leftAt": null,
+      "aliases": []
+    },
+    {
+      "id": "22222222-2222-4222-8222-222222222210",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "firstName": "Alex",
+      "lastName": "Ruiz",
+      "pseudonym": null,
+      "createdAt": "2026-09-01T08:00:00.000Z",
+      "leftAt": null,
+      "aliases": []
+    },
+    {
+      "id": "22222222-2222-4222-8222-222222222213",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "firstName": "Ronan",
+      "lastName": "Pike",
+      "pseudonym": null,
+      "createdAt": "2026-09-01T08:00:00.000Z",
+      "leftAt": null,
+      "aliases": []
+    },
+    {
+      "id": "22222222-2222-4222-8222-222222222214",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "firstName": "Theo",
+      "lastName": "Brightwater",
+      "pseudonym": null,
+      "createdAt": "2026-09-01T08:00:00.000Z",
+      "leftAt": null,
+      "aliases": [
+        "Teddy"
+      ]
+    },
+    {
+      "id": "22222222-2222-4222-8222-222222222215",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "firstName": "Imogen",
+      "lastName": "Hale",
+      "pseudonym": null,
+      "createdAt": "2026-09-01T08:00:00.000Z",
+      "leftAt": null,
+      "aliases": []
+    }
+  ],
+  "notes": [
+    {
+      "id": "0154e1f8-2a92-4b04-acce-85f3a25f439f",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "reminder unit test on the twelfth for third period um study guide goes out wednesday and need to remake the vocab cards someone walked off with half",
+      "audioKey": null,
+      "notedAt": "2026-10-05T22:30:00.000Z",
+      "createdAt": "2026-11-09T17:41:01.837Z",
+      "sourceName": null
+    },
+    {
+      "id": "028d14f8-d72a-45aa-80dd-adb2810edcf6",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Marlowe had the folder! And the homework was in it! Half done but IN IT. Gave him a sticker which he pretended to hate.",
+      "audioKey": null,
+      "notedAt": "2026-09-15T17:41:00.000Z",
+      "createdAt": "2026-11-09T17:40:34.581Z",
+      "sourceName": null
+    },
+    {
+      "id": "0775b788-30a2-47eb-81cd-1552f6593f7b",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "First DBQ practice. Theo had an intro with a real thesis in the first ten minutes, asked me to check it, then said 'wait, don't — I'll check it against the rubric myself.' Who is this kid.",
+      "audioKey": null,
+      "notedAt": "2026-10-12T18:00:00.000Z",
+      "createdAt": "2026-11-09T17:41:08.578Z",
+      "sourceName": null
+    },
+    {
+      "id": "13df4211-2eb8-4b68-884f-b06e098c96a3",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Rowan much better in new seat. Ember next to him seems to help, she just ignores him until he gives up. Alex Marsh finished the map labels early and helped the table.",
+      "audioKey": null,
+      "notedAt": "2026-09-08T17:47:00.000Z",
+      "createdAt": "2026-11-09T17:40:23.533Z",
+      "sourceName": null
+    },
+    {
+      "id": "1510cc63-ba76-4c40-936d-0dbf884dd8a0",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "ronin had a rough one today kept getting up to sharpen a pencil that was already sharp like four times um gave him the yellow card. if it keeps up i'll call home",
+      "audioKey": null,
+      "notedAt": "2026-09-14T17:45:00.000Z",
+      "createdAt": "2026-11-09T17:40:32.045Z",
+      "sourceName": null
+    },
+    {
+      "id": "1511fbb3-fe25-4276-8434-81e2fcc77ad1",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Timeline drafts in. Missing: Marlowe, Alex Marsh. Marlowe's excuse was creative at least. Alex just shrugged.",
+      "audioKey": null,
+      "notedAt": "2026-09-25T17:55:00.000Z",
+      "createdAt": "2026-11-09T17:40:50.400Z",
+      "sourceName": null
+    },
+    {
+      "id": "1a27f57a-d1f9-4e49-a1d5-9159987621ec",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Lunch check-in with Imogen. She's overcommitted with orchestra and the fall play and says she just lost track. Plan: missing worksheet by Wednesday, quiz makeup during Friday catch-up.",
+      "audioKey": null,
+      "notedAt": "2026-09-28T18:10:00.000Z",
+      "createdAt": "2026-11-09T17:40:51.893Z",
+      "sourceName": null
+    },
+    {
+      "id": "1a403d96-30c0-4d57-8d39-f9aa79a39b51",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Rowan's presentation on Hammurabi's punishments — funny, accurate, kept to time. The debate stuff paid off. Nominating him for the humanities showcase with Em.",
+      "audioKey": null,
+      "notedAt": "2026-10-19T17:50:00.000Z",
+      "createdAt": "2026-11-09T17:41:14.553Z",
+      "sourceName": null
+    },
+    {
+      "id": "1dcea7c7-24cd-4f0d-82b1-5b23174177d4",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Print Alex a copy of the campus map and mark the humanities wing — he said he still gets turned around between buildings.",
+      "audioKey": null,
+      "notedAt": "2026-09-08T17:50:00.000Z",
+      "createdAt": "2026-11-09T17:40:24.284Z",
+      "sourceName": null
+    },
+    {
+      "id": "27ab328e-016b-46c8-af8c-37d2abae5c6b",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Imogen came by before class to show me her planner, every assignment written in for the next two weeks. Seminar sheet came in too, late but complete.",
+      "audioKey": null,
+      "notedAt": "2026-10-14T18:10:00.000Z",
+      "createdAt": "2026-11-09T17:41:10.178Z",
+      "sourceName": null
+    },
+    {
+      "id": "280a7400-53f2-4164-943d-4f1c3ea94d8b",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "First day with Period 3. Good energy, loads of hands up for the 'what makes a civilisation' brainstorm. Need a seating plan before Thursday.",
+      "audioKey": null,
+      "notedAt": "2026-09-01T17:45:00.000Z",
+      "createdAt": "2026-11-09T17:40:14.561Z",
+      "sourceName": null
+    },
+    {
+      "id": "2b0e5b32-2adf-4156-85db-8d9b97ff6e3a",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Marlo's mum emailed — he's been doing homework but leaving it in the car. Suggested a folder that lives in his bag. She's on board.",
+      "audioKey": null,
+      "notedAt": "2026-09-09T19:15:00.000Z",
+      "createdAt": "2026-11-09T17:40:26.831Z",
+      "sourceName": null
+    },
+    {
+      "id": "34003da7-5371-4242-a44b-4b7449f6915f",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Rowan sent out for throwing a rubber at Alex. Came back and apologised without being asked, which is new.",
+      "audioKey": null,
+      "notedAt": "2026-09-22T18:00:00.000Z",
+      "createdAt": "2026-11-09T17:40:44.704Z",
+      "sourceName": null
+    },
+    {
+      "id": "3580364d-13fd-497e-a926-3f3701a008ec",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "First day with B Block. Ran the name-tent activity and the 'artifact from home' share. Good energy overall, a few already finishing each other's sentences.",
+      "audioKey": null,
+      "notedAt": "2026-09-01T17:40:00.000Z",
+      "createdAt": "2026-11-09T17:40:14.482Z",
+      "sourceName": null
+    },
+    {
+      "id": "3b0277fc-b5e2-40eb-aabe-2bddef0ba38b",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Tests marked. Marlowe 31/40 — from 4/20 on the first quiz! Wrote 'proud of this' on it and meant it. Ember 39/40, lost one on spelling Euphrates, she'll be furious. Rowan 28, good short answers, ran out of time on the essay.",
+      "audioKey": null,
+      "notedAt": "2026-10-14T22:45:00.000Z",
+      "createdAt": "2026-11-09T17:41:11.520Z",
+      "sourceName": null
+    },
+    {
+      "id": "3eb0b922-4ca5-4844-9a79-76716b8bb17f",
+      "classId": null,
+      "kind": "text",
+      "body": "um cross class thing felix stroud from fifth period and teddy bright water both asked me about the regional history fair need to email ms lindqvist about the entry deadline before friday",
+      "audioKey": null,
+      "notedAt": "2026-09-23T21:50:00.000Z",
+      "createdAt": "2026-11-09T17:40:46.967Z",
+      "sourceName": null
+    },
+    {
+      "id": "3fb1be8d-f22b-4e9e-9bb3-ad5506f143e1",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "quick one um dbq essays back theo brightwater got a b plus best hes done all term he was so happy and imagine hale turned hers in on time it was solid not her best but on time",
+      "audioKey": null,
+      "notedAt": "2026-10-21T18:00:00.000Z",
+      "createdAt": "2026-11-09T17:41:18.779Z",
+      "sourceName": null
+    },
+    {
+      "id": "40888b63-15e6-4d01-98f6-116594465149",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "HAMMURABI TRIAL DAY. Period 3 were brilliant. Em's closing argument got applause. Ro lost graciously (mostly). Avery said her lines! Voice shaking but she did it and sat down grinning.",
+      "audioKey": null,
+      "notedAt": "2026-10-02T17:58:00.000Z",
+      "createdAt": "2026-11-09T17:40:58.096Z",
+      "sourceName": null
+    },
+    {
+      "id": "4214eeec-0aa5-4439-862e-83f895669f0b",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Called Ronan's dad about the up-and-down week. Very supportive — said Ronan does better when he has a job to do. Making him timekeeper for the next group project.",
+      "audioKey": null,
+      "notedAt": "2026-09-17T17:30:00.000Z",
+      "createdAt": "2026-11-09T17:40:38.439Z",
+      "sourceName": null
+    },
+    {
+      "id": "4224744e-7471-4dec-b489-49e5111f114a",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Rowan talked through the entire map intro. Moved him twice. Not rude, just constant. Ro if you're reading this over my shoulder, no.",
+      "audioKey": null,
+      "notedAt": "2026-09-02T18:02:00.000Z",
+      "createdAt": "2026-11-09T17:40:17.241Z",
+      "sourceName": null
+    },
+    {
+      "id": "465e1dc7-9812-431c-ae0a-4d00873a7fc5",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "note for b block uh the group with nola and cassius vey finished their athens model early so theyll present first thursday and also remind ronan pike he still owes me the peer feedback form",
+      "audioKey": null,
+      "notedAt": "2026-10-13T21:40:00.000Z",
+      "createdAt": "2026-11-09T17:41:09.693Z",
+      "sourceName": null
+    },
+    {
+      "id": "49b09008-b27a-4961-80be-b0f2a4647226",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Alex Marsh back to himself — answered the warm-up, no headphones, stayed after to ask about the test. Whatever happened at home with the headset, it worked.",
+      "audioKey": null,
+      "notedAt": "2026-10-06T17:50:00.000Z",
+      "createdAt": "2026-11-09T17:41:02.376Z",
+      "sourceName": null
+    },
+    {
+      "id": "4db60ee0-bae7-49a7-8680-2c98af691532",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "City-state groups started. Nola is running the Athens group without making a show of it — she just wrote a task list on the whiteboard and everybody followed it. Ronan took timekeeper for Sparta very seriously and even called time on himself once.",
+      "audioKey": null,
+      "notedAt": "2026-09-22T18:15:00.000Z",
+      "createdAt": "2026-11-09T17:40:44.820Z",
+      "sourceName": null
+    },
+    {
+      "id": "5195ab63-bb5b-4d30-bf38-d53f86b22c0f",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Source analysis groups day 1. Mr. Delacroix took Marlowe's group and said Marlo actually had the best question about who the law protected. Ember's group finished early, she's running ahead.",
+      "audioKey": null,
+      "notedAt": "2026-09-21T17:50:00.000Z",
+      "createdAt": "2026-11-09T17:40:41.221Z",
+      "sourceName": null
+    },
+    {
+      "id": "5c943754-b18a-4020-a4f4-a4239181eb5a",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Cassius emailed his city-state draft a day early with the subject line 'not perfect, submitting anyway.' Huge. Theo's draft, on the other hand, is one paragraph and a pretty good drawing of a trireme.",
+      "audioKey": null,
+      "notedAt": "2026-09-25T17:40:00.000Z",
+      "createdAt": "2026-11-09T17:40:49.522Z",
+      "sourceName": null
+    },
+    {
+      "id": "5e31582b-7d62-4f51-b929-56227a018998",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Theo talks a mile a minute in discussion — great instincts about why rivers mattered for early settlements — but his exit ticket was two lines with no punctuation. The gap between his talking and his writing is going to be our project this term.",
+      "audioKey": null,
+      "notedAt": "2026-09-02T22:20:00.000Z",
+      "createdAt": "2026-11-09T17:40:18.048Z",
+      "sourceName": null
+    },
+    {
+      "id": "65c16caf-ceeb-4ce0-bf51-eeb1b212429a",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Socratic seminar on 'Was Athens really a democracy?' Ronan was the standout — he brought up that women and enslaved people couldn't vote and then actually let other people respond instead of steamrolling. Nola built on everyone's points and tied it back to the text twice. Imogen sat outside the circle and barely spoke.",
+      "audioKey": null,
+      "notedAt": "2026-10-08T18:20:00.000Z",
+      "createdAt": "2026-11-09T17:41:05.109Z",
+      "sourceName": null
+    },
+    {
+      "id": "67e1851b-6488-4857-befe-89e907ce4791",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "note to self rowan pel was great in the um hammurabi intro argued the eye for an eye thing really well and actually listened and ember held her own too had the page numbers ready the whole time so maybe debate is rowans thing",
+      "audioKey": null,
+      "notedAt": "2026-09-14T18:00:00.000Z",
+      "createdAt": "2026-11-09T17:40:33.162Z",
+      "sourceName": null
+    },
+    {
+      "id": "6d06c36b-f494-45e6-a26b-d09dde7a884a",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Ronan asked to run the DBQ review game. Let him. He ran it better than I do and nobody drifted off task — which, given September, is saying something.",
+      "audioKey": null,
+      "notedAt": "2026-10-19T22:25:00.000Z",
+      "createdAt": "2026-11-09T17:41:17.053Z",
+      "sourceName": null
+    },
+    {
+      "id": "6d1d14a0-173f-4176-94f3-376d34a8f4ef",
+      "classId": null,
+      "kind": "text",
+      "body": "Found Hazel Moreno-Vance's essay in my stack — she's not even in this class. Return it to her today. Marlowe noticed it and handed it over, which, a month ago, would not have happened.",
+      "audioKey": null,
+      "notedAt": "2026-10-07T18:10:00.000Z",
+      "createdAt": "2026-11-09T17:41:04.002Z",
+      "sourceName": null
+    },
+    {
+      "id": "734444df-c40c-436f-81b6-1bbd556600ec",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Phone call with Imogen's dad tonight. He's going to sit down with her Sunday evenings to go over the week's calendar. We agreed on a short weekly email check-in through end of term.",
+      "audioKey": null,
+      "notedAt": "2026-10-08T23:10:00.000Z",
+      "createdAt": "2026-11-09T17:41:06.584Z",
+      "sourceName": null
+    },
+    {
+      "id": "77287272-4012-4cca-a0bf-1c88ff51c90d",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "marlow handed in the timeline late but it's actually good like he put the dates in the right order and found a picture of the stele um still needs captions tell him tomorrow",
+      "audioKey": null,
+      "notedAt": "2026-09-29T22:40:00.000Z",
+      "createdAt": "2026-11-09T17:40:54.629Z",
+      "sourceName": null
+    },
+    {
+      "id": "7ac652b6-8206-4798-9b3d-1cca3fc7a03a",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Marlowe — no summer reading reflection, no notebook, no pencil. Said it's 'somewhere'. Lending him a pencil until further notice.",
+      "audioKey": null,
+      "notedAt": "2026-09-03T22:40:00.000Z",
+      "createdAt": "2026-11-09T17:40:20.516Z",
+      "sourceName": null
+    },
+    {
+      "id": "7c053b40-2cce-4862-8634-212723f2fbba",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Em asked if she could do the extension reading on Sumerian schools. Of course. Juniper asked to borrow it after her — first time she's asked me for anything!",
+      "audioKey": null,
+      "notedAt": "2026-09-17T17:48:00.000Z",
+      "createdAt": "2026-11-09T17:40:38.743Z",
+      "sourceName": null
+    },
+    {
+      "id": "81d2973b-97db-4fe3-b726-f238c5d02336",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Imogen finished the Fertile Crescent map in twenty minutes and asked for the extension sheet. Nola finished too and quietly helped the kid next to her without being asked.",
+      "audioKey": null,
+      "notedAt": "2026-09-03T18:02:00.000Z",
+      "createdAt": "2026-11-09T17:40:20.208Z",
+      "sourceName": null
+    },
+    {
+      "id": "8250d24d-2141-4665-aec4-d0d81fc838a6",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "ok juni pervale presentation on cuneiform she brought clay and everyone made a tablet best hands on thing all term um and ember castle lane said it was better than hers which is high praise from em",
+      "audioKey": null,
+      "notedAt": "2026-10-16T22:30:00.000Z",
+      "createdAt": "2026-11-09T17:41:14.099Z",
+      "sourceName": null
+    },
+    {
+      "id": "86258360-7ab7-401a-bd3a-8550fb420f73",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Study session after school — Em ran a review table without being asked. Marlowe came! Stayed the whole 40 min. Rowan came for the snacks and stayed for the quiz.",
+      "audioKey": null,
+      "notedAt": "2026-10-08T22:35:00.000Z",
+      "createdAt": "2026-11-09T17:41:06.499Z",
+      "sourceName": null
+    },
+    {
+      "id": "870ee2fb-db27-4eb2-95c3-2ded11238221",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Marsh's mum replied — he's been staying up gaming, she's going to take the headset at night. Thanked me for flagging it.",
+      "audioKey": null,
+      "notedAt": "2026-09-29T19:30:00.000Z",
+      "createdAt": "2026-11-09T17:40:52.918Z",
+      "sourceName": null
+    },
+    {
+      "id": "8f4bc56e-3b30-4ea7-aa3e-be29d5f504bd",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "okay so teddy did the talk then write thing on his own today didnt even ask me just recorded himself on the chromebook and typed it up so cool make sure to tell his family",
+      "audioKey": null,
+      "notedAt": "2026-10-01T17:50:00.000Z",
+      "createdAt": "2026-11-09T17:40:56.736Z",
+      "sourceName": null
+    },
+    {
+      "id": "91e069ec-18c5-423b-aad5-6ef6942a6518",
+      "classId": null,
+      "kind": "text",
+      "body": "Teddy Brightwater wandered in looking for his water bottle mid-lesson. Rowan took that as an invitation to do a stand-up routine. Lost five minutes.",
+      "audioKey": null,
+      "notedAt": "2026-09-18T18:05:00.000Z",
+      "createdAt": "2026-11-09T17:40:40.849Z",
+      "sourceName": null
+    },
+    {
+      "id": "9af36d73-328a-4ab2-bc37-711df26b3b8c",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Alex Ruiz's Sparta podcast script came in: eight pages, footnoted, with sound cues in the margins. Wants to record it in the library booth Friday.",
+      "audioKey": null,
+      "notedAt": "2026-10-06T18:05:00.000Z",
+      "createdAt": "2026-11-09T17:41:02.823Z",
+      "sourceName": null
+    },
+    {
+      "id": "a09a6036-f0d7-4f07-9e0a-12856f1a1845",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Emailed Alex Marsh's family about the timeline + the headphones thing. Keep it light.",
+      "audioKey": null,
+      "notedAt": "2026-09-25T22:20:00.000Z",
+      "createdAt": "2026-11-09T17:40:50.752Z",
+      "sourceName": null
+    },
+    {
+      "id": "a6413a3d-f535-4f5a-bd68-147a3eef7203",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Imogen's mom emailed asking for the full reading list so they can get ahead on weekends. Sent her the unit calendar.",
+      "audioKey": null,
+      "notedAt": "2026-09-09T23:05:00.000Z",
+      "createdAt": "2026-11-09T17:40:27.458Z",
+      "sourceName": null
+    },
+    {
+      "id": "a7bfbb23-1e76-4c5a-975f-86f6724ea902",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Alex Marsh quieter than usual this week. Headphones in during work time twice. Not a big deal yet, watch it.",
+      "audioKey": null,
+      "notedAt": "2026-09-16T22:45:00.000Z",
+      "createdAt": "2026-11-09T17:40:37.683Z",
+      "sourceName": null
+    },
+    {
+      "id": "ad4ac4d7-2814-4492-9274-ad02473b24ab",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Presentations day one. Alex Ruiz played his Sparta podcast and the class applauded at the end without being prompted. Cassius blanked on one slide and just kept going instead of asking to start over — noticed that, told him after.",
+      "audioKey": null,
+      "notedAt": "2026-10-15T17:55:00.000Z",
+      "createdAt": "2026-11-09T17:41:11.926Z",
+      "sourceName": null
+    },
+    {
+      "id": "b03b6176-6159-4a98-b7ef-16e8ca55991b",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "ok so quick one alex was really into the ziggurat video today asked like four questions about how they moved the bricks um follow up with that book from the library",
+      "audioKey": null,
+      "notedAt": "2026-09-04T17:38:00.000Z",
+      "createdAt": "2026-11-09T17:40:22.020Z",
+      "sourceName": null
+    },
+    {
+      "id": "b17ff5b7-964f-452d-83f0-e903e93d9968",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Alex asked whether the test covers the trial stuff. Yes. Clarify for everyone Monday.",
+      "audioKey": null,
+      "notedAt": "2026-10-09T17:45:00.000Z",
+      "createdAt": "2026-11-09T17:41:07.018Z",
+      "sourceName": null
+    },
+    {
+      "id": "b5f9f477-7fd5-4563-99d8-66604b1e9a02",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Debate prep for Hammurabi trial. Ro wants to be prosecution lead. Em wants it too. Gave Ro prosecution and Em defence — she was annoyed for about a minute then started planning how to destroy him.",
+      "audioKey": null,
+      "notedAt": "2026-09-28T17:40:00.000Z",
+      "createdAt": "2026-11-09T17:40:51.371Z",
+      "sourceName": null
+    },
+    {
+      "id": "b6e9004d-bb78-4630-992e-78eac09a350d",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Imogen turned in the missing worksheet, two days after the date we agreed on, but it's in. Ronan backslid a bit — two reminders for side conversations during the Solon reading, and he knew it.",
+      "audioKey": null,
+      "notedAt": "2026-10-02T18:30:00.000Z",
+      "createdAt": "2026-11-09T17:40:59.043Z",
+      "sourceName": null
+    },
+    {
+      "id": "bce2f3c7-e624-4f35-a7cb-b975cdbc06b6",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Quiz 1 — Sable full marks, again quietly. Marlowe 4/20, left the back page blank, said he didn't see it.",
+      "audioKey": null,
+      "notedAt": "2026-09-11T17:55:00.000Z",
+      "createdAt": "2026-11-09T17:40:31.397Z",
+      "sourceName": null
+    },
+    {
+      "id": "bf53054d-d5d1-4734-b77b-12036c663c55",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Counselor asked who'd be a good buddy for next week's new transfer. Suggested the B Block Alex — a month ago he was the one getting lost. He said yes right away.",
+      "audioKey": null,
+      "notedAt": "2026-09-24T18:00:00.000Z",
+      "createdAt": "2026-11-09T17:40:48.649Z",
+      "sourceName": null
+    },
+    {
+      "id": "c064d0f4-8b2a-4cb9-b11c-ed4605c72b2c",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Em's paragraph on why rivers mattered was the best thing I read today. Clear claim, two pieces of evidence, didn't need prompting. Ask if she'd share it as a model.",
+      "audioKey": null,
+      "notedAt": "2026-09-03T17:50:00.000Z",
+      "createdAt": "2026-11-09T17:40:18.786Z",
+      "sourceName": null
+    },
+    {
+      "id": "c4853564-ab90-4271-8085-0f1451c327fc",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Sat with Theo during work time and had him say his Hammurabi argument out loud while I typed it. Then turned the laptop around: that's a paragraph. He looked genuinely surprised. Going to try a talk-then-write routine with him.",
+      "audioKey": null,
+      "notedAt": "2026-09-11T21:30:00.000Z",
+      "createdAt": "2026-11-09T17:40:31.675Z",
+      "sourceName": null
+    },
+    {
+      "id": "c6f19a59-4c16-4347-8be8-a32476d583f6",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Alex left a blue water bottle with a fox sticker under the back table. It's in my top drawer.",
+      "audioKey": null,
+      "notedAt": "2026-09-17T20:40:00.000Z",
+      "createdAt": "2026-11-09T17:40:38.706Z",
+      "sourceName": null
+    },
+    {
+      "id": "dc1cf2fe-2f47-4ceb-8b14-98686d09ca3b",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Alex asked if a Sparta podcast could count as the presentation option. Yes, as long as there's a written script.",
+      "audioKey": null,
+      "notedAt": "2026-10-01T21:20:00.000Z",
+      "createdAt": "2026-11-09T17:40:57.935Z",
+      "sourceName": null
+    },
+    {
+      "id": "e269308d-67c4-4ab8-b065-f6c1ffbfcc67",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Ronan Pike spent most of map work narrating a fake nature documentary to his table. Funny, honestly, but nobody at that table finished labeling the Tigris and Euphrates. Moving him up front tomorrow.",
+      "audioKey": null,
+      "notedAt": "2026-09-03T18:00:00.000Z",
+      "createdAt": "2026-11-09T17:40:19.987Z",
+      "sourceName": null
+    },
+    {
+      "id": "ea0d660b-3c72-49e1-b7d6-de632c5d14c7",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Imogen is missing the Greek geography worksheet and hasn't made up last Friday's reading quiz. Two in a row. Flagged in the gradebook; will check in this week.",
+      "audioKey": null,
+      "notedAt": "2026-09-21T22:10:00.000Z",
+      "createdAt": "2026-11-09T17:40:43.232Z",
+      "sourceName": null
+    },
+    {
+      "id": "ea32aeaa-4635-4e91-af55-b0a343a9b171",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Hammurabi discussion. Ronan was much better at the front, actually took notes. Teddy volunteered to read the law about the builder whose house collapses and did voices for it. Cassius asked whether 'an eye for an eye' was fair if the eyes belonged to people of different classes — great question, it's on the board for tomorrow.",
+      "audioKey": null,
+      "notedAt": "2026-09-08T22:30:00.000Z",
+      "createdAt": "2026-11-09T17:40:25.073Z",
+      "sourceName": null
+    },
+    {
+      "id": "ee7aa98e-c050-4d78-a0c4-89b40600bced",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "B Block crushed the Mesopotamia test, class average 86. Rewarded them with five minutes of the ancient-memes slideshow.",
+      "audioKey": null,
+      "notedAt": "2026-09-18T18:00:00.000Z",
+      "createdAt": "2026-11-09T17:40:40.493Z",
+      "sourceName": null
+    },
+    {
+      "id": "f1e7bc94-15b3-4bc3-a250-773f30c8c80f",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Mock trial day. Alex Ruiz played the judge and was surprisingly commanding — first time I've heard him project. Imogen was defense counsel but clearly hadn't prepped, which isn't like her; she improvised okay but leaned on last week's notes.",
+      "audioKey": null,
+      "notedAt": "2026-09-15T18:05:00.000Z",
+      "createdAt": "2026-11-09T17:40:35.713Z",
+      "sourceName": null
+    },
+    {
+      "id": "f5f349be-158e-431b-ba6a-0d6a401b88a9",
+      "classId": null,
+      "kind": "text",
+      "body": "Ro from third period left her sketchbook in here at lunch; Linden found it and brought it straight to my desk without flipping through it. Thoughtful.",
+      "audioKey": null,
+      "notedAt": "2026-10-08T22:25:00.000Z",
+      "createdAt": "2026-11-09T17:41:05.795Z",
+      "sourceName": null
+    },
+    {
+      "id": "f8b05c66-63f3-4681-9194-3a3e1beefb10",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Trial run-through. Rowan objected to literally everything, but in role, so I'll allow it. Sable as judge is terrifying, nobody talks over her.",
+      "audioKey": null,
+      "notedAt": "2026-10-01T17:46:00.000Z",
+      "createdAt": "2026-11-09T17:40:56.536Z",
+      "sourceName": null
+    },
+    {
+      "id": "f8f3ca8b-5be2-49f2-a6d9-946c3da2a865",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "kind": "text",
+      "body": "Ran into Mr. Delacroix (learning support) at copier, he can come into third period Thursdays from next week. Will use him for the source-analysis groups.",
+      "audioKey": null,
+      "notedAt": "2026-09-16T20:10:00.000Z",
+      "createdAt": "2026-11-09T17:40:36.075Z",
+      "sourceName": null
+    },
+    {
+      "id": "fc74020b-7b24-44c7-ae28-1cc9dc4b2b40",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Imogen didn't turn in the Socratic seminar prep sheet. That's the third missing piece this month. Emailing home tonight.",
+      "audioKey": null,
+      "notedAt": "2026-10-07T17:50:00.000Z",
+      "createdAt": "2026-11-09T17:41:03.659Z",
+      "sourceName": null
+    },
+    {
+      "id": "fea252f4-9fd7-4ebd-9bd5-3a5fde1a4271",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Alex Ruiz is new to the school this year, transferred in from out of state. Barely spoke during the artifact share but wrote a really thoughtful paragraph about his grandfather's compass. Check in with him privately tomorrow.",
+      "audioKey": null,
+      "notedAt": "2026-09-02T18:05:00.000Z",
+      "createdAt": "2026-11-09T17:40:17.288Z",
+      "sourceName": null
+    },
+    {
+      "id": "ff62dd70-baf2-4d20-95e3-417da2b6fd38",
+      "classId": "11111111-1111-4111-8111-111111112222",
+      "kind": "text",
+      "body": "Theo's short answer on the unit test: three full sentences, a claim, and actual evidence. Messy, but it's there. Talk-then-write is working.",
+      "audioKey": null,
+      "notedAt": "2026-09-21T17:55:00.000Z",
+      "createdAt": "2026-11-09T17:40:41.657Z",
+      "sourceName": null
+    }
+  ],
+  "tags": [
+    {
+      "noteId": "028d14f8-d72a-45aa-80dd-adb2810edcf6",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "quotes": [
+        "Marlowe had the folder! And the homework was in it! Half done but IN IT. Gave him a sticker which he pretended to hate."
+      ]
+    },
+    {
+      "noteId": "0775b788-30a2-47eb-81cd-1552f6593f7b",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "quotes": [
+        "Theo had an intro with a real thesis in the first ten minutes, asked me to check it, then said 'wait, don't — I'll check it against the rubric myself."
+      ]
+    },
+    {
+      "noteId": "13df4211-2eb8-4b68-884f-b06e098c96a3",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "quotes": [
+        "Rowan much better in new seat.",
+        "Ember next to him seems to help, she just ignores him until he gives up."
+      ]
+    },
+    {
+      "noteId": "13df4211-2eb8-4b68-884f-b06e098c96a3",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "quotes": [
+        "Ember next to him seems to help, she just ignores him until he gives up."
+      ]
+    },
+    {
+      "noteId": "13df4211-2eb8-4b68-884f-b06e098c96a3",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "quotes": [
+        "Alex Marsh finished the map labels early and helped the table."
+      ]
+    },
+    {
+      "noteId": "1510cc63-ba76-4c40-936d-0dbf884dd8a0",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "quotes": [
+        "ronin had a rough one today kept getting up to sharpen a pencil that was already sharp like four times um gave him the yellow card.",
+        "if it keeps up i'll call home"
+      ]
+    },
+    {
+      "noteId": "1511fbb3-fe25-4276-8434-81e2fcc77ad1",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "quotes": [
+        "Missing: Marlowe, Alex Marsh.",
+        "Marlowe's excuse was creative at least."
+      ]
+    },
+    {
+      "noteId": "1511fbb3-fe25-4276-8434-81e2fcc77ad1",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "quotes": [
+        "Missing: Marlowe, Alex Marsh.",
+        "Alex just shrugged."
+      ]
+    },
+    {
+      "noteId": "1a27f57a-d1f9-4e49-a1d5-9159987621ec",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "quotes": [
+        "Lunch check-in with Imogen. She's overcommitted with orchestra and the fall play and says she just lost track. Plan: missing worksheet by Wednesday, quiz makeup during Friday catch-up."
+      ]
+    },
+    {
+      "noteId": "1a403d96-30c0-4d57-8d39-f9aa79a39b51",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "quotes": [
+        "Rowan's presentation on Hammurabi's punishments — funny, accurate, kept to time.",
+        "The debate stuff paid off.",
+        "Nominating him for the humanities showcase with Em."
+      ]
+    },
+    {
+      "noteId": "1a403d96-30c0-4d57-8d39-f9aa79a39b51",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "quotes": [
+        "Nominating him for the humanities showcase with Em."
+      ]
+    },
+    {
+      "noteId": "1dcea7c7-24cd-4f0d-82b1-5b23174177d4",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "quotes": [
+        "Print Alex a copy of the campus map and mark the humanities wing — he said he still gets turned around between buildings."
+      ]
+    },
+    {
+      "noteId": "27ab328e-016b-46c8-af8c-37d2abae5c6b",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "quotes": [
+        "Imogen came by before class to show me her planner, every assignment written in for the next two weeks.",
+        "Seminar sheet came in too, late but complete."
+      ]
+    },
+    {
+      "noteId": "2b0e5b32-2adf-4156-85db-8d9b97ff6e3a",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "quotes": [
+        "Marlo's mum emailed — he's been doing homework but leaving it in the car.",
+        "Suggested a folder that lives in his bag. She's on board."
+      ]
+    },
+    {
+      "noteId": "34003da7-5371-4242-a44b-4b7449f6915f",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "quotes": [
+        "Rowan sent out for throwing a rubber at Alex.",
+        "Came back and apologised without being asked, which is new."
+      ]
+    },
+    {
+      "noteId": "3b0277fc-b5e2-40eb-aabe-2bddef0ba38b",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "quotes": [
+        "Rowan 28, good short answers, ran out of time on the essay."
+      ]
+    },
+    {
+      "noteId": "3b0277fc-b5e2-40eb-aabe-2bddef0ba38b",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "quotes": [
+        "Marlowe 31/40 — from 4/20 on the first quiz! Wrote 'proud of this' on it and meant it."
+      ]
+    },
+    {
+      "noteId": "3b0277fc-b5e2-40eb-aabe-2bddef0ba38b",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "quotes": [
+        "Ember 39/40, lost one on spelling Euphrates, she'll be furious."
+      ]
+    },
+    {
+      "noteId": "3eb0b922-4ca5-4844-9a79-76716b8bb17f",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "quotes": [
+        "felix stroud from fifth period and teddy bright water both asked me about the regional history fair"
+      ]
+    },
+    {
+      "noteId": "3fb1be8d-f22b-4e9e-9bb3-ad5506f143e1",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "quotes": [
+        "theo brightwater got a b plus best hes done all term he was so happy"
+      ]
+    },
+    {
+      "noteId": "3fb1be8d-f22b-4e9e-9bb3-ad5506f143e1",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "quotes": [
+        "imagine hale turned hers in on time it was solid not her best but on time"
+      ]
+    },
+    {
+      "noteId": "40888b63-15e6-4d01-98f6-116594465149",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "quotes": [
+        "Ro lost graciously (mostly)."
+      ]
+    },
+    {
+      "noteId": "40888b63-15e6-4d01-98f6-116594465149",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "quotes": [
+        "Em's closing argument got applause."
+      ]
+    },
+    {
+      "noteId": "4214eeec-0aa5-4439-862e-83f895669f0b",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "quotes": [
+        "Called Ronan's dad about the up-and-down week.",
+        "Very supportive — said Ronan does better when he has a job to do.",
+        "Making him timekeeper for the next group project."
+      ]
+    },
+    {
+      "noteId": "4224744e-7471-4dec-b489-49e5111f114a",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "quotes": [
+        "Rowan talked through the entire map intro.",
+        "Moved him twice.",
+        "Not rude, just constant.",
+        "Ro if you're reading this over my shoulder, no."
+      ]
+    },
+    {
+      "noteId": "465e1dc7-9812-431c-ae0a-4d00873a7fc5",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "quotes": [
+        "also remind ronan pike he still owes me the peer feedback form"
+      ]
+    },
+    {
+      "noteId": "49b09008-b27a-4961-80be-b0f2a4647226",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "quotes": [
+        "Alex Marsh back to himself — answered the warm-up, no headphones, stayed after to ask about the test.",
+        "Whatever happened at home with the headset, it worked."
+      ]
+    },
+    {
+      "noteId": "4db60ee0-bae7-49a7-8680-2c98af691532",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "quotes": [
+        "Ronan took timekeeper for Sparta very seriously and even called time on himself once."
+      ]
+    },
+    {
+      "noteId": "5195ab63-bb5b-4d30-bf38-d53f86b22c0f",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "quotes": [
+        "Mr. Delacroix took Marlowe's group and said Marlo actually had the best question about who the law protected."
+      ]
+    },
+    {
+      "noteId": "5195ab63-bb5b-4d30-bf38-d53f86b22c0f",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "quotes": [
+        "Ember's group finished early, she's running ahead."
+      ]
+    },
+    {
+      "noteId": "5c943754-b18a-4020-a4f4-a4239181eb5a",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "quotes": [
+        "Theo's draft, on the other hand, is one paragraph and a pretty good drawing of a trireme."
+      ]
+    },
+    {
+      "noteId": "5e31582b-7d62-4f51-b929-56227a018998",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "quotes": [
+        "Theo talks a mile a minute in discussion — great instincts about why rivers mattered for early settlements — but his exit ticket was two lines with no punctuation.",
+        "The gap between his talking and his writing is going to be our project this term."
+      ]
+    },
+    {
+      "noteId": "65c16caf-ceeb-4ce0-bf51-eeb1b212429a",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "quotes": [
+        "Ronan was the standout — he brought up that women and enslaved people couldn't vote and then actually let other people respond instead of steamrolling."
+      ]
+    },
+    {
+      "noteId": "65c16caf-ceeb-4ce0-bf51-eeb1b212429a",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "quotes": [
+        "Imogen sat outside the circle and barely spoke."
+      ]
+    },
+    {
+      "noteId": "67e1851b-6488-4857-befe-89e907ce4791",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "quotes": [
+        "rowan pel was great in the um hammurabi intro argued the eye for an eye thing really well and actually listened",
+        "so maybe debate is rowans thing"
+      ]
+    },
+    {
+      "noteId": "67e1851b-6488-4857-befe-89e907ce4791",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "quotes": [
+        "ember held her own too had the page numbers ready the whole time"
+      ]
+    },
+    {
+      "noteId": "6d06c36b-f494-45e6-a26b-d09dde7a884a",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "quotes": [
+        "Ronan asked to run the DBQ review game. Let him. He ran it better than I do and nobody drifted off task — which, given September, is saying something."
+      ]
+    },
+    {
+      "noteId": "6d1d14a0-173f-4176-94f3-376d34a8f4ef",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "quotes": [
+        "Marlowe noticed it and handed it over, which, a month ago, would not have happened."
+      ]
+    },
+    {
+      "noteId": "734444df-c40c-436f-81b6-1bbd556600ec",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "quotes": [
+        "Phone call with Imogen's dad tonight. He's going to sit down with her Sunday evenings to go over the week's calendar. We agreed on a short weekly email check-in through end of term."
+      ]
+    },
+    {
+      "noteId": "77287272-4012-4cca-a0bf-1c88ff51c90d",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "quotes": [
+        "marlow handed in the timeline late but it's actually good like he put the dates in the right order and found a picture of the stele um still needs captions tell him tomorrow"
+      ]
+    },
+    {
+      "noteId": "7ac652b6-8206-4798-9b3d-1cca3fc7a03a",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "quotes": [
+        "Marlowe — no summer reading reflection, no notebook, no pencil. Said it's 'somewhere'. Lending him a pencil until further notice."
+      ]
+    },
+    {
+      "noteId": "7c053b40-2cce-4862-8634-212723f2fbba",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "quotes": [
+        "Em asked if she could do the extension reading on Sumerian schools."
+      ]
+    },
+    {
+      "noteId": "81d2973b-97db-4fe3-b726-f238c5d02336",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "quotes": [
+        "Imogen finished the Fertile Crescent map in twenty minutes and asked for the extension sheet."
+      ]
+    },
+    {
+      "noteId": "8250d24d-2141-4665-aec4-d0d81fc838a6",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "quotes": [
+        "um and ember castle lane said it was better than hers which is high praise from em"
+      ]
+    },
+    {
+      "noteId": "86258360-7ab7-401a-bd3a-8550fb420f73",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "quotes": [
+        "Rowan came for the snacks and stayed for the quiz."
+      ]
+    },
+    {
+      "noteId": "86258360-7ab7-401a-bd3a-8550fb420f73",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "quotes": [
+        "Marlowe came!",
+        "Stayed the whole 40 min."
+      ]
+    },
+    {
+      "noteId": "86258360-7ab7-401a-bd3a-8550fb420f73",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "quotes": [
+        "Em ran a review table without being asked."
+      ]
+    },
+    {
+      "noteId": "870ee2fb-db27-4eb2-95c3-2ded11238221",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "quotes": [
+        "Marsh's mum replied — he's been staying up gaming, she's going to take the headset at night."
+      ]
+    },
+    {
+      "noteId": "8f4bc56e-3b30-4ea7-aa3e-be29d5f504bd",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "quotes": [
+        "okay so teddy did the talk then write thing on his own today didnt even ask me just recorded himself on the chromebook and typed it up so cool make sure to tell his family"
+      ]
+    },
+    {
+      "noteId": "91e069ec-18c5-423b-aad5-6ef6942a6518",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "quotes": [
+        "Rowan took that as an invitation to do a stand-up routine."
+      ]
+    },
+    {
+      "noteId": "91e069ec-18c5-423b-aad5-6ef6942a6518",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "quotes": [
+        "Teddy Brightwater wandered in looking for his water bottle mid-lesson."
+      ]
+    },
+    {
+      "noteId": "9af36d73-328a-4ab2-bc37-711df26b3b8c",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "quotes": [
+        "Alex Ruiz's Sparta podcast script came in: eight pages, footnoted, with sound cues in the margins.",
+        "Wants to record it in the library booth Friday."
+      ]
+    },
+    {
+      "noteId": "a09a6036-f0d7-4f07-9e0a-12856f1a1845",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "quotes": [
+        "Emailed Alex Marsh's family about the timeline + the headphones thing. Keep it light."
+      ]
+    },
+    {
+      "noteId": "a6413a3d-f535-4f5a-bd68-147a3eef7203",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "quotes": [
+        "Imogen's mom emailed asking for the full reading list so they can get ahead on weekends.",
+        "Sent her the unit calendar."
+      ]
+    },
+    {
+      "noteId": "a7bfbb23-1e76-4c5a-975f-86f6724ea902",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "quotes": [
+        "Alex Marsh quieter than usual this week.",
+        "Headphones in during work time twice.",
+        "Not a big deal yet, watch it."
+      ]
+    },
+    {
+      "noteId": "ad4ac4d7-2814-4492-9274-ad02473b24ab",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "quotes": [
+        "Alex Ruiz played his Sparta podcast and the class applauded at the end without being prompted."
+      ]
+    },
+    {
+      "noteId": "b03b6176-6159-4a98-b7ef-16e8ca55991b",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "quotes": [
+        "alex was really into the ziggurat video today asked like four questions about how they moved the bricks um follow up with that book from the library"
+      ]
+    },
+    {
+      "noteId": "b17ff5b7-964f-452d-83f0-e903e93d9968",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "quotes": [
+        "Alex asked whether the test covers the trial stuff. Yes."
+      ]
+    },
+    {
+      "noteId": "b5f9f477-7fd5-4563-99d8-66604b1e9a02",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "quotes": [
+        "Ro wants to be prosecution lead.",
+        "Gave Ro prosecution and Em defence — she was annoyed for about a minute then started planning how to destroy him."
+      ]
+    },
+    {
+      "noteId": "b5f9f477-7fd5-4563-99d8-66604b1e9a02",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "quotes": [
+        "Em wants it too.",
+        "Gave Ro prosecution and Em defence — she was annoyed for about a minute then started planning how to destroy him."
+      ]
+    },
+    {
+      "noteId": "b6e9004d-bb78-4630-992e-78eac09a350d",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "quotes": [
+        "Ronan backslid a bit — two reminders for side conversations during the Solon reading, and he knew it."
+      ]
+    },
+    {
+      "noteId": "b6e9004d-bb78-4630-992e-78eac09a350d",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "quotes": [
+        "Imogen turned in the missing worksheet, two days after the date we agreed on, but it's in."
+      ]
+    },
+    {
+      "noteId": "bce2f3c7-e624-4f35-a7cb-b975cdbc06b6",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "quotes": [
+        "Marlowe 4/20, left the back page blank, said he didn't see it."
+      ]
+    },
+    {
+      "noteId": "bf53054d-d5d1-4734-b77b-12036c663c55",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "quotes": [
+        "Suggested the B Block Alex — a month ago he was the one getting lost.",
+        "He said yes right away."
+      ]
+    },
+    {
+      "noteId": "c064d0f4-8b2a-4cb9-b11c-ed4605c72b2c",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "quotes": [
+        "Em's paragraph on why rivers mattered was the best thing I read today. Clear claim, two pieces of evidence, didn't need prompting. Ask if she'd share it as a model."
+      ]
+    },
+    {
+      "noteId": "c4853564-ab90-4271-8085-0f1451c327fc",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "quotes": [
+        "Sat with Theo during work time and had him say his Hammurabi argument out loud while I typed it.",
+        "Then turned the laptop around: that's a paragraph.",
+        "He looked genuinely surprised.",
+        "Going to try a talk-then-write routine with him."
+      ]
+    },
+    {
+      "noteId": "c6f19a59-4c16-4347-8be8-a32476d583f6",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "quotes": [
+        "Alex left a blue water bottle with a fox sticker under the back table."
+      ]
+    },
+    {
+      "noteId": "dc1cf2fe-2f47-4ceb-8b14-98686d09ca3b",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "quotes": [
+        "Alex asked if a Sparta podcast could count as the presentation option. Yes, as long as there's a written script."
+      ]
+    },
+    {
+      "noteId": "e269308d-67c4-4ab8-b065-f6c1ffbfcc67",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "quotes": [
+        "Ronan Pike spent most of map work narrating a fake nature documentary to his table.",
+        "Moving him up front tomorrow."
+      ]
+    },
+    {
+      "noteId": "ea0d660b-3c72-49e1-b7d6-de632c5d14c7",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "quotes": [
+        "Imogen is missing the Greek geography worksheet and hasn't made up last Friday's reading quiz.",
+        "Two in a row.",
+        "Flagged in the gradebook; will check in this week."
+      ]
+    },
+    {
+      "noteId": "ea32aeaa-4635-4e91-af55-b0a343a9b171",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "quotes": [
+        "Ronan was much better at the front, actually took notes."
+      ]
+    },
+    {
+      "noteId": "ea32aeaa-4635-4e91-af55-b0a343a9b171",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "quotes": [
+        "Teddy volunteered to read the law about the builder whose house collapses and did voices for it."
+      ]
+    },
+    {
+      "noteId": "f1e7bc94-15b3-4bc3-a250-773f30c8c80f",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "quotes": [
+        "Alex Ruiz played the judge and was surprisingly commanding — first time I've heard him project."
+      ]
+    },
+    {
+      "noteId": "f1e7bc94-15b3-4bc3-a250-773f30c8c80f",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "quotes": [
+        "Imogen was defense counsel but clearly hadn't prepped, which isn't like her; she improvised okay but leaned on last week's notes."
+      ]
+    },
+    {
+      "noteId": "f5f349be-158e-431b-ba6a-0d6a401b88a9",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "quotes": [
+        "Ro from third period left her sketchbook in here at lunch;"
+      ]
+    },
+    {
+      "noteId": "f8b05c66-63f3-4681-9194-3a3e1beefb10",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "quotes": [
+        "Rowan objected to literally everything, but in role, so I'll allow it."
+      ]
+    },
+    {
+      "noteId": "fc74020b-7b24-44c7-ae28-1cc9dc4b2b40",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "quotes": [
+        "Imogen didn't turn in the Socratic seminar prep sheet.",
+        "That's the third missing piece this month.",
+        "Emailing home tonight."
+      ]
+    },
+    {
+      "noteId": "fea252f4-9fd7-4ebd-9bd5-3a5fde1a4271",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "quotes": [
+        "Alex Ruiz is new to the school this year, transferred in from out of state.",
+        "Barely spoke during the artifact share but wrote a really thoughtful paragraph about his grandfather's compass.",
+        "Check in with him privately tomorrow."
+      ]
+    },
+    {
+      "noteId": "ff62dd70-baf2-4d20-95e3-417da2b6fd38",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "quotes": [
+        "Theo's short answer on the unit test: three full sentences, a claim, and actual evidence. Messy, but it's there."
+      ]
+    }
+  ],
+  "mentions": [],
+  "materials": [
+    {
+      "id": "9fad75d4-0cd8-4595-a047-4c1558f129d4",
+      "classId": "11111111-1111-4111-8111-111111111111",
+      "name": "period-3-syllabus.md",
+      "text": "# Year 7 Humanities: course syllabus, 2026–27\n\nOakfield Middle School (fictional). Period 3 Humanities. Teacher: Ms J. Harrow (fictional).\nEvery name, date and policy in this document is invented for the Throughline demo.\n\n## What this course is for\n\nBy the end of the year, students should be able to:\n\n- Explain how geography shaped where and how the first civilisations grew.\n- Read a primary source and say who made it, when, and what it was for.\n- Build an argument from evidence, in discussion and in writing, and change their mind when the evidence says so.\n- Write a clear paragraph with a claim, two pieces of evidence, and a sentence that ties them together.\n- Work in a group so that everyone in it gets to speak.\n\n## How the grade is calculated\n\n| Category | Weight |\n|---|---|\n| Homework | 20% |\n| Quizzes | 20% |\n| Projects | 30% |\n| Tests | 30% |\n\nHomework is marked for completion and effort. Quizzes are short, every two weeks or so, and the lowest quiz score is dropped at the end of each term. Projects are the big pieces (the timeline, the city-state podcast, the DBQ essay) and come with a rubric. Tests close each unit.\n\n## Units\n\n1. The Fertile Crescent and the first cities (September to mid-October)\n2. Hammurabi, law and fairness (mid-October to November)\n3. Egypt and the Nile (December to January)\n4. Greece: city-states, democracy and the Persian wars (February to March)\n5. Rome from republic to empire (April to May)\n6. Choice project and exhibition (June)\n\n## Policies\n\n- Late homework is accepted for full credit up to one week late; after that it is half credit until the end of the term.\n- Any quiz can be retaken once within two weeks for the higher score.\n- A missed test is made up during the next lunch slot; a missed project deadline is discussed with the student first.\n- Phones stay in bags during class. First reminder is free; the second means the phone goes on the desk at the front.\n- Work handed in must be the student's own; a source used must be named.\n- Families can expect an email in the first week of each unit with what we are reading and when the test is.\n\nQuestions are welcome any time: catch me before school or email through the office.",
+      "summary": {
+        "description": "Year 7 Humanities course syllabus for 2026–27 at Oakfield Middle School, taught by Ms J. Harrow.",
+        "goals": [
+          "Explain how geography shaped where and how the first civilisations grew.",
+          "Read a primary source and say who made it, when, and what it was for.",
+          "Build an argument from evidence, in discussion and in writing, and change their mind when the evidence says so.",
+          "Write a clear paragraph with a claim, two pieces of evidence, and a sentence that ties them together.",
+          "Work in a group so that everyone in it gets to speak."
+        ],
+        "grading": [
+          {
+            "category": "Homework",
+            "weight": 20
+          },
+          {
+            "category": "Quizzes",
+            "weight": 20
+          },
+          {
+            "category": "Projects",
+            "weight": 30
+          },
+          {
+            "category": "Tests",
+            "weight": 30
+          }
+        ],
+        "units": [
+          {
+            "name": "The Fertile Crescent and the first cities",
+            "when": "September to mid-October"
+          },
+          {
+            "name": "Hammurabi, law and fairness",
+            "when": "mid-October to November"
+          },
+          {
+            "name": "Egypt and the Nile",
+            "when": "December to January"
+          },
+          {
+            "name": "Greece: city-states, democracy and the Persian wars",
+            "when": "February to March"
+          },
+          {
+            "name": "Rome from republic to empire",
+            "when": "April to May"
+          },
+          {
+            "name": "Choice project and exhibition",
+            "when": "June"
+          }
+        ],
+        "policies": [
+          "Late homework is accepted for full credit up to one week late; after that it is half credit until the end of the term.",
+          "Any quiz can be retaken once within two weeks for the higher score.",
+          "A missed test is made up during the next lunch slot; a missed project deadline is discussed with the student first.",
+          "Phones stay in bags during class. First reminder is free; the second means the phone goes on the desk at the front.",
+          "Work handed in must be the student's own; a source used must be named.",
+          "Families can expect an email in the first week of each unit with what we are reading and when the test is."
+        ]
+      },
+      "createdAt": "2026-11-09T17:52:42.259Z"
+    }
+  ],
+  "grades": [
+    {
+      "id": "02bb651f-6a72-4c05-a3f7-5e752649aa3d",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "assignment": "City-State Presentation",
+      "category": "Projects",
+      "score": 43,
+      "maxScore": 50,
+      "dueDate": "2026-10-15",
+      "position": 8
+    },
+    {
+      "id": "04c165d9-c22b-4cbe-91b1-e0698de0d43f",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "assignment": "DBQ Essay",
+      "category": "Tests",
+      "score": 34,
+      "maxScore": 40,
+      "dueDate": "2026-10-21",
+      "position": 9
+    },
+    {
+      "id": "06aebd30-31bd-4eaf-b491-2d335b34b40f",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "assignment": "City-State Presentation",
+      "category": "Projects",
+      "score": 42,
+      "maxScore": 50,
+      "dueDate": "2026-10-15",
+      "position": 8
+    },
+    {
+      "id": "07092ad0-ed60-49dc-95c1-28022e7d5cd5",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "assignment": "City-State Draft",
+      "category": "Homework",
+      "score": null,
+      "maxScore": 10,
+      "dueDate": "2026-09-25",
+      "position": 6
+    },
+    {
+      "id": "17d11bfc-acd8-4775-94d2-9e8301614c36",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "assignment": "Code of Laws",
+      "category": "Projects",
+      "score": 20,
+      "maxScore": 30,
+      "dueDate": "2026-09-16",
+      "position": 3
+    },
+    {
+      "id": "1bfce739-3c5b-4620-ba45-7c5b430f6e72",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "assignment": "Quiz 1: First Cities",
+      "category": "Quizzes",
+      "score": 12,
+      "maxScore": 20,
+      "dueDate": "2026-09-11",
+      "position": 3
+    },
+    {
+      "id": "1d2d3357-06ce-46f5-9c33-4e795aa7965a",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "assignment": "DBQ Essay",
+      "category": "Tests",
+      "score": 35,
+      "maxScore": 40,
+      "dueDate": "2026-10-21",
+      "position": 9
+    },
+    {
+      "id": "1e346e58-96c6-4b9a-bf8c-61804c388fc3",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "assignment": "Fertile Crescent Map",
+      "category": "Projects",
+      "score": 16,
+      "maxScore": 20,
+      "dueDate": "2026-09-10",
+      "position": 2
+    },
+    {
+      "id": "1eec11d3-e21b-4d69-a070-baf978f9ee51",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "assignment": "Quiz 2: Hammurabi's Code",
+      "category": "Quizzes",
+      "score": 12,
+      "maxScore": 20,
+      "dueDate": "2026-09-29",
+      "position": 7
+    },
+    {
+      "id": "1f58a95b-7308-4239-b88c-ff2b87022120",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "assignment": "Reading Quiz: Hammurabi",
+      "category": "Quizzes",
+      "score": 13,
+      "maxScore": 20,
+      "dueDate": "2026-09-11",
+      "position": 2
+    },
+    {
+      "id": "1f5b2df0-0de8-4096-8894-ad3fecdbe7cd",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "assignment": "HW: Why Rivers Mattered",
+      "category": "Homework",
+      "score": 7,
+      "maxScore": 10,
+      "dueDate": "2026-09-08",
+      "position": 1
+    },
+    {
+      "id": "28c08ef2-6ab9-4be7-9cdf-2ac7a8cc1603",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "assignment": "Unit 1 Test",
+      "category": "Tests",
+      "score": 31,
+      "maxScore": 40,
+      "dueDate": "2026-10-12",
+      "position": 9
+    },
+    {
+      "id": "2e5a617a-df81-435f-9613-cc7c197912b9",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "assignment": "Quiz 1: First Cities",
+      "category": "Quizzes",
+      "score": 19,
+      "maxScore": 20,
+      "dueDate": "2026-09-11",
+      "position": 3
+    },
+    {
+      "id": "34027b7b-9506-4b93-8897-35a18db8bdca",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "assignment": "Hammurabi Trial",
+      "category": "Projects",
+      "score": 26,
+      "maxScore": 30,
+      "dueDate": "2026-10-02",
+      "position": 8
+    },
+    {
+      "id": "350e632f-4825-4836-9a0f-fcff151b5786",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "assignment": "Quiz 3: Sumerian Schools",
+      "category": "Quizzes",
+      "score": 19,
+      "maxScore": 20,
+      "dueDate": "2026-10-16",
+      "position": 10
+    },
+    {
+      "id": "3ba68469-d02e-45d5-9814-705dd2d37ee9",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "assignment": "City-State Presentation",
+      "category": "Projects",
+      "score": 44,
+      "maxScore": 50,
+      "dueDate": "2026-10-15",
+      "position": 8
+    },
+    {
+      "id": "40c37240-4e4b-4c78-9239-1ebf7b3af676",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "assignment": "Source Analysis Worksheet",
+      "category": "Homework",
+      "score": 7,
+      "maxScore": 10,
+      "dueDate": "2026-09-22",
+      "position": 5
+    },
+    {
+      "id": "44ce54a8-21af-4eff-b524-3661f642a7d0",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "assignment": "HW: Why Rivers Mattered",
+      "category": "Homework",
+      "score": 8,
+      "maxScore": 10,
+      "dueDate": "2026-09-08",
+      "position": 1
+    },
+    {
+      "id": "451ac62f-c2e9-4eec-a72f-1fd61bbebfba",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "assignment": "Code of Laws",
+      "category": "Projects",
+      "score": 25,
+      "maxScore": 30,
+      "dueDate": "2026-09-16",
+      "position": 3
+    },
+    {
+      "id": "4620bedc-068c-4e26-8d8a-184b14f87d3a",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "assignment": "Fertile Crescent Map",
+      "category": "Classwork",
+      "score": 19,
+      "maxScore": 20,
+      "dueDate": "2026-09-03",
+      "position": 1
+    },
+    {
+      "id": "4cda4704-7542-4c22-9da1-d18235692bb3",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "assignment": "Unit 1 Test",
+      "category": "Tests",
+      "score": 33,
+      "maxScore": 40,
+      "dueDate": "2026-10-12",
+      "position": 9
+    },
+    {
+      "id": "4d526adc-aa71-476e-a2d0-36ecfa5075ed",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "assignment": "City-State Draft",
+      "category": "Homework",
+      "score": 5,
+      "maxScore": 10,
+      "dueDate": "2026-09-25",
+      "position": 6
+    },
+    {
+      "id": "4d7458d6-bd62-4cba-a6aa-440952f81349",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "assignment": "Timeline Project",
+      "category": "Projects",
+      "score": 30,
+      "maxScore": 50,
+      "dueDate": "2026-09-25",
+      "position": 6
+    },
+    {
+      "id": "4eaf34c8-ae1a-4738-812e-55c9c795973e",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "assignment": "Unit 1 Test",
+      "category": "Tests",
+      "score": 30,
+      "maxScore": 40,
+      "dueDate": "2026-09-21",
+      "position": 5
+    },
+    {
+      "id": "4fa7c059-87de-4ac6-950e-05b71cfc5b8c",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "assignment": "Unit 1 Test",
+      "category": "Tests",
+      "score": 31,
+      "maxScore": 40,
+      "dueDate": "2026-09-21",
+      "position": 5
+    },
+    {
+      "id": "4fb35bf1-c7de-4c18-8377-f8c361639c4b",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "assignment": "Reading Quiz: Hammurabi",
+      "category": "Quizzes",
+      "score": 15,
+      "maxScore": 20,
+      "dueDate": "2026-09-11",
+      "position": 2
+    },
+    {
+      "id": "507b9870-fd21-4827-bfa3-a12052772a63",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "assignment": "Source Analysis Worksheet",
+      "category": "Homework",
+      "score": 9,
+      "maxScore": 10,
+      "dueDate": "2026-09-22",
+      "position": 5
+    },
+    {
+      "id": "5235890a-d1f5-4606-bd88-9a11b2490767",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "assignment": "Fertile Crescent Map",
+      "category": "Classwork",
+      "score": 15,
+      "maxScore": 20,
+      "dueDate": "2026-09-03",
+      "position": 1
+    },
+    {
+      "id": "5b441cb8-cfab-4f06-bed7-1978109e0531",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "assignment": "Cuneiform Presentation",
+      "category": "Projects",
+      "score": 28,
+      "maxScore": 30,
+      "dueDate": "2026-10-19",
+      "position": 11
+    },
+    {
+      "id": "5d24987d-5eb7-4890-8454-f4c350c1857c",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "assignment": "Greek Geography Worksheet",
+      "category": "Homework",
+      "score": 8,
+      "maxScore": 10,
+      "dueDate": "2026-09-19",
+      "position": 4
+    },
+    {
+      "id": "5df9fc1e-abbe-4b66-b42d-0ad94c0631ff",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "assignment": "Exit Ticket: Rivers",
+      "category": "Classwork",
+      "score": 5,
+      "maxScore": 5,
+      "dueDate": "2026-09-02",
+      "position": 0
+    },
+    {
+      "id": "60aa5e32-88e5-4986-b047-91244c9b4985",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "assignment": "HW: Why Rivers Mattered",
+      "category": "Homework",
+      "score": 5,
+      "maxScore": 10,
+      "dueDate": "2026-09-08",
+      "position": 1
+    },
+    {
+      "id": "64b32de7-d214-4007-be99-7f2ce104cdc9",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "assignment": "Socratic Seminar Prep",
+      "category": "Homework",
+      "score": 8,
+      "maxScore": 10,
+      "dueDate": "2026-10-07",
+      "position": 7
+    },
+    {
+      "id": "66422753-2a29-4289-9ca6-e56b724b453c",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "assignment": "Quiz 3: Sumerian Schools",
+      "category": "Quizzes",
+      "score": 16,
+      "maxScore": 20,
+      "dueDate": "2026-10-16",
+      "position": 10
+    },
+    {
+      "id": "68378c72-a087-41bb-a44a-2fb5b7823ace",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "assignment": "HW: Eye for an Eye",
+      "category": "Homework",
+      "score": 8,
+      "maxScore": 10,
+      "dueDate": "2026-09-16",
+      "position": 4
+    },
+    {
+      "id": "6ac2a2cd-c63c-4fb0-bf78-5e6664f82a4c",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "assignment": "HW: Summer Reading Reflection",
+      "category": "Homework",
+      "score": null,
+      "maxScore": 10,
+      "dueDate": "2026-09-03",
+      "position": 0
+    },
+    {
+      "id": "6da67191-96c4-4433-ace7-d6a7326c4bd0",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "assignment": "Fertile Crescent Map",
+      "category": "Projects",
+      "score": 12,
+      "maxScore": 20,
+      "dueDate": "2026-09-10",
+      "position": 2
+    },
+    {
+      "id": "6e699a85-9a87-42e8-8667-6b61751e79ae",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "assignment": "Reading Quiz: Hammurabi",
+      "category": "Quizzes",
+      "score": 11,
+      "maxScore": 20,
+      "dueDate": "2026-09-11",
+      "position": 2
+    },
+    {
+      "id": "70a7876a-f5f1-4c61-9561-039e658c3107",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "assignment": "HW: Eye for an Eye",
+      "category": "Homework",
+      "score": 5,
+      "maxScore": 10,
+      "dueDate": "2026-09-16",
+      "position": 4
+    },
+    {
+      "id": "75df149f-cd0e-48be-a38f-1480760c24be",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "assignment": "Greek Geography Worksheet",
+      "category": "Homework",
+      "score": 7,
+      "maxScore": 10,
+      "dueDate": "2026-09-19",
+      "position": 4
+    },
+    {
+      "id": "7b125fce-ded2-41c2-9f84-8af9438533e1",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "assignment": "Socratic Seminar Prep",
+      "category": "Homework",
+      "score": 9,
+      "maxScore": 10,
+      "dueDate": "2026-10-07",
+      "position": 7
+    },
+    {
+      "id": "7ec8816d-3adb-4d39-b547-3234e87cba49",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "assignment": "Greek Geography Worksheet",
+      "category": "Homework",
+      "score": 7,
+      "maxScore": 10,
+      "dueDate": "2026-09-19",
+      "position": 4
+    },
+    {
+      "id": "80e45692-aed0-4b45-8aee-4f0efc866664",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "assignment": "Socratic Seminar Prep",
+      "category": "Homework",
+      "score": 7,
+      "maxScore": 10,
+      "dueDate": "2026-10-07",
+      "position": 7
+    },
+    {
+      "id": "85688768-992d-4bcb-a472-b636ce3c308e",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "assignment": "HW: Summer Reading Reflection",
+      "category": "Homework",
+      "score": 10,
+      "maxScore": 10,
+      "dueDate": "2026-09-03",
+      "position": 0
+    },
+    {
+      "id": "87a9b701-2c30-41cc-a69e-404437403138",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "assignment": "Cuneiform Presentation",
+      "category": "Projects",
+      "score": 27,
+      "maxScore": 30,
+      "dueDate": "2026-10-19",
+      "position": 11
+    },
+    {
+      "id": "92134e21-9e24-47a9-9a61-0ac99c0fe641",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "assignment": "Exit Ticket: Rivers",
+      "category": "Classwork",
+      "score": 4,
+      "maxScore": 5,
+      "dueDate": "2026-09-02",
+      "position": 0
+    },
+    {
+      "id": "92912c71-44c7-4714-bb00-2939a20d02d5",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "assignment": "Fertile Crescent Map",
+      "category": "Projects",
+      "score": 18,
+      "maxScore": 20,
+      "dueDate": "2026-09-10",
+      "position": 2
+    },
+    {
+      "id": "94998385-1da8-4e85-a47f-8ed624a200fc",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "assignment": "DBQ Essay",
+      "category": "Tests",
+      "score": 34,
+      "maxScore": 40,
+      "dueDate": "2026-10-21",
+      "position": 9
+    },
+    {
+      "id": "97d5e5db-2394-4c45-8d3d-bd9848847a37",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "assignment": "Exit Ticket: Rivers",
+      "category": "Classwork",
+      "score": 2,
+      "maxScore": 5,
+      "dueDate": "2026-09-02",
+      "position": 0
+    },
+    {
+      "id": "9985292e-ffed-44b5-abfc-e07ac5edb767",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "assignment": "Code of Laws",
+      "category": "Projects",
+      "score": 22,
+      "maxScore": 30,
+      "dueDate": "2026-09-16",
+      "position": 3
+    },
+    {
+      "id": "9d419332-7e50-4c49-9b7e-91623b99ba49",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "assignment": "HW: Summer Reading Reflection",
+      "category": "Homework",
+      "score": 8,
+      "maxScore": 10,
+      "dueDate": "2026-09-03",
+      "position": 0
+    },
+    {
+      "id": "a653eb5d-43ff-4b8d-91b9-bdacc1767df1",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "assignment": "Timeline Project",
+      "category": "Projects",
+      "score": 38,
+      "maxScore": 50,
+      "dueDate": "2026-09-25",
+      "position": 6
+    },
+    {
+      "id": "aee794a6-caea-452d-96db-a7e890824ceb",
+      "studentId": "22222222-2222-4222-8222-222222222214",
+      "assignment": "Socratic Seminar Prep",
+      "category": "Homework",
+      "score": 9,
+      "maxScore": 10,
+      "dueDate": "2026-10-07",
+      "position": 7
+    },
+    {
+      "id": "b0003d58-542f-4056-8a4b-3c7826955f4d",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "assignment": "HW: Why Rivers Mattered",
+      "category": "Homework",
+      "score": 10,
+      "maxScore": 10,
+      "dueDate": "2026-09-08",
+      "position": 1
+    },
+    {
+      "id": "b07eb5a5-abec-4455-a0a4-f9c910f648a6",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "assignment": "Fertile Crescent Map",
+      "category": "Classwork",
+      "score": 17,
+      "maxScore": 20,
+      "dueDate": "2026-09-03",
+      "position": 1
+    },
+    {
+      "id": "b4006212-4308-41a7-8499-5991a390e5d3",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "assignment": "Quiz 1: First Cities",
+      "category": "Quizzes",
+      "score": 4,
+      "maxScore": 20,
+      "dueDate": "2026-09-11",
+      "position": 3
+    },
+    {
+      "id": "b8ebc1cb-94de-463c-88a9-2998d2666cd3",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "assignment": "Reading Quiz: Hammurabi",
+      "category": "Quizzes",
+      "score": 14,
+      "maxScore": 20,
+      "dueDate": "2026-09-11",
+      "position": 2
+    },
+    {
+      "id": "badff3ed-676c-4abf-ba11-6d1ddd180d12",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "assignment": "DBQ Essay",
+      "category": "Tests",
+      "score": 33,
+      "maxScore": 40,
+      "dueDate": "2026-10-21",
+      "position": 9
+    },
+    {
+      "id": "baef6e8b-31ba-487a-8545-861f9881baa1",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "assignment": "Unit 1 Test",
+      "category": "Tests",
+      "score": 28,
+      "maxScore": 40,
+      "dueDate": "2026-09-21",
+      "position": 5
+    },
+    {
+      "id": "bfe6f7e1-6e1c-463a-889a-7d6248b57fa0",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "assignment": "HW: Eye for an Eye",
+      "category": "Homework",
+      "score": 6,
+      "maxScore": 10,
+      "dueDate": "2026-09-16",
+      "position": 4
+    },
+    {
+      "id": "c35a9c89-fb62-4f62-bc80-f8ad1597a159",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "assignment": "Timeline Project",
+      "category": "Projects",
+      "score": 40,
+      "maxScore": 50,
+      "dueDate": "2026-09-25",
+      "position": 6
+    },
+    {
+      "id": "c50c481d-5a01-478e-a3ff-f04ef91a09ab",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "assignment": "Quiz 2: Hammurabi's Code",
+      "category": "Quizzes",
+      "score": 15,
+      "maxScore": 20,
+      "dueDate": "2026-09-29",
+      "position": 7
+    },
+    {
+      "id": "c806ec0f-3a8a-4369-96d3-6dfe71bedab2",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "assignment": "Source Analysis Worksheet",
+      "category": "Homework",
+      "score": 6,
+      "maxScore": 10,
+      "dueDate": "2026-09-22",
+      "position": 5
+    },
+    {
+      "id": "ca8113e9-4a75-492b-9c8b-eb618b927800",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "assignment": "Unit 1 Test",
+      "category": "Tests",
+      "score": 36,
+      "maxScore": 40,
+      "dueDate": "2026-10-12",
+      "position": 9
+    },
+    {
+      "id": "cac54229-94da-424c-aced-8b2915a8a844",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "assignment": "Cuneiform Presentation",
+      "category": "Projects",
+      "score": 27,
+      "maxScore": 30,
+      "dueDate": "2026-10-19",
+      "position": 11
+    },
+    {
+      "id": "ce4f0ccf-598a-425e-a61e-5ac4da2419d0",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "assignment": "Quiz 1: First Cities",
+      "category": "Quizzes",
+      "score": 16,
+      "maxScore": 20,
+      "dueDate": "2026-09-11",
+      "position": 3
+    },
+    {
+      "id": "d294298e-e6f3-4636-900e-0ce7d9c045e5",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "assignment": "Greek Geography Worksheet",
+      "category": "Homework",
+      "score": 6,
+      "maxScore": 10,
+      "dueDate": "2026-09-19",
+      "position": 4
+    },
+    {
+      "id": "d2abeaeb-01cc-4c4d-9687-a3346324e5db",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "assignment": "Quiz 2: Hammurabi's Code",
+      "category": "Quizzes",
+      "score": 9,
+      "maxScore": 20,
+      "dueDate": "2026-09-29",
+      "position": 7
+    },
+    {
+      "id": "d44857e3-9ce5-430a-8322-e9a5edcf0394",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "assignment": "Hammurabi Trial",
+      "category": "Projects",
+      "score": 30,
+      "maxScore": 30,
+      "dueDate": "2026-10-02",
+      "position": 8
+    },
+    {
+      "id": "d7bcf13b-3f29-4e0f-97af-d85bfd29898e",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "assignment": "Unit 1 Test",
+      "category": "Tests",
+      "score": 39,
+      "maxScore": 40,
+      "dueDate": "2026-10-12",
+      "position": 9
+    },
+    {
+      "id": "d940513c-c1be-43a5-bf01-9bb0f0a37780",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "assignment": "City-State Draft",
+      "category": "Homework",
+      "score": 8,
+      "maxScore": 10,
+      "dueDate": "2026-09-25",
+      "position": 6
+    },
+    {
+      "id": "d96bd7aa-579b-4854-8b92-887224524798",
+      "studentId": "22222222-2222-4222-8222-222222222210",
+      "assignment": "City-State Presentation",
+      "category": "Projects",
+      "score": 50,
+      "maxScore": 50,
+      "dueDate": "2026-10-15",
+      "position": 8
+    },
+    {
+      "id": "d9972e33-d3d8-4641-a65d-8af87e58fb86",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "assignment": "Quiz 3: Sumerian Schools",
+      "category": "Quizzes",
+      "score": 15,
+      "maxScore": 20,
+      "dueDate": "2026-10-16",
+      "position": 10
+    },
+    {
+      "id": "d9e37742-c953-4e69-84a0-a7d4e3dd1cd7",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "assignment": "HW: Summer Reading Reflection",
+      "category": "Homework",
+      "score": 6,
+      "maxScore": 10,
+      "dueDate": "2026-09-03",
+      "position": 0
+    },
+    {
+      "id": "d9e8a554-8610-4c61-9cd6-9d0c1aebd51d",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "assignment": "Quiz 3: Sumerian Schools",
+      "category": "Quizzes",
+      "score": 19,
+      "maxScore": 20,
+      "dueDate": "2026-10-16",
+      "position": 10
+    },
+    {
+      "id": "db5421ab-3455-406e-a100-abf3989bfd5b",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "assignment": "Timeline Project",
+      "category": "Projects",
+      "score": 46,
+      "maxScore": 50,
+      "dueDate": "2026-09-25",
+      "position": 6
+    },
+    {
+      "id": "dca63fee-30b4-432a-bc3d-d76174196bf8",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "assignment": "Fertile Crescent Map",
+      "category": "Classwork",
+      "score": 12,
+      "maxScore": 20,
+      "dueDate": "2026-09-03",
+      "position": 1
+    },
+    {
+      "id": "df672fa2-4128-4f36-86e3-adb2f64b125c",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "assignment": "Cuneiform Presentation",
+      "category": "Projects",
+      "score": 22,
+      "maxScore": 30,
+      "dueDate": "2026-10-19",
+      "position": 11
+    },
+    {
+      "id": "dfc883f2-62af-455f-94a1-ff5d755d5306",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "assignment": "Code of Laws",
+      "category": "Projects",
+      "score": 22,
+      "maxScore": 30,
+      "dueDate": "2026-09-16",
+      "position": 3
+    },
+    {
+      "id": "e03b7d83-4d72-4813-ad19-9049ad168f3e",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "assignment": "Hammurabi Trial",
+      "category": "Projects",
+      "score": 29,
+      "maxScore": 30,
+      "dueDate": "2026-10-02",
+      "position": 8
+    },
+    {
+      "id": "e2897181-a2bf-49a1-9e77-bc06d34c54f3",
+      "studentId": "22222222-2222-4222-8222-222222222215",
+      "assignment": "Unit 1 Test",
+      "category": "Tests",
+      "score": 29,
+      "maxScore": 40,
+      "dueDate": "2026-09-21",
+      "position": 5
+    },
+    {
+      "id": "e4ac3469-8a20-4a30-8f50-e7882a468ba9",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "assignment": "Quiz 2: Hammurabi's Code",
+      "category": "Quizzes",
+      "score": 19,
+      "maxScore": 20,
+      "dueDate": "2026-09-29",
+      "position": 7
+    },
+    {
+      "id": "e4dd5b7d-39d4-4948-a25d-621a36af2041",
+      "studentId": "22222222-2222-4222-8222-222222222213",
+      "assignment": "Exit Ticket: Rivers",
+      "category": "Classwork",
+      "score": 3,
+      "maxScore": 5,
+      "dueDate": "2026-09-02",
+      "position": 0
+    },
+    {
+      "id": "e7eccc55-65ea-459a-bec0-26baef296d54",
+      "studentId": "22222222-2222-4222-8222-222222222209",
+      "assignment": "Source Analysis Worksheet",
+      "category": "Homework",
+      "score": null,
+      "maxScore": 10,
+      "dueDate": "2026-09-22",
+      "position": 5
+    },
+    {
+      "id": "ebd2f8ae-c893-42d2-b422-a00e3bb02009",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "assignment": "Fertile Crescent Map",
+      "category": "Projects",
+      "score": 13,
+      "maxScore": 20,
+      "dueDate": "2026-09-10",
+      "position": 2
+    },
+    {
+      "id": "ee82f2e6-f638-4417-9b60-4c4964953e92",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "assignment": "HW: Eye for an Eye",
+      "category": "Homework",
+      "score": 10,
+      "maxScore": 10,
+      "dueDate": "2026-09-16",
+      "position": 4
+    },
+    {
+      "id": "feee4ba6-ee55-41f3-84fb-79d7bcf8242c",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "assignment": "Hammurabi Trial",
+      "category": "Projects",
+      "score": 22,
+      "maxScore": 30,
+      "dueDate": "2026-10-02",
+      "position": 8
+    }
+  ],
+  "settings": [],
+  "syntheses": [
+    {
+      "id": "8c994e55-b4bb-4155-a37a-e70d15d56c71",
+      "studentId": "22222222-2222-4222-8222-222222222202",
+      "version": 1,
+      "model": "claude-opus-5-5",
+      "json": {
+        "overview": "Rowan started the year loud. On 2 September he talked through the whole map introduction and was moved twice; the note calls it \"not rude, just constant.\" A new seat next to Ember helped within the week. Early grades were low against the class: the Summer Reading Reflection at 60% (class mean 87%), the Fertile Crescent Map at 65% and Quiz 1 at 60%. Behaviour stayed uneven through September. He turned one moment into a stand-up routine on 18 September, and on 22 September he was sent out for throwing a rubber at Alex. He came back and apologised without being asked, which the note marks as new.\n\nThe turn came with argument. In the Hammurabi introduction on 14 September he argued the eye-for-an-eye question well and listened. He asked to be prosecution lead for the Hammurabi Trial and objected to everything, but in role. The trial scored 97% (class mean 89%), and the note says he lost \"graciously (mostly).\" From there the scores climbed: Unit 1 Test 83%, Quiz 3 80%, and on 19 October a presentation at 93% that was \"funny, accurate, kept to time.\" He has been nominated for the humanities showcase with Ember. The grade summary shows the overall at 78% and rising, from 68% over the first half of the scores to 84% over the second.\n\nThe thread is that his energy for talk became an asset once it had a structure: a role, a side to argue, a time limit. Homework (70%) and quizzes (72%) remain his weaker categories. The unit test note says he ran out of time on the essay. There are no notes after 19 October, and nothing yet on his paragraph writing or on group work.",
+        "highlights": [
+          {
+            "title": "Prosecution lead in the trial",
+            "story": "Rowan asked to lead the prosecution in the Hammurabi Trial, objected to everything in role, and scored 97% against a class mean of 89%. He lost the case \"graciously (mostly).\"",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "b5f9f477-7fd5-4563-99d8-66604b1e9a02",
+                "notedAt": "2026-09-28T17:40:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Ro wants to be prosecution lead.",
+                  "Gave Ro prosecution and Em defence — she was annoyed for about a minute then started planning how to destroy him."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "f8b05c66-63f3-4681-9194-3a3e1beefb10",
+                "notedAt": "2026-10-01T17:46:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan objected to literally everything, but in role, so I'll allow it."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "40888b63-15e6-4d01-98f6-116594465149",
+                "notedAt": "2026-10-02T17:58:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Ro lost graciously (mostly)."
+                ]
+              },
+              {
+                "type": "grade",
+                "assignment": "Hammurabi Trial",
+                "category": "Projects",
+                "score": 29,
+                "maxScore": 30,
+                "pct": 96.7,
+                "dueDate": "2026-10-02",
+                "classMean": 88.6
+              }
+            ]
+          },
+          {
+            "title": "Unprompted apology",
+            "story": "On 22 September he was sent out for throwing a rubber at Alex. He came back and apologised without being asked, which was new for him.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "34003da7-5371-4242-a44b-4b7449f6915f",
+                "notedAt": "2026-09-22T18:00:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan sent out for throwing a rubber at Alex.",
+                  "Came back and apologised without being asked, which is new."
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Presentation that earned a showcase spot",
+            "story": "His 19 October presentation on Hammurabi's punishments was funny, accurate and kept to time, scoring 93%. It led to a nomination for the humanities showcase with Ember.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "1a403d96-30c0-4d57-8d39-f9aa79a39b51",
+                "notedAt": "2026-10-19T17:50:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan's presentation on Hammurabi's punishments — funny, accurate, kept to time.",
+                  "The debate stuff paid off.",
+                  "Nominating him for the humanities showcase with Em."
+                ]
+              },
+              {
+                "type": "grade",
+                "assignment": "Cuneiform Presentation",
+                "category": "Projects",
+                "score": 28,
+                "maxScore": 30,
+                "pct": 93.3,
+                "dueDate": "2026-10-19",
+                "classMean": 89.5
+              }
+            ]
+          },
+          {
+            "title": "Arguing and listening",
+            "story": "In the Hammurabi introduction in mid-September he argued the eye-for-an-eye question well and listened to others.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "67e1851b-6488-4857-befe-89e907ce4791",
+                "notedAt": "2026-09-14T18:00:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "rowan pel was great in the um hammurabi intro argued the eye for an eye thing really well and actually listened",
+                  "so maybe debate is rowans thing"
+                ]
+              }
+            ]
+          }
+        ],
+        "strengths": [
+          {
+            "point": "Argues a position well in discussion and in role, and listens while doing it.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "67e1851b-6488-4857-befe-89e907ce4791",
+                "notedAt": "2026-09-14T18:00:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "rowan pel was great in the um hammurabi intro argued the eye for an eye thing really well and actually listened",
+                  "so maybe debate is rowans thing"
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "f8b05c66-63f3-4681-9194-3a3e1beefb10",
+                "notedAt": "2026-10-01T17:46:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan objected to literally everything, but in role, so I'll allow it."
+                ]
+              },
+              {
+                "type": "grade",
+                "assignment": "Hammurabi Trial",
+                "category": "Projects",
+                "score": 29,
+                "maxScore": 30,
+                "pct": 96.7,
+                "dueDate": "2026-10-02",
+                "classMean": 88.6
+              }
+            ]
+          },
+          {
+            "point": "Presents with humour while staying accurate and on time.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "1a403d96-30c0-4d57-8d39-f9aa79a39b51",
+                "notedAt": "2026-10-19T17:50:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan's presentation on Hammurabi's punishments — funny, accurate, kept to time.",
+                  "The debate stuff paid off.",
+                  "Nominating him for the humanities showcase with Em."
+                ]
+              },
+              {
+                "type": "grade",
+                "assignment": "Cuneiform Presentation",
+                "category": "Projects",
+                "score": 28,
+                "maxScore": 30,
+                "pct": 93.3,
+                "dueDate": "2026-10-19",
+                "classMean": 89.5
+              }
+            ]
+          },
+          {
+            "point": "Strongest in project work: the Hammurabi Trial scored 97% and the presentation 93%.",
+            "evidence": [
+              {
+                "type": "grade",
+                "assignment": "Hammurabi Trial",
+                "category": "Projects",
+                "score": 29,
+                "maxScore": 30,
+                "pct": 96.7,
+                "dueDate": "2026-10-02",
+                "classMean": 88.6
+              },
+              {
+                "type": "grade",
+                "assignment": "Cuneiform Presentation",
+                "category": "Projects",
+                "score": 28,
+                "maxScore": 30,
+                "pct": 93.3,
+                "dueDate": "2026-10-19",
+                "classMean": 89.5
+              },
+              {
+                "type": "grades"
+              }
+            ]
+          },
+          {
+            "point": "Takes responsibility after a mistake; he apologised unprompted after being sent out.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "34003da7-5371-4242-a44b-4b7449f6915f",
+                "notedAt": "2026-09-22T18:00:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan sent out for throwing a rubber at Alex.",
+                  "Came back and apologised without being asked, which is new."
+                ]
+              }
+            ]
+          }
+        ],
+        "growth": [
+          {
+            "point": "Managing talk and attention-seeking outside structured roles, such as the map intro and the stand-up routine.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "4224744e-7471-4dec-b489-49e5111f114a",
+                "notedAt": "2026-09-02T18:02:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan talked through the entire map intro.",
+                  "Moved him twice.",
+                  "Not rude, just constant.",
+                  "Ro if you're reading this over my shoulder, no."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "91e069ec-18c5-423b-aad5-6ef6942a6518",
+                "notedAt": "2026-09-18T18:05:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan took that as an invitation to do a stand-up routine."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "34003da7-5371-4242-a44b-4b7449f6915f",
+                "notedAt": "2026-09-22T18:00:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan sent out for throwing a rubber at Alex.",
+                  "Came back and apologised without being asked, which is new."
+                ]
+              }
+            ]
+          },
+          {
+            "point": "Finishing extended writing under time; he ran out of time on the unit test essay.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "3b0277fc-b5e2-40eb-aabe-2bddef0ba38b",
+                "notedAt": "2026-10-14T22:45:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan 28, good short answers, ran out of time on the essay."
+                ]
+              }
+            ]
+          },
+          {
+            "point": "Homework is his weakest category at 70%, and quizzes are at 72%.",
+            "evidence": [
+              {
+                "type": "grades"
+              },
+              {
+                "type": "grade",
+                "assignment": "HW: Summer Reading Reflection",
+                "category": "Homework",
+                "score": 6,
+                "maxScore": 10,
+                "pct": 60,
+                "dueDate": "2026-09-03",
+                "classMean": 86.7
+              },
+              {
+                "type": "grade",
+                "assignment": "Source Analysis Worksheet",
+                "category": "Homework",
+                "score": 7,
+                "maxScore": 10,
+                "pct": 70,
+                "dueDate": "2026-09-22",
+                "classMean": 78.3
+              }
+            ]
+          }
+        ],
+        "change": [
+          {
+            "point": "Scores rose from 68% over the first half to 84% over the second, with early results below the class mean and later ones at or above it.",
+            "evidence": [
+              {
+                "type": "grades"
+              },
+              {
+                "type": "grade",
+                "assignment": "HW: Summer Reading Reflection",
+                "category": "Homework",
+                "score": 6,
+                "maxScore": 10,
+                "pct": 60,
+                "dueDate": "2026-09-03",
+                "classMean": 86.7
+              },
+              {
+                "type": "grade",
+                "assignment": "Fertile Crescent Map",
+                "category": "Projects",
+                "score": 13,
+                "maxScore": 20,
+                "pct": 65,
+                "dueDate": "2026-09-10",
+                "classMean": 82.1
+              },
+              {
+                "type": "grade",
+                "assignment": "Quiz 1: First Cities",
+                "category": "Quizzes",
+                "score": 12,
+                "maxScore": 20,
+                "pct": 60,
+                "dueDate": "2026-09-11",
+                "classMean": 72.9
+              },
+              {
+                "type": "grade",
+                "assignment": "Hammurabi Trial",
+                "category": "Projects",
+                "score": 29,
+                "maxScore": 30,
+                "pct": 96.7,
+                "dueDate": "2026-10-02",
+                "classMean": 88.6
+              },
+              {
+                "type": "grade",
+                "assignment": "Cuneiform Presentation",
+                "category": "Projects",
+                "score": 28,
+                "maxScore": 30,
+                "pct": 93.3,
+                "dueDate": "2026-10-19",
+                "classMean": 89.5
+              }
+            ]
+          },
+          {
+            "point": "Behaviour settled after the seat move next to Ember in early September.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "4224744e-7471-4dec-b489-49e5111f114a",
+                "notedAt": "2026-09-02T18:02:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan talked through the entire map intro.",
+                  "Moved him twice.",
+                  "Not rude, just constant.",
+                  "Ro if you're reading this over my shoulder, no."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "13df4211-2eb8-4b68-884f-b06e098c96a3",
+                "notedAt": "2026-09-08T17:47:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan much better in new seat.",
+                  "Ember next to him seems to help, she just ignores him until he gives up."
+                ]
+              }
+            ]
+          },
+          {
+            "point": "From the Hammurabi trial onward, his talkativeness was channelled into argument and presentation.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "67e1851b-6488-4857-befe-89e907ce4791",
+                "notedAt": "2026-09-14T18:00:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "rowan pel was great in the um hammurabi intro argued the eye for an eye thing really well and actually listened",
+                  "so maybe debate is rowans thing"
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "f8b05c66-63f3-4681-9194-3a3e1beefb10",
+                "notedAt": "2026-10-01T17:46:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan objected to literally everything, but in role, so I'll allow it."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "1a403d96-30c0-4d57-8d39-f9aa79a39b51",
+                "notedAt": "2026-10-19T17:50:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan's presentation on Hammurabi's punishments — funny, accurate, kept to time.",
+                  "The debate stuff paid off.",
+                  "Nominating him for the humanities showcase with Em."
+                ]
+              }
+            ]
+          }
+        ],
+        "goals": [
+          {
+            "goal": "Explain how geography shaped where and how the first civilisations grew.",
+            "status": "partly",
+            "point": "Early geography work was below the class mean: Why Rivers Mattered 70%, Fertile Crescent Map 65%, Quiz 1 60%. The Unit 1 Test reached 83%. There are no notes on his geography thinking.",
+            "evidence": [
+              {
+                "type": "grade",
+                "assignment": "HW: Why Rivers Mattered",
+                "category": "Homework",
+                "score": 7,
+                "maxScore": 10,
+                "pct": 70,
+                "dueDate": "2026-09-08",
+                "classMean": 81.4
+              },
+              {
+                "type": "grade",
+                "assignment": "Fertile Crescent Map",
+                "category": "Projects",
+                "score": 13,
+                "maxScore": 20,
+                "pct": 65,
+                "dueDate": "2026-09-10",
+                "classMean": 82.1
+              },
+              {
+                "type": "grade",
+                "assignment": "Quiz 1: First Cities",
+                "category": "Quizzes",
+                "score": 12,
+                "maxScore": 20,
+                "pct": 60,
+                "dueDate": "2026-09-11",
+                "classMean": 72.9
+              },
+              {
+                "type": "grade",
+                "assignment": "Unit 1 Test",
+                "category": "Tests",
+                "score": 33,
+                "maxScore": 40,
+                "pct": 82.5,
+                "dueDate": "2026-10-12",
+                "classMean": 87.5
+              }
+            ]
+          },
+          {
+            "goal": "Read a primary source and say who made it, when, and what it was for.",
+            "status": "partly",
+            "point": "The Source Analysis Worksheet scored 70% against a class mean of 78%. That is the only evidence.",
+            "evidence": [
+              {
+                "type": "grade",
+                "assignment": "Source Analysis Worksheet",
+                "category": "Homework",
+                "score": 7,
+                "maxScore": 10,
+                "pct": 70,
+                "dueDate": "2026-09-22",
+                "classMean": 78.3
+              }
+            ]
+          },
+          {
+            "goal": "Build an argument from evidence, in discussion and in writing, and change their mind when the evidence says so.",
+            "status": "partly",
+            "point": "He argues from evidence well in discussion and in role, and he listened in debate. In writing he ran out of time on the test essay. There is no evidence of him changing his mind.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "67e1851b-6488-4857-befe-89e907ce4791",
+                "notedAt": "2026-09-14T18:00:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "rowan pel was great in the um hammurabi intro argued the eye for an eye thing really well and actually listened",
+                  "so maybe debate is rowans thing"
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "f8b05c66-63f3-4681-9194-3a3e1beefb10",
+                "notedAt": "2026-10-01T17:46:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan objected to literally everything, but in role, so I'll allow it."
+                ]
+              },
+              {
+                "type": "grade",
+                "assignment": "Hammurabi Trial",
+                "category": "Projects",
+                "score": 29,
+                "maxScore": 30,
+                "pct": 96.7,
+                "dueDate": "2026-10-02",
+                "classMean": 88.6
+              },
+              {
+                "type": "note",
+                "noteId": "3b0277fc-b5e2-40eb-aabe-2bddef0ba38b",
+                "notedAt": "2026-10-14T22:45:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Rowan 28, good short answers, ran out of time on the essay."
+                ]
+              }
+            ]
+          },
+          {
+            "goal": "Write a clear paragraph with a claim, two pieces of evidence, and a sentence that ties them together.",
+            "status": "no_evidence",
+            "point": "",
+            "evidence": []
+          },
+          {
+            "goal": "Work in a group so that everyone in it gets to speak.",
+            "status": "no_evidence",
+            "point": "",
+            "evidence": []
+          }
+        ],
+        "gaps": [
+          {
+            "area": "Nothing recorded since 19 October",
+            "why": "The last note and grade are from 19 October, with no notes in November, while the Hammurabi unit runs to November.",
+            "ask": "How has Rowan been doing since the cuneiform presentation, in class and in the rest of the Hammurabi unit?"
+          },
+          {
+            "area": "Paragraph writing",
+            "why": "There are no notes on his written paragraphs. The only writing evidence is that he ran out of time on the test essay.",
+            "ask": "When Rowan writes a paragraph, does he get a claim, two pieces of evidence and a linking sentence down?"
+          },
+          {
+            "area": "Group work and letting others speak",
+            "why": "There is no evidence on how he works in groups. The early notes show him dominating whole-class talk.",
+            "ask": "In the source-analysis or trial groups, did Rowan make room for others to speak?"
+          },
+          {
+            "area": "Homework and work habits",
+            "why": "Homework is at 70% and the Summer Reading Reflection was 60%, but there are no notes on why.",
+            "ask": "What is getting in the way of Rowan's homework: completion, effort or understanding?"
+          },
+          {
+            "area": "Unit test note doesn't match the grade",
+            "why": "The 14 October note records \"Rowan 28\", but the Unit 1 Test grade is 33/40. The presentation note also describes Hammurabi's punishments, while the grade is titled Cuneiform Presentation.",
+            "ask": "What was the 28 in your 14 October note about Rowan, and was the 19 October presentation the cuneiform one?"
+          },
+          {
+            "area": "Primary sources",
+            "why": "The only evidence is the Source Analysis Worksheet at 70% (class mean 78%), with no notes.",
+            "ask": "How does Rowan handle working out who made a source, when, and why?"
+          }
+        ],
+        "coverage": {
+          "label": "well_supported",
+          "notes": 12,
+          "bySource": {
+            "text": 12
+          },
+          "lastNotedAt": "2026-10-19T17:50:00.000Z",
+          "daysSinceLastNote": 21,
+          "longestSilenceDays": 21,
+          "emptyMonths": [
+            "2026-11"
+          ],
+          "grades": 12,
+          "missing": 0,
+          "undatedGrades": false
+        },
+        "grades": {
+          "overall": 77.9,
+          "weighted": true,
+          "count": 12,
+          "missing": 0,
+          "byCategory": [
+            {
+              "category": "Projects",
+              "weight": 30,
+              "count": 4,
+              "missing": 0,
+              "mean": 82.8
+            },
+            {
+              "category": "Tests",
+              "weight": 30,
+              "count": 1,
+              "missing": 0,
+              "mean": 82.5
+            },
+            {
+              "category": "Quizzes",
+              "weight": 20,
+              "count": 3,
+              "missing": 0,
+              "mean": 71.7
+            },
+            {
+              "category": "Homework",
+              "weight": 20,
+              "count": 4,
+              "missing": 0,
+              "mean": 70
+            }
+          ],
+          "strongest": "Projects",
+          "weakest": "Homework",
+          "trend": {
+            "label": "rising",
+            "from": 68,
+            "to": 84
+          },
+          "biggestWin": {
+            "assignment": "Hammurabi Trial",
+            "pct": 96.7,
+            "classMean": 88.6
+          },
+          "biggestLoss": {
+            "assignment": "HW: Summer Reading Reflection",
+            "pct": 60,
+            "classMean": 86.7
+          },
+          "entries": [
+            {
+              "assignment": "HW: Summer Reading Reflection",
+              "category": "Homework",
+              "score": 6,
+              "maxScore": 10,
+              "pct": 60,
+              "dueDate": "2026-09-03"
+            },
+            {
+              "assignment": "HW: Why Rivers Mattered",
+              "category": "Homework",
+              "score": 7,
+              "maxScore": 10,
+              "pct": 70,
+              "dueDate": "2026-09-08"
+            },
+            {
+              "assignment": "Fertile Crescent Map",
+              "category": "Projects",
+              "score": 13,
+              "maxScore": 20,
+              "pct": 65,
+              "dueDate": "2026-09-10"
+            },
+            {
+              "assignment": "Quiz 1: First Cities",
+              "category": "Quizzes",
+              "score": 12,
+              "maxScore": 20,
+              "pct": 60,
+              "dueDate": "2026-09-11"
+            },
+            {
+              "assignment": "HW: Eye for an Eye",
+              "category": "Homework",
+              "score": 8,
+              "maxScore": 10,
+              "pct": 80,
+              "dueDate": "2026-09-16"
+            },
+            {
+              "assignment": "Source Analysis Worksheet",
+              "category": "Homework",
+              "score": 7,
+              "maxScore": 10,
+              "pct": 70,
+              "dueDate": "2026-09-22"
+            },
+            {
+              "assignment": "Timeline Project",
+              "category": "Projects",
+              "score": 38,
+              "maxScore": 50,
+              "pct": 76,
+              "dueDate": "2026-09-25"
+            },
+            {
+              "assignment": "Quiz 2: Hammurabi's Code",
+              "category": "Quizzes",
+              "score": 15,
+              "maxScore": 20,
+              "pct": 75,
+              "dueDate": "2026-09-29"
+            },
+            {
+              "assignment": "Hammurabi Trial",
+              "category": "Projects",
+              "score": 29,
+              "maxScore": 30,
+              "pct": 96.7,
+              "dueDate": "2026-10-02"
+            },
+            {
+              "assignment": "Unit 1 Test",
+              "category": "Tests",
+              "score": 33,
+              "maxScore": 40,
+              "pct": 82.5,
+              "dueDate": "2026-10-12"
+            },
+            {
+              "assignment": "Quiz 3: Sumerian Schools",
+              "category": "Quizzes",
+              "score": 16,
+              "maxScore": 20,
+              "pct": 80,
+              "dueDate": "2026-10-16"
+            },
+            {
+              "assignment": "Cuneiform Presentation",
+              "category": "Projects",
+              "score": 28,
+              "maxScore": 30,
+              "pct": 93.3,
+              "dueDate": "2026-10-19"
+            }
+          ]
+        }
+      },
+      "createdAt": "2026-11-09T17:57:19.629Z",
+      "periodStart": "2026-09-01",
+      "periodEnd": "2027-06-15"
+    },
+    {
+      "id": "aede4269-ba2e-49e4-81ec-4d87d254ce62",
+      "studentId": "22222222-2222-4222-8222-222222222205",
+      "version": 1,
+      "model": "claude-opus-5-5",
+      "json": {
+        "overview": "Marlowe started the year disorganised. On the first day he had no summer reading reflection, no notebook and no pencil, and that reflection is still recorded as missing. Early scores were low: 50% on the Why Rivers Mattered homework, 60% on the Fertile Crescent Map, and 20% on Quiz 1: First Cities, where he left the back page blank and said he didn't see it. On 9 September his mum explained he had been doing homework but leaving it in the car, and a bag folder was agreed.\n\nThings began to shift in mid-September. By 15 September he had the folder with homework in it, half done. On 21 September, in Mr. Delacroix's group, he asked what was described as the best question about who the law protected. He missed the Timeline Project deadline on 25 September but handed it in late, with dates in the right order and a picture of the stele. It still needed captions, and it scored 80%. Early October brought two notes: on 7 October he noticed something and handed it over, which the note says would not have happened a month earlier, and on 8 October he came to something and stayed the whole 40 minutes.\n\nOn 14 October he scored 31/40 (78%) on the Unit 1 Test and wrote 'proud of this' on it. The grade summary shows an overall 66%, rising from 48% over the first half of scores to 73% over the second. His later scores (75% on Quiz 3 and 73% on the Cuneiform Presentation) are steadier but still below the class means. The thread running through the period is organisation: as the systems around him took hold, the work started arriving and the scores rose. There are no notes after 14 October.",
+        "highlights": [
+          {
+            "title": "From 4/20 to 31/40",
+            "story": "After scoring 4/20 on the first quiz in September, Marlowe scored 31/40 on the Unit 1 Test in October and wrote 'proud of this' on the paper.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "bce2f3c7-e624-4f35-a7cb-b975cdbc06b6",
+                "notedAt": "2026-09-11T17:55:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Marlowe 4/20, left the back page blank, said he didn't see it."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "3b0277fc-b5e2-40eb-aabe-2bddef0ba38b",
+                "notedAt": "2026-10-14T22:45:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Marlowe 31/40 — from 4/20 on the first quiz! Wrote 'proud of this' on it and meant it."
+                ]
+              },
+              {
+                "type": "grade",
+                "assignment": "Quiz 1: First Cities",
+                "category": "Quizzes",
+                "score": 4,
+                "maxScore": 20,
+                "pct": 20,
+                "dueDate": "2026-09-11",
+                "classMean": 72.9
+              },
+              {
+                "type": "grade",
+                "assignment": "Unit 1 Test",
+                "category": "Tests",
+                "score": 31,
+                "maxScore": 40,
+                "pct": 77.5,
+                "dueDate": "2026-10-12",
+                "classMean": 87.5
+              }
+            ]
+          },
+          {
+            "title": "The folder arrives",
+            "story": "A week after his mum said his homework was being left in the car, Marlowe turned up on 15 September with the folder and the homework inside it. It was half done, but it was there, and he pretended to hate the sticker he got for it.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "2b0e5b32-2adf-4156-85db-8d9b97ff6e3a",
+                "notedAt": "2026-09-09T19:15:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Marlo's mum emailed — he's been doing homework but leaving it in the car.",
+                  "Suggested a folder that lives in his bag. She's on board."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "028d14f8-d72a-45aa-80dd-adb2810edcf6",
+                "notedAt": "2026-09-15T17:41:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Marlowe had the folder! And the homework was in it! Half done but IN IT. Gave him a sticker which he pretended to hate."
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Best question in the group",
+            "story": "In a September small-group session, Mr. Delacroix said Marlowe had the best question about who Hammurabi's law protected.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "5195ab63-bb5b-4d30-bf38-d53f86b22c0f",
+                "notedAt": "2026-09-21T17:50:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Mr. Delacroix took Marlowe's group and said Marlo actually had the best question about who the law protected."
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Late but good timeline",
+            "story": "Marlowe missed the 25 September Timeline Project deadline. The version he handed in later had the dates in the right order and a picture of the stele he had found, and it scored 80%.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "1511fbb3-fe25-4276-8434-81e2fcc77ad1",
+                "notedAt": "2026-09-25T17:55:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Missing: Marlowe, Alex Marsh.",
+                  "Marlowe's excuse was creative at least."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "77287272-4012-4cca-a0bf-1c88ff51c90d",
+                "notedAt": "2026-09-29T22:40:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "marlow handed in the timeline late but it's actually good like he put the dates in the right order and found a picture of the stele um still needs captions tell him tomorrow"
+                ]
+              },
+              {
+                "type": "grade",
+                "assignment": "Timeline Project",
+                "category": "Projects",
+                "score": 40,
+                "maxScore": 50,
+                "pct": 80,
+                "dueDate": "2026-09-25",
+                "classMean": 83.1
+              }
+            ]
+          },
+          {
+            "title": "Stayed the whole 40 minutes",
+            "story": "On 8 October Marlowe came and stayed for the full 40 minutes.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "86258360-7ab7-401a-bd3a-8550fb420f73",
+                "notedAt": "2026-10-08T22:35:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Marlowe came!",
+                  "Stayed the whole 40 min."
+                ]
+              }
+            ]
+          }
+        ],
+        "strengths": [
+          {
+            "point": "Asks sharp questions in discussion, such as who the law protected.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "5195ab63-bb5b-4d30-bf38-d53f86b22c0f",
+                "notedAt": "2026-09-21T17:50:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Mr. Delacroix took Marlowe's group and said Marlo actually had the best question about who the law protected."
+                ]
+              }
+            ]
+          },
+          {
+            "point": "Responded to the folder system within a week, and homework started arriving.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "2b0e5b32-2adf-4156-85db-8d9b97ff6e3a",
+                "notedAt": "2026-09-09T19:15:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Marlo's mum emailed — he's been doing homework but leaving it in the car.",
+                  "Suggested a folder that lives in his bag. She's on board."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "028d14f8-d72a-45aa-80dd-adb2810edcf6",
+                "notedAt": "2026-09-15T17:41:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Marlowe had the folder! And the homework was in it! Half done but IN IT. Gave him a sticker which he pretended to hate."
+                ]
+              }
+            ]
+          },
+          {
+            "point": "His project work holds up best: the Timeline was put in the right order with a picture he found, and Projects is his strongest scored category over several pieces.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "77287272-4012-4cca-a0bf-1c88ff51c90d",
+                "notedAt": "2026-09-29T22:40:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "marlow handed in the timeline late but it's actually good like he put the dates in the right order and found a picture of the stele um still needs captions tell him tomorrow"
+                ]
+              },
+              {
+                "type": "grade",
+                "assignment": "Timeline Project",
+                "category": "Projects",
+                "score": 40,
+                "maxScore": 50,
+                "pct": 80,
+                "dueDate": "2026-09-25",
+                "classMean": 83.1
+              },
+              {
+                "type": "grades"
+              }
+            ]
+          },
+          {
+            "point": "Takes pride in his work when it goes well, as with the Unit 1 Test.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "3b0277fc-b5e2-40eb-aabe-2bddef0ba38b",
+                "notedAt": "2026-10-14T22:45:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Marlowe 31/40 — from 4/20 on the first quiz! Wrote 'proud of this' on it and meant it."
+                ]
+              }
+            ]
+          }
+        ],
+        "growth": [
+          {
+            "point": "Getting work in complete and on time: the summer reflection is still missing, the homework was half done, and the timeline was late and lacked captions.",
+            "evidence": [
+              {
+                "type": "grade",
+                "assignment": "HW: Summer Reading Reflection",
+                "category": "Homework",
+                "score": null,
+                "maxScore": 10,
+                "pct": null,
+                "dueDate": "2026-09-03",
+                "classMean": 86.7
+              },
+              {
+                "type": "note",
+                "noteId": "028d14f8-d72a-45aa-80dd-adb2810edcf6",
+                "notedAt": "2026-09-15T17:41:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Marlowe had the folder! And the homework was in it! Half done but IN IT. Gave him a sticker which he pretended to hate."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "1511fbb3-fe25-4276-8434-81e2fcc77ad1",
+                "notedAt": "2026-09-25T17:55:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Missing: Marlowe, Alex Marsh.",
+                  "Marlowe's excuse was creative at least."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "77287272-4012-4cca-a0bf-1c88ff51c90d",
+                "notedAt": "2026-09-29T22:40:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "marlow handed in the timeline late but it's actually good like he put the dates in the right order and found a picture of the stele um still needs captions tell him tomorrow"
+                ]
+              }
+            ]
+          },
+          {
+            "point": "Quizzes and homework are his weakest categories, at 52% and 53%.",
+            "evidence": [
+              {
+                "type": "grades"
+              }
+            ]
+          },
+          {
+            "point": "Checking the whole paper before handing it in; he left the back page of Quiz 1 blank.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "bce2f3c7-e624-4f35-a7cb-b975cdbc06b6",
+                "notedAt": "2026-09-11T17:55:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Marlowe 4/20, left the back page blank, said he didn't see it."
+                ]
+              }
+            ]
+          },
+          {
+            "point": "His most recent quiz and presentation scores are still well below the class means.",
+            "evidence": [
+              {
+                "type": "grade",
+                "assignment": "Quiz 3: Sumerian Schools",
+                "category": "Quizzes",
+                "score": 15,
+                "maxScore": 20,
+                "pct": 75,
+                "dueDate": "2026-10-16",
+                "classMean": 87.1
+              },
+              {
+                "type": "grade",
+                "assignment": "Cuneiform Presentation",
+                "category": "Projects",
+                "score": 22,
+                "maxScore": 30,
+                "pct": 73.3,
+                "dueDate": "2026-10-19",
+                "classMean": 89.5
+              }
+            ]
+          }
+        ],
+        "change": [
+          {
+            "point": "Scores rose from 48% over the first half of the period to 73% over the second.",
+            "evidence": [
+              {
+                "type": "grades"
+              }
+            ]
+          },
+          {
+            "point": "His organisation shifted around mid-September, when the bag folder came in.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "7ac652b6-8206-4798-9b3d-1cca3fc7a03a",
+                "notedAt": "2026-09-03T22:40:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Marlowe — no summer reading reflection, no notebook, no pencil. Said it's 'somewhere'. Lending him a pencil until further notice."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "2b0e5b32-2adf-4156-85db-8d9b97ff6e3a",
+                "notedAt": "2026-09-09T19:15:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Marlo's mum emailed — he's been doing homework but leaving it in the car.",
+                  "Suggested a folder that lives in his bag. She's on board."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "028d14f8-d72a-45aa-80dd-adb2810edcf6",
+                "notedAt": "2026-09-15T17:41:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Marlowe had the folder! And the homework was in it! Half done but IN IT. Gave him a sticker which he pretended to hate."
+                ]
+              }
+            ]
+          },
+          {
+            "point": "Quiz scores climbed steadily: 20% on Quiz 1, then 60%, then 75%.",
+            "evidence": [
+              {
+                "type": "grade",
+                "assignment": "Quiz 1: First Cities",
+                "category": "Quizzes",
+                "score": 4,
+                "maxScore": 20,
+                "pct": 20,
+                "dueDate": "2026-09-11",
+                "classMean": 72.9
+              },
+              {
+                "type": "grade",
+                "assignment": "Quiz 2: Hammurabi's Code",
+                "category": "Quizzes",
+                "score": 12,
+                "maxScore": 20,
+                "pct": 60,
+                "dueDate": "2026-09-29",
+                "classMean": 75.7
+              },
+              {
+                "type": "grade",
+                "assignment": "Quiz 3: Sumerian Schools",
+                "category": "Quizzes",
+                "score": 15,
+                "maxScore": 20,
+                "pct": 75,
+                "dueDate": "2026-10-16",
+                "classMean": 87.1
+              }
+            ]
+          },
+          {
+            "point": "By early October he was noticing and handing things over, which a note says he would not have done a month before.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "6d1d14a0-173f-4176-94f3-376d34a8f4ef",
+                "notedAt": "2026-10-07T18:10:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Marlowe noticed it and handed it over, which, a month ago, would not have happened."
+                ]
+              }
+            ]
+          }
+        ],
+        "goals": [
+          {
+            "goal": "Explain how geography shaped where and how the first civilisations grew.",
+            "status": "partly",
+            "point": "The early geography work was weak (rivers homework 50%, map 60%, Quiz 1 20%). The Unit 1 Test at 78% shows he has largely caught up.",
+            "evidence": [
+              {
+                "type": "grade",
+                "assignment": "HW: Why Rivers Mattered",
+                "category": "Homework",
+                "score": 5,
+                "maxScore": 10,
+                "pct": 50,
+                "dueDate": "2026-09-08",
+                "classMean": 81.4
+              },
+              {
+                "type": "grade",
+                "assignment": "Fertile Crescent Map",
+                "category": "Projects",
+                "score": 12,
+                "maxScore": 20,
+                "pct": 60,
+                "dueDate": "2026-09-10",
+                "classMean": 82.1
+              },
+              {
+                "type": "grade",
+                "assignment": "Quiz 1: First Cities",
+                "category": "Quizzes",
+                "score": 4,
+                "maxScore": 20,
+                "pct": 20,
+                "dueDate": "2026-09-11",
+                "classMean": 72.9
+              },
+              {
+                "type": "grade",
+                "assignment": "Unit 1 Test",
+                "category": "Tests",
+                "score": 31,
+                "maxScore": 40,
+                "pct": 77.5,
+                "dueDate": "2026-10-12",
+                "classMean": 87.5
+              }
+            ]
+          },
+          {
+            "goal": "Read a primary source and say who made it, when, and what it was for.",
+            "status": "partly",
+            "point": "He scored 60% on the Source Analysis Worksheet and asked a strong question about who the law protected.",
+            "evidence": [
+              {
+                "type": "grade",
+                "assignment": "Source Analysis Worksheet",
+                "category": "Homework",
+                "score": 6,
+                "maxScore": 10,
+                "pct": 60,
+                "dueDate": "2026-09-22",
+                "classMean": 78.3
+              },
+              {
+                "type": "note",
+                "noteId": "5195ab63-bb5b-4d30-bf38-d53f86b22c0f",
+                "notedAt": "2026-09-21T17:50:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Mr. Delacroix took Marlowe's group and said Marlo actually had the best question about who the law protected."
+                ]
+              }
+            ]
+          },
+          {
+            "goal": "Build an argument from evidence, in discussion and in writing, and change their mind when the evidence says so.",
+            "status": "partly",
+            "point": "He asks probing questions in discussion and scored 73% on the Hammurabi Trial. There is no evidence of him changing his mind in response to evidence.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "5195ab63-bb5b-4d30-bf38-d53f86b22c0f",
+                "notedAt": "2026-09-21T17:50:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Mr. Delacroix took Marlowe's group and said Marlo actually had the best question about who the law protected."
+                ]
+              },
+              {
+                "type": "grade",
+                "assignment": "Hammurabi Trial",
+                "category": "Projects",
+                "score": 22,
+                "maxScore": 30,
+                "pct": 73.3,
+                "dueDate": "2026-10-02",
+                "classMean": 88.6
+              }
+            ]
+          },
+          {
+            "goal": "Write a clear paragraph with a claim, two pieces of evidence, and a sentence that ties them together.",
+            "status": "no_evidence",
+            "point": "",
+            "evidence": []
+          },
+          {
+            "goal": "Work in a group so that everyone in it gets to speak.",
+            "status": "no_evidence",
+            "point": "",
+            "evidence": []
+          }
+        ],
+        "gaps": [
+          {
+            "area": "Nothing recorded since mid-October",
+            "why": "The last note is from 14 October, and no notes cover the Hammurabi unit's later weeks or any of November.",
+            "ask": "How has Marlowe been doing since the Unit 1 Test, especially with the folder and getting homework in?"
+          },
+          {
+            "area": "Writing (paragraph goal)",
+            "why": "There are grades only and no notes about his writing, so the claim-and-evidence paragraph goal has no evidence.",
+            "ask": "When Marlowe writes a paragraph, does he state a claim and back it with evidence?"
+          },
+          {
+            "area": "Group work and letting others speak",
+            "why": "The one group note is about his own question, not about how he works with others.",
+            "ask": "How does Marlowe behave in groups, for example during the Hammurabi Trial: does he make room for others?"
+          },
+          {
+            "area": "What the 7 and 8 October notes refer to",
+            "why": "Both notes are vague: 'noticed it and handed it over', and 'came' and stayed 40 minutes.",
+            "ask": "What did Marlowe hand over on 7 October, and what did he come to on 8 October?"
+          },
+          {
+            "area": "Cuneiform Presentation",
+            "why": "There is a grade only (73% against a class mean of 90%) and no observation behind it.",
+            "ask": "How did Marlowe's Cuneiform Presentation go, and what held the score down?"
+          },
+          {
+            "area": "Quiz 1 retake and the missing summer reflection",
+            "why": "Quiz 1 is still at 20%, and the summer reflection is still missing, with nothing noting a retake or follow-up.",
+            "ask": "Did Marlowe retake Quiz 1 or ever hand in the summer reading reflection?"
+          }
+        ],
+        "coverage": {
+          "label": "well_supported",
+          "notes": 10,
+          "bySource": {
+            "text": 10
+          },
+          "lastNotedAt": "2026-10-14T22:45:00.000Z",
+          "daysSinceLastNote": 26,
+          "longestSilenceDays": 26,
+          "emptyMonths": [
+            "2026-11"
+          ],
+          "grades": 11,
+          "missing": 1,
+          "undatedGrades": false
+        },
+        "grades": {
+          "overall": 65.8,
+          "weighted": true,
+          "count": 11,
+          "missing": 1,
+          "byCategory": [
+            {
+              "category": "Tests",
+              "weight": 30,
+              "count": 1,
+              "missing": 0,
+              "mean": 77.5
+            },
+            {
+              "category": "Projects",
+              "weight": 30,
+              "count": 4,
+              "missing": 0,
+              "mean": 71.7
+            },
+            {
+              "category": "Homework",
+              "weight": 20,
+              "count": 3,
+              "missing": 1,
+              "mean": 53.3
+            },
+            {
+              "category": "Quizzes",
+              "weight": 20,
+              "count": 3,
+              "missing": 0,
+              "mean": 51.7
+            }
+          ],
+          "strongest": "Projects",
+          "weakest": "Quizzes",
+          "trend": {
+            "label": "rising",
+            "from": 48,
+            "to": 73
+          },
+          "biggestWin": {
+            "assignment": "Timeline Project",
+            "pct": 80,
+            "classMean": 83.1
+          },
+          "biggestLoss": {
+            "assignment": "Quiz 1: First Cities",
+            "pct": 20,
+            "classMean": 72.9
+          },
+          "entries": [
+            {
+              "assignment": "HW: Summer Reading Reflection",
+              "category": "Homework",
+              "score": null,
+              "maxScore": 10,
+              "pct": null,
+              "dueDate": "2026-09-03"
+            },
+            {
+              "assignment": "HW: Why Rivers Mattered",
+              "category": "Homework",
+              "score": 5,
+              "maxScore": 10,
+              "pct": 50,
+              "dueDate": "2026-09-08"
+            },
+            {
+              "assignment": "Fertile Crescent Map",
+              "category": "Projects",
+              "score": 12,
+              "maxScore": 20,
+              "pct": 60,
+              "dueDate": "2026-09-10"
+            },
+            {
+              "assignment": "Quiz 1: First Cities",
+              "category": "Quizzes",
+              "score": 4,
+              "maxScore": 20,
+              "pct": 20,
+              "dueDate": "2026-09-11"
+            },
+            {
+              "assignment": "HW: Eye for an Eye",
+              "category": "Homework",
+              "score": 5,
+              "maxScore": 10,
+              "pct": 50,
+              "dueDate": "2026-09-16"
+            },
+            {
+              "assignment": "Source Analysis Worksheet",
+              "category": "Homework",
+              "score": 6,
+              "maxScore": 10,
+              "pct": 60,
+              "dueDate": "2026-09-22"
+            },
+            {
+              "assignment": "Timeline Project",
+              "category": "Projects",
+              "score": 40,
+              "maxScore": 50,
+              "pct": 80,
+              "dueDate": "2026-09-25"
+            },
+            {
+              "assignment": "Quiz 2: Hammurabi's Code",
+              "category": "Quizzes",
+              "score": 12,
+              "maxScore": 20,
+              "pct": 60,
+              "dueDate": "2026-09-29"
+            },
+            {
+              "assignment": "Hammurabi Trial",
+              "category": "Projects",
+              "score": 22,
+              "maxScore": 30,
+              "pct": 73.3,
+              "dueDate": "2026-10-02"
+            },
+            {
+              "assignment": "Unit 1 Test",
+              "category": "Tests",
+              "score": 31,
+              "maxScore": 40,
+              "pct": 77.5,
+              "dueDate": "2026-10-12"
+            },
+            {
+              "assignment": "Quiz 3: Sumerian Schools",
+              "category": "Quizzes",
+              "score": 15,
+              "maxScore": 20,
+              "pct": 75,
+              "dueDate": "2026-10-16"
+            },
+            {
+              "assignment": "Cuneiform Presentation",
+              "category": "Projects",
+              "score": 22,
+              "maxScore": 30,
+              "pct": 73.3,
+              "dueDate": "2026-10-19"
+            }
+          ]
+        }
+      },
+      "createdAt": "2026-11-09T17:56:37.172Z",
+      "periodStart": "2026-09-01",
+      "periodEnd": "2027-06-15"
+    },
+    {
+      "id": "e925d1b9-2611-42b7-be83-a3abad023adc",
+      "studentId": "22222222-2222-4222-8222-222222222206",
+      "version": 1,
+      "model": "claude-opus-5-5",
+      "json": {
+        "overview": "Ember started the year strongly. In the first week her paragraph on why rivers mattered had a clear claim and two pieces of evidence without prompting, and you thought of sharing it as a model. Her September homework scores were all 90% or above, well over the class means. She asked to do the extension reading on Sumerian schools, and her group finished early on 21 September. Early seating notes show her sitting next to a classmate who tends to distract, ignoring him until he gave up.\n\nThe Hammurabi trial at the end of September and start of October was the high point. She was annoyed for about a minute at being given the defence rather than prosecution, then started planning her case. Her closing argument got applause, and the trial scored 30/30. In the week before the Unit 1 Test she ran a review table without being asked, then scored 39/40, losing the one mark on spelling Euphrates. Her last recorded grade, the Cuneiform Presentation on 19 October, was 27/30 (90%), level with the class mean. It is the only grade not above the mean. Around then she said a classmate's work was better than hers.\n\nShe stands at 96% overall. The grade trend is steady, 96% over the first half of the scores and 95% over the second. The thread through the notes is initiative: extension reading, running ahead, running a review table. She is also prepared, with page numbers ready in discussion. There are no notes after 19 October, so the current Hammurabi unit into November is not covered.",
+        "highlights": [
+          {
+            "title": "Applause for her closing argument",
+            "story": "Given the defence in the Hammurabi trial when she wanted prosecution, she was annoyed for about a minute, then planned how to beat her opponent. Her closing argument on 2 October got applause, and the trial scored 30/30.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "b5f9f477-7fd5-4563-99d8-66604b1e9a02",
+                "notedAt": "2026-09-28T17:40:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Em wants it too.",
+                  "Gave Ro prosecution and Em defence — she was annoyed for about a minute then started planning how to destroy him."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "40888b63-15e6-4d01-98f6-116594465149",
+                "notedAt": "2026-10-02T17:58:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Em's closing argument got applause."
+                ]
+              },
+              {
+                "type": "grade",
+                "assignment": "Hammurabi Trial",
+                "category": "Projects",
+                "score": 30,
+                "maxScore": 30,
+                "pct": 100,
+                "dueDate": "2026-10-02",
+                "classMean": 88.6
+              }
+            ]
+          },
+          {
+            "title": "Review table before the unit test",
+            "story": "On 8 October she ran a review table without being asked. She then scored 39/40 on the Unit 1 Test, losing the single mark on spelling Euphrates.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "86258360-7ab7-401a-bd3a-8550fb420f73",
+                "notedAt": "2026-10-08T22:35:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Em ran a review table without being asked."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "3b0277fc-b5e2-40eb-aabe-2bddef0ba38b",
+                "notedAt": "2026-10-14T22:45:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Ember 39/40, lost one on spelling Euphrates, she'll be furious."
+                ]
+              },
+              {
+                "type": "grade",
+                "assignment": "Unit 1 Test",
+                "category": "Tests",
+                "score": 39,
+                "maxScore": 40,
+                "pct": 97.5,
+                "dueDate": "2026-10-12",
+                "classMean": 87.5
+              }
+            ]
+          },
+          {
+            "title": "A model paragraph in week one",
+            "story": "On 3 September her paragraph on why rivers mattered had a clear claim and two pieces of evidence without prompting. You noted asking her to share it as a model.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "c064d0f4-8b2a-4cb9-b11c-ed4605c72b2c",
+                "notedAt": "2026-09-03T17:50:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Em's paragraph on why rivers mattered was the best thing I read today. Clear claim, two pieces of evidence, didn't need prompting. Ask if she'd share it as a model."
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Asked for the extension reading",
+            "story": "On 17 September she asked to do the extension reading on Sumerian schools. She later scored 19/20 on the Sumerian Schools quiz.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "7c053b40-2cce-4862-8634-212723f2fbba",
+                "notedAt": "2026-09-17T17:48:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Em asked if she could do the extension reading on Sumerian schools."
+                ]
+              },
+              {
+                "type": "grade",
+                "assignment": "Quiz 3: Sumerian Schools",
+                "category": "Quizzes",
+                "score": 19,
+                "maxScore": 20,
+                "pct": 95,
+                "dueDate": "2026-10-16",
+                "classMean": 87.1
+              }
+            ]
+          }
+        ],
+        "strengths": [
+          {
+            "point": "Builds and delivers an argument under pressure: her defence closing in the Hammurabi trial got applause and scored 30/30.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "40888b63-15e6-4d01-98f6-116594465149",
+                "notedAt": "2026-10-02T17:58:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Em's closing argument got applause."
+                ]
+              },
+              {
+                "type": "grade",
+                "assignment": "Hammurabi Trial",
+                "category": "Projects",
+                "score": 30,
+                "maxScore": 30,
+                "pct": 100,
+                "dueDate": "2026-10-02",
+                "classMean": 88.6
+              }
+            ]
+          },
+          {
+            "point": "Comes prepared to discussion; on 14 September she had page numbers ready the whole time.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "67e1851b-6488-4857-befe-89e907ce4791",
+                "notedAt": "2026-09-14T18:00:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "ember held her own too had the page numbers ready the whole time"
+                ]
+              }
+            ]
+          },
+          {
+            "point": "Takes initiative: asked for extension reading and ran a review table unprompted.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "7c053b40-2cce-4862-8634-212723f2fbba",
+                "notedAt": "2026-09-17T17:48:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Em asked if she could do the extension reading on Sumerian schools."
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "86258360-7ab7-401a-bd3a-8550fb420f73",
+                "notedAt": "2026-10-08T22:35:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Em ran a review table without being asked."
+                ]
+              }
+            ]
+          },
+          {
+            "point": "Writes a structured paragraph (claim plus two pieces of evidence) without prompting.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "c064d0f4-8b2a-4cb9-b11c-ed4605c72b2c",
+                "notedAt": "2026-09-03T17:50:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Em's paragraph on why rivers mattered was the best thing I read today. Clear claim, two pieces of evidence, didn't need prompting. Ask if she'd share it as a model."
+                ]
+              }
+            ]
+          },
+          {
+            "point": "Grades consistently high: 96% overall, with Tests 98%, Homework 98% and Quizzes 95%.",
+            "evidence": [
+              {
+                "type": "grades"
+              }
+            ]
+          },
+          {
+            "point": "Stays on task beside a distracting classmate, ignoring him until he gives up.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "13df4211-2eb8-4b68-884f-b06e098c96a3",
+                "notedAt": "2026-09-08T17:47:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Ember next to him seems to help, she just ignores him until he gives up."
+                ]
+              }
+            ]
+          }
+        ],
+        "growth": [
+          {
+            "point": "Projects are her lowest category at 93%. The Cuneiform Presentation, at 90%, matched the class mean rather than exceeding it.",
+            "evidence": [
+              {
+                "type": "grades"
+              },
+              {
+                "type": "grade",
+                "assignment": "Cuneiform Presentation",
+                "category": "Projects",
+                "score": 27,
+                "maxScore": 30,
+                "pct": 90,
+                "dueDate": "2026-10-19",
+                "classMean": 89.5
+              }
+            ]
+          },
+          {
+            "point": "She dislikes not getting the role she wants. With the trial defence it lasted about a minute before she adapted.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "b5f9f477-7fd5-4563-99d8-66604b1e9a02",
+                "notedAt": "2026-09-28T17:40:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Em wants it too.",
+                  "Gave Ro prosecution and Em defence — she was annoyed for about a minute then started planning how to destroy him."
+                ]
+              }
+            ]
+          }
+        ],
+        "change": [
+          {
+            "point": "Grades held steady across the period, 96% over the first half of the scores and 95% over the second.",
+            "evidence": [
+              {
+                "type": "grades"
+              }
+            ]
+          },
+          {
+            "point": "Her margin over the class narrowed late on. The early quizzes were 95% against means of 73% and 76%, while in October she scored 95% against 87% on Quiz 3 and 90% against 90% on the Cuneiform Presentation.",
+            "evidence": [
+              {
+                "type": "grade",
+                "assignment": "Quiz 1: First Cities",
+                "category": "Quizzes",
+                "score": 19,
+                "maxScore": 20,
+                "pct": 95,
+                "dueDate": "2026-09-11",
+                "classMean": 72.9
+              },
+              {
+                "type": "grade",
+                "assignment": "Quiz 2: Hammurabi's Code",
+                "category": "Quizzes",
+                "score": 19,
+                "maxScore": 20,
+                "pct": 95,
+                "dueDate": "2026-09-29",
+                "classMean": 75.7
+              },
+              {
+                "type": "grade",
+                "assignment": "Quiz 3: Sumerian Schools",
+                "category": "Quizzes",
+                "score": 19,
+                "maxScore": 20,
+                "pct": 95,
+                "dueDate": "2026-10-16",
+                "classMean": 87.1
+              },
+              {
+                "type": "grade",
+                "assignment": "Cuneiform Presentation",
+                "category": "Projects",
+                "score": 27,
+                "maxScore": 30,
+                "pct": 90,
+                "dueDate": "2026-10-19",
+                "classMean": 89.5
+              }
+            ]
+          }
+        ],
+        "goals": [
+          {
+            "goal": "Explain how geography shaped where and how the first civilisations grew.",
+            "status": "met",
+            "point": "She wrote a clear paragraph on why rivers mattered, scored 100% on the Why Rivers Mattered homework, 90% on the Fertile Crescent Map and 95% on the First Cities quiz.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "c064d0f4-8b2a-4cb9-b11c-ed4605c72b2c",
+                "notedAt": "2026-09-03T17:50:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Em's paragraph on why rivers mattered was the best thing I read today. Clear claim, two pieces of evidence, didn't need prompting. Ask if she'd share it as a model."
+                ]
+              },
+              {
+                "type": "grade",
+                "assignment": "HW: Why Rivers Mattered",
+                "category": "Homework",
+                "score": 10,
+                "maxScore": 10,
+                "pct": 100,
+                "dueDate": "2026-09-08",
+                "classMean": 81.4
+              },
+              {
+                "type": "grade",
+                "assignment": "Fertile Crescent Map",
+                "category": "Projects",
+                "score": 18,
+                "maxScore": 20,
+                "pct": 90,
+                "dueDate": "2026-09-10",
+                "classMean": 82.1
+              },
+              {
+                "type": "grade",
+                "assignment": "Quiz 1: First Cities",
+                "category": "Quizzes",
+                "score": 19,
+                "maxScore": 20,
+                "pct": 95,
+                "dueDate": "2026-09-11",
+                "classMean": 72.9
+              }
+            ]
+          },
+          {
+            "goal": "Read a primary source and say who made it, when, and what it was for.",
+            "status": "partly",
+            "point": "She scored 90% on the Source Analysis Worksheet, but there are no observations of her source reading.",
+            "evidence": [
+              {
+                "type": "grade",
+                "assignment": "Source Analysis Worksheet",
+                "category": "Homework",
+                "score": 9,
+                "maxScore": 10,
+                "pct": 90,
+                "dueDate": "2026-09-22",
+                "classMean": 78.3
+              }
+            ]
+          },
+          {
+            "goal": "Build an argument from evidence, in discussion and in writing, and change their mind when the evidence says so.",
+            "status": "partly",
+            "point": "Strong evidence-based argument in discussion and in the trial: page numbers ready, an applauded closing, 30/30. Nothing yet shows her changing her mind.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "67e1851b-6488-4857-befe-89e907ce4791",
+                "notedAt": "2026-09-14T18:00:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "ember held her own too had the page numbers ready the whole time"
+                ]
+              },
+              {
+                "type": "note",
+                "noteId": "40888b63-15e6-4d01-98f6-116594465149",
+                "notedAt": "2026-10-02T17:58:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Em's closing argument got applause."
+                ]
+              },
+              {
+                "type": "grade",
+                "assignment": "Hammurabi Trial",
+                "category": "Projects",
+                "score": 30,
+                "maxScore": 30,
+                "pct": 100,
+                "dueDate": "2026-10-02",
+                "classMean": 88.6
+              }
+            ]
+          },
+          {
+            "goal": "Write a clear paragraph with a claim, two pieces of evidence, and a sentence that ties them together.",
+            "status": "met",
+            "point": "Her 3 September paragraph had a clear claim and two pieces of evidence without prompting. This rests on one note.",
+            "evidence": [
+              {
+                "type": "note",
+                "noteId": "c064d0f4-8b2a-4cb9-b11c-ed4605c72b2c",
+                "notedAt": "2026-09-03T17:50:00.000Z",
+                "kind": "text",
+                "sourceName": null,
+                "quotes": [
+                  "Em's paragraph on why rivers mattered was the best thing I read today. Clear claim, two pieces of evidence, didn't need prompting. Ask if she'd share it as a model."
+                ]
+              }
+            ]
+          },
+          {
+            "goal": "Work in a group so that everyone in it gets to speak.",
+            "status": "no_evidence",
+            "point": "",
+            "evidence": []
+          }
+        ],
+        "gaps": [
+          {
+            "area": "The current unit, from 20 October onward",
+            "why": "No notes since 19 October and none in November, while the Hammurabi unit is still running.",
+            "ask": "How has Ember been doing in the Hammurabi, law and fairness unit since mid-October?"
+          },
+          {
+            "area": "Making sure everyone in her group gets to speak",
+            "why": "Notes show her running ahead and running a review table, but nothing on whether others in her group got a say.",
+            "ask": "When Ember leads a group, like the review table on 8 October, do the quieter students get to speak?"
+          },
+          {
+            "area": "Writing beyond the first week",
+            "why": "The only note on her paragraph writing is from 3 September.",
+            "ask": "How has Ember's paragraph writing held up since the rivers paragraph, for example in the Timeline Project or test answers?"
+          },
+          {
+            "area": "Reading primary sources",
+            "why": "Grades only, a 90% on the Source Analysis Worksheet, with no notes on how she handles who made a source, when, or why.",
+            "ask": "How did Ember do at identifying who made a source, when, and what it was for in the source-analysis work?"
+          },
+          {
+            "area": "Changing her mind when the evidence says so",
+            "why": "Notes show her arguing strongly but not revising a view. The 16 October comment that a classmate's work was better than hers is the nearest, and it is unclear.",
+            "ask": "Have you seen Ember change her position in a discussion when someone brought better evidence?"
+          },
+          {
+            "area": "Cuneiform Presentation and the showcase",
+            "why": "The presentation was her only grade at the class mean, with no note on it. The 19 October showcase nomination note is unclear about Ember's part.",
+            "ask": "What happened in Ember's Cuneiform Presentation, and is she going to the humanities showcase herself?"
+          }
+        ],
+        "coverage": {
+          "label": "well_supported",
+          "notes": 11,
+          "bySource": {
+            "text": 11
+          },
+          "lastNotedAt": "2026-10-19T17:50:00.000Z",
+          "daysSinceLastNote": 21,
+          "longestSilenceDays": 21,
+          "emptyMonths": [
+            "2026-11"
+          ],
+          "grades": 12,
+          "missing": 0,
+          "undatedGrades": false
+        },
+        "grades": {
+          "overall": 95.7,
+          "weighted": true,
+          "count": 12,
+          "missing": 0,
+          "byCategory": [
+            {
+              "category": "Homework",
+              "weight": 20,
+              "count": 4,
+              "missing": 0,
+              "mean": 97.5
+            },
+            {
+              "category": "Tests",
+              "weight": 30,
+              "count": 1,
+              "missing": 0,
+              "mean": 97.5
+            },
+            {
+              "category": "Quizzes",
+              "weight": 20,
+              "count": 3,
+              "missing": 0,
+              "mean": 95
+            },
+            {
+              "category": "Projects",
+              "weight": 30,
+              "count": 4,
+              "missing": 0,
+              "mean": 93
+            }
+          ],
+          "strongest": "Homework",
+          "weakest": "Projects",
+          "trend": {
+            "label": "steady",
+            "from": 96,
+            "to": 95
+          },
+          "biggestWin": null,
+          "biggestLoss": null,
+          "entries": [
+            {
+              "assignment": "HW: Summer Reading Reflection",
+              "category": "Homework",
+              "score": 10,
+              "maxScore": 10,
+              "pct": 100,
+              "dueDate": "2026-09-03"
+            },
+            {
+              "assignment": "HW: Why Rivers Mattered",
+              "category": "Homework",
+              "score": 10,
+              "maxScore": 10,
+              "pct": 100,
+              "dueDate": "2026-09-08"
+            },
+            {
+              "assignment": "Fertile Crescent Map",
+              "category": "Projects",
+              "score": 18,
+              "maxScore": 20,
+              "pct": 90,
+              "dueDate": "2026-09-10"
+            },
+            {
+              "assignment": "Quiz 1: First Cities",
+              "category": "Quizzes",
+              "score": 19,
+              "maxScore": 20,
+              "pct": 95,
+              "dueDate": "2026-09-11"
+            },
+            {
+              "assignment": "HW: Eye for an Eye",
+              "category": "Homework",
+              "score": 10,
+              "maxScore": 10,
+              "pct": 100,
+              "dueDate": "2026-09-16"
+            },
+            {
+              "assignment": "Source Analysis Worksheet",
+              "category": "Homework",
+              "score": 9,
+              "maxScore": 10,
+              "pct": 90,
+              "dueDate": "2026-09-22"
+            },
+            {
+              "assignment": "Timeline Project",
+              "category": "Projects",
+              "score": 46,
+              "maxScore": 50,
+              "pct": 92,
+              "dueDate": "2026-09-25"
+            },
+            {
+              "assignment": "Quiz 2: Hammurabi's Code",
+              "category": "Quizzes",
+              "score": 19,
+              "maxScore": 20,
+              "pct": 95,
+              "dueDate": "2026-09-29"
+            },
+            {
+              "assignment": "Hammurabi Trial",
+              "category": "Projects",
+              "score": 30,
+              "maxScore": 30,
+              "pct": 100,
+              "dueDate": "2026-10-02"
+            },
+            {
+              "assignment": "Unit 1 Test",
+              "category": "Tests",
+              "score": 39,
+              "maxScore": 40,
+              "pct": 97.5,
+              "dueDate": "2026-10-12"
+            },
+            {
+              "assignment": "Quiz 3: Sumerian Schools",
+              "category": "Quizzes",
+              "score": 19,
+              "maxScore": 20,
+              "pct": 95,
+              "dueDate": "2026-10-16"
+            },
+            {
+              "assignment": "Cuneiform Presentation",
+              "category": "Projects",
+              "score": 27,
+              "maxScore": 30,
+              "pct": 90,
+              "dueDate": "2026-10-19"
+            }
+          ]
+        }
+      },
+      "createdAt": "2026-11-09T17:56:46.882Z",
+      "periodStart": "2026-09-01",
+      "periodEnd": "2027-06-15"
+    }
+  ]
+}

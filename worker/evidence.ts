@@ -54,8 +54,11 @@ const QUIET_DAYS = 30;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const dayOf = (iso: string) => iso.slice(0, 10);
-const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / DAY_MS);
-export const dayAfter = (day: string) => new Date(Date.parse(day) + DAY_MS).toISOString().slice(0, 10);
+export const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / DAY_MS);
+// A day or an instant moved by whole days; the instant keeps its time of day.
+export const shiftIso = (iso: string, days: number) => new Date(Date.parse(iso) + days * DAY_MS).toISOString();
+export const shiftDay = (day: string, days: number) => shiftIso(day, days).slice(0, 10);
+export const dayAfter = (day: string) => shiftDay(day, 1);
 const inRange = (day: string, r: Range) => day >= r.from && day <= r.to;
 // Undated grades (wide grade-book exports rarely carry dates) belong to every range.
 const gradeInRange = (e: GradeEntry, r: Range) => e.dueDate === null || inRange(e.dueDate, r);

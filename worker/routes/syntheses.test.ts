@@ -133,7 +133,7 @@ test("a demo visitor gets three summaries; a cached one is free, and a failed on
   const left = async () => (await demo.json<SessionUser>("/api/auth/me")).demo!.reportsLeft;
 
   await note(1, "2026-09-10");
-  await db.setUsed(demo.userId, { reports: 2 });
+  await db.setUsed(demo.userId, { reports: 3 });
   expect((await post()).status).toBe(201);
   expect(await left()).toBe(0);
   const cached = await post();
@@ -143,10 +143,10 @@ test("a demo visitor gets three summaries; a cached one is free, and a failed on
   await note(2, "2026-09-11");
   const refused = await post();
   expect(refused.status).toBe(403);
-  expect(await refused.json()).toEqual({ error: "The demo allows 3 reports; sign in with Google to use your own classes" });
+  expect(await refused.json()).toEqual({ error: "The demo allows 4 reports; sign in with Google to use your own classes" });
   expect(synthesiseMock).toHaveBeenCalledTimes(1);
 
-  await db.setUsed(demo.userId, { reports: 2 });
+  await db.setUsed(demo.userId, { reports: 3 });
   synthesiseMock.mockRejectedValueOnce(new ModelError("model refused synthesis"));
   expect((await quietErrors(post)).status).toBe(502);
   expect(await left()).toBe(1);
