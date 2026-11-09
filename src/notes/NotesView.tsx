@@ -12,6 +12,7 @@ import { useIsLaptop } from "@/lib/useIsLaptop";
 import { cn } from "@/lib/utils";
 import CaptureCard from "./CaptureCard";
 import { groupByDay } from "./days";
+import NoteMenu from "./NoteMenu";
 import { toPickable, useNotes } from "./notesStore";
 import RecordHome from "./RecordHome";
 import SavedSheet from "./SavedSheet";
@@ -166,6 +167,7 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
                     </span>
                   )
                 }
+                actions={<NoteMenu note={n} />}
               >
                 <Tags note={n} />
               </NoteItem>
