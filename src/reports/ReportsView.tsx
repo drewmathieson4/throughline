@@ -6,19 +6,19 @@ import { api, messageOf } from "../api";
 import { useAllowance } from "../auth/allowanceStore";
 import { useNotes } from "../notes/notesStore";
 import { errorText } from "../ui";
-import ReportPane from "./ReportPane";
+import ReportPane, { type PaneTab } from "./ReportPane";
 import ReportRoster from "./ReportRoster";
 import ReportsControls from "./ReportsControls";
-import { needsRun, runBusy, sameRange, useReports, validRange, type Range } from "./reportsStore";
+import { needsReport, needsRun, runBusy, sameRange, useReports, validRange, type Range } from "./reportsStore";
 import { BackLink, PageTitle } from "@/components/page";
 import { useIsLaptop } from "@/lib/useIsLaptop";
 import { cn } from "@/lib/utils";
 
-// Reports: pick a class and a period, see which students have a summary for it and whether
-// it is still current, make the ones that are missing or out of date, and read one. Each
-// summary is an Opus call, so Generate only appears where the evidence has changed.
-// Laptop: the roster and the open report side by side. Phone: the roster, then the report
-// on its own screen.
+// Reports: pick a class and a period, see which students have evidence gathered for it and
+// whether it is still current, gather what is missing or out of date, write the reports
+// from it, and read or edit one. Evidence and reports are each an Opus call, so the buttons
+// only appear where something is missing. Laptop: the roster and the open student side by
+// side. Phone: the roster, then the student on their own screen.
 
 const STORED_CLASS_KEY = "throughline.classId";
 // Storage can be blocked (private mode, embedded pages); remembering the class is a nicety, not a need.
@@ -74,12 +74,14 @@ function ClassReports({ classes, cls, studentId }: { classes: ClassRow[]; cls: C
   // boxes, so the students queued and the period they are generated for always match.
   const [roster, setRoster] = useState<{ range: Range; rows: SynthesisRosterRow[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Which tab the open student shows; kept here so it survives switching students.
+  const [tab, setTab] = useState<PaneTab>("evidence");
 
   useEffect(() => {
     storeClass(cls.id);
   }, [cls.id]);
 
-  // Refetched after every finished summary or recorded answer (the store's version).
+  // Refetched after every finished summary, written report or recorded answer (the store's version).
   useEffect(() => {
     if (!valid) return;
     // Typing a date fires a fetch per keystroke; only the newest may land.
@@ -110,7 +112,7 @@ function ClassReports({ classes, cls, studentId }: { classes: ClassRow[]; cls: C
   // A student who is not on this roster (they left, or the link is old): back to the class.
   if (studentId && rows && !selected) return <Navigate to={`/reports/${cls.id}`} replace />;
 
-  // A single student: open their report and make it there.
+  // A single student: open them and gather their evidence there.
   async function generateOne(id: string, period: Range) {
     setError(null);
     if (id !== studentId) navigate(`/reports/${cls.id}/${id}`);
@@ -121,12 +123,31 @@ function ClassReports({ classes, cls, studentId }: { classes: ClassRow[]; cls: C
     }
   }
 
+  async function writeOne(row: SynthesisRosterRow) {
+    if (!row.synthesisId) return;
+    setError(null);
+    setTab("report");
+    try {
+      await reports.writeReport(row.studentId, row.synthesisId);
+    } catch (e) {
+      setError(messageOf(e));
+    }
+  }
+
   // A demo visitor's run stops at what they have left.
   function generateClass() {
     if (!roster) return;
     setError(null);
     const ids = roster.rows.filter(needsRun).map((r) => r.studentId);
-    reports.generateClass(cls.id, roster.range, demo ? ids.slice(0, demo.reportsLeft) : ids);
+    reports.generateClass(cls.id, roster.range, demo ? ids.slice(0, demo.evidenceLeft) : ids);
+  }
+
+  function writeClass() {
+    if (!roster) return;
+    setError(null);
+    setTab("report");
+    const targets = roster.rows.filter(needsReport).map((r) => ({ studentId: r.studentId, synthesisId: r.synthesisId! }));
+    reports.writeClass(cls.id, roster.range, demo ? targets.slice(0, demo.reportsLeft) : targets);
   }
 
   const pane = selected && roster && (
@@ -136,9 +157,13 @@ function ClassReports({ classes, cls, studentId }: { classes: ClassRow[]; cls: C
       range={roster.range}
       classId={cls.id}
       colour={colour}
+      tab={tab}
+      onTab={setTab}
       running={reports.running.has(selected.studentId)}
+      writing={reports.writing.has(selected.studentId)}
       disabled={busy || !ready}
       onGenerate={(period) => generateOne(selected.studentId, period)}
+      onWrite={() => writeOne(selected)}
       onRecorded={reports.refresh}
     />
   );
@@ -163,9 +188,11 @@ function ClassReports({ classes, cls, studentId }: { classes: ClassRow[]; cls: C
         range={range}
         onRange={(r) => reports.setRange(cls.id, r)}
         pending={(rows ?? []).filter(needsRun).length}
+        pendingReports={(rows ?? []).filter(needsReport).length}
         ready={ready}
         run={run}
         onGenerateClass={generateClass}
+        onWriteClass={writeClass}
       />
       {errorLine}
       {/* Side by side from lg; a narrow laptop window stacks them. */}

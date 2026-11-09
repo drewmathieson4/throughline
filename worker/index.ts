@@ -10,6 +10,7 @@ import documents from "./routes/documents";
 import grades from "./routes/grades";
 import materials from "./routes/materials";
 import notes from "./routes/notes";
+import reports from "./routes/reports";
 import students from "./routes/students";
 import syntheses from "./routes/syntheses";
 
@@ -27,6 +28,7 @@ app.route("/api/documents", documents);
 app.route("/api/grades", grades);
 app.route("/api/materials", materials);
 app.route("/api/notes", notes);
+app.route("/api/reports", reports);
 app.route("/api/students", students);
 app.route("/api/syntheses", syntheses);
 

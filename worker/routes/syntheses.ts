@@ -1,14 +1,15 @@
 // Syntheses: one student's structured summary for one date range, made by Opus from their
-// notes, grades and the course's goals (worker/evidence.ts, worker/synthesis-model.ts). An
+// notes, grades and the course's goals (worker/evidence.ts, worker/synthesis-model.ts). The
+// screens call it the evidence; the report written from it lives in routes/reports.ts. An
 // Opus call costs real money, so a saved summary is served again until the evidence it read
 // changes; the Reports tab only offers Generate when it has. See DECISIONS.md.
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { and, eq, getTableColumns, inArray } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, inArray } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "../db/schema";
 import type { SynthesisRow } from "../db/schema";
-import type { UserEnv } from "../db/client";
+import type { Db, UserEnv } from "../db/client";
 import type { SynthesisResult, SynthesisRosterRow, SynthesisStatus, SynthesisView } from "../api-types";
 import { notFound, ownedClasses, requireClass, requireStudent } from "../db/helpers";
 import { reserved } from "../demo";
@@ -31,32 +32,50 @@ const byName = new Intl.Collator("en");
 
 const syntheses = new Hono<UserEnv>();
 
+// The newest report written from each of the given summaries.
+async function newestReports(db: Db, synthesisIds: string[]): Promise<Map<string, string>> {
+  if (synthesisIds.length === 0) return new Map();
+  const rows = await db
+    .select({ id: schema.reports.id, synthesisId: schema.reports.synthesisId })
+    .from(schema.reports)
+    .where(inArray(schema.reports.synthesisId, synthesisIds))
+    .orderBy(desc(schema.reports.createdAt));
+  const newest = new Map<string, string>();
+  for (const r of rows) if (!newest.has(r.synthesisId)) newest.set(r.synthesisId, r.id);
+  return newest;
+}
+
 // GET /api/syntheses?classId=…&from=…&to=… → one row per student still in the class: whether
-// a summary exists for exactly this range and whether the evidence has changed since.
-// Hashing every student's evidence is a few dozen small JSON strings; no model is called.
+// a summary exists for exactly this range, whether the evidence has changed since, and the
+// report written from it. Hashing every student's evidence is a few dozen small JSON
+// strings; no model is called.
 syntheses.get("/", validate("query", listQuery), async (c) => {
   const { classId, from, to } = c.req.valid("query");
   await requireClass(c.var.db, c.var.user.id, classId);
   const loaded = await loadEvidence(c.var.db, classId, { from, to });
   const day = todayUtc();
+  const students = loaded.students.filter((s) => !s.leftAt);
+  const reports = await newestReports(
+    c.var.db,
+    students.flatMap((s) => loaded.latest(s.id)?.id ?? []),
+  );
   const rows = await Promise.all(
-    loaded.students
-      .filter((s) => !s.leftAt)
-      .map(async (s): Promise<SynthesisRosterRow> => {
-        const rows = loaded.rowsFor(s);
-        const evidence = buildEvidence(rows, day);
-        const saved = loaded.latest(s.id);
-        const status: SynthesisStatus = evidence.empty ? "empty" : !saved ? "none" : saved.inputHash === (await inputHash(evidence)) ? "current" : "stale";
-        return {
-          studentId: s.id,
-          firstName: s.firstName,
-          lastName: s.lastName,
-          status,
-          synthesisId: saved?.id ?? null,
-          createdAt: saved?.createdAt ?? null,
-          newNotes: saved ? rows.notes.filter((n) => n.createdAt > saved.createdAt).length : 0,
-        };
-      }),
+    students.map(async (s): Promise<SynthesisRosterRow> => {
+      const rows = loaded.rowsFor(s);
+      const evidence = buildEvidence(rows, day);
+      const saved = loaded.latest(s.id);
+      const status: SynthesisStatus = evidence.empty ? "empty" : !saved ? "none" : saved.inputHash === (await inputHash(evidence)) ? "current" : "stale";
+      return {
+        studentId: s.id,
+        firstName: s.firstName,
+        lastName: s.lastName,
+        status,
+        synthesisId: saved?.id ?? null,
+        createdAt: saved?.createdAt ?? null,
+        newNotes: saved ? rows.notes.filter((n) => n.createdAt > saved.createdAt).length : 0,
+        reportId: saved ? (reports.get(saved.id) ?? null) : null,
+      };
+    }),
   );
   rows.sort((a, b) => byName.compare(a.lastName, b.lastName) || byName.compare(a.firstName, b.firstName));
   return c.json(rows satisfies SynthesisRosterRow[]);
@@ -86,7 +105,7 @@ syntheses.post("/", validate("json", createBody), async (c) => {
   const client = access.client;
   let result: Awaited<ReturnType<typeof synthesise>>;
   try {
-    result = await reserved(db, c.var.user, "reports", 1, () => synthesise({ evidence, client }));
+    result = await reserved(db, c.var.user, "evidence", 1, () => synthesise({ evidence, client }));
   } catch (err) {
     if (err instanceof HTTPException) throw err; // a demo visitor with no summaries left
     console.error("synthesis failed for student", studentId, err);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runQueue, wholeYear } from "./reportsStore";
+import { needsReport, runQueue, wholeYear } from "./reportsStore";
 
 describe("wholeYear", () => {
   it("uses the class's term when it has one", () => {
@@ -14,6 +14,17 @@ describe("wholeYear", () => {
 
   it("fills only the missing end", () => {
     expect(wholeYear({ termStart: "2026-08-25", termEnd: null }, new Date(2026, 9, 23))).toEqual({ from: "2026-08-25", to: "2027-06-30" });
+  });
+});
+
+describe("needsReport", () => {
+  const row = { firstName: "A", lastName: "B", studentId: "s", status: "current" as const, createdAt: null, newNotes: 0 };
+  it("wants a report only where there is evidence and no report written from it", () => {
+    expect(needsReport({ ...row, synthesisId: "x", reportId: null })).toBe(true);
+    expect(needsReport({ ...row, synthesisId: "x", reportId: "r" })).toBe(false);
+    expect(needsReport({ ...row, synthesisId: null, reportId: null, status: "none" })).toBe(false);
+    // Stale evidence still has a report; the pane says to regenerate first.
+    expect(needsReport({ ...row, synthesisId: "x", reportId: "r", status: "stale" })).toBe(false);
   });
 });
 

@@ -21,9 +21,10 @@ import templateJson from "./demo-template.json";
 
 export const DEMO_SESSION_DAYS = 7;
 // Per visitor: notes created (typed, spoken or cut from a document; a course document counts
-// one) and summaries that called Opus. A summary served from the cache is free. Four summaries
-// is the half of the template that has none saved, so a visitor can finish the class.
-export const DEMO_LIMITS = { notes: 30, reports: 4 } as const;
+// one), evidence summaries that called Opus (one served from the cache is free; four is the
+// half of the template that has none saved, so a visitor can finish the class), and reports
+// written (four: one per saved summary the template ships with).
+export const DEMO_LIMITS = { notes: 30, evidence: 4, reports: 4 } as const;
 export type Allowance = keyof typeof DEMO_LIMITS;
 // Visitors with a live session at once. Beyond this the demo says it is busy: the per-visitor
 // caps bound one visitor, this bounds all of them.
@@ -106,6 +107,7 @@ export async function cloneDemo(db: Db): Promise<User> {
     lastSigninAt: now,
     demo: 1,
     demoNotesUsed: 0,
+    demoEvidenceUsed: 0,
     demoReportsUsed: 0,
     aiSpentMicro: 0,
   };
@@ -198,10 +200,11 @@ export async function cloneDemo(db: Db): Promise<User> {
   return user;
 }
 
-// The users column that counts each kind.
-const USED = { notes: "demoNotesUsed", reports: "demoReportsUsed" } as const satisfies Record<Allowance, keyof User>;
+// The users column that counts each kind, and the words for the limit.
+const USED = { notes: "demoNotesUsed", evidence: "demoEvidenceUsed", reports: "demoReportsUsed" } as const satisfies Record<Allowance, keyof User>;
+const LABEL = { notes: "notes", evidence: "evidence summaries", reports: "reports" } as const satisfies Record<Allowance, string>;
 const capReached = (kind: Allowance) =>
-  new HTTPException(403, { message: `The demo allows ${DEMO_LIMITS[kind]} ${kind}; sign in with Google to use your own classes` });
+  new HTTPException(403, { message: `The demo allows ${DEMO_LIMITS[kind]} ${LABEL[kind]}; sign in with Google to use your own classes` });
 
 // Take `n` of a demo visitor's allowance, or 403 when it would go over. The check and the
 // count are one statement, so two requests at the limit cannot both get through. Nothing
@@ -256,7 +259,13 @@ export function assertAllowance(user: User, kind: Allowance): void {
 
 // What is left, for /api/auth/me. Null for a teacher.
 export const allowanceOf = (user: User): DemoAllowance | null =>
-  user.demo ? { notesLeft: Math.max(0, DEMO_LIMITS.notes - user.demoNotesUsed), reportsLeft: Math.max(0, DEMO_LIMITS.reports - user.demoReportsUsed) } : null;
+  user.demo
+    ? {
+        notesLeft: Math.max(0, DEMO_LIMITS.notes - user.demoNotesUsed),
+        evidenceLeft: Math.max(0, DEMO_LIMITS.evidence - user.demoEvidenceUsed),
+        reportsLeft: Math.max(0, DEMO_LIMITS.reports - user.demoReportsUsed),
+      }
+    : null;
 
 // A session of this user's that has not expired.
 const liveSession = (db: Db) =>
@@ -275,8 +284,8 @@ export async function liveDemoCount(db: Db): Promise<number> {
 }
 
 // Delete demo users, with everything they own. Notes and classes go first: owner_id points at
-// users without a cascade. Deleting a class takes its students, grades, materials, tags and
-// summaries; deleting a user takes its sessions.
+// users without a cascade. Deleting a class takes its students, grades, materials, tags,
+// summaries and reports; deleting a user takes its sessions.
 function deleteDemoUsers(db: Db, which: ReturnType<typeof and>) {
   const gone = db.select({ id: schema.users.id }).from(schema.users).where(which);
   return db.batch([

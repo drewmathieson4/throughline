@@ -129,7 +129,7 @@ test("bad ranges are 400s; an unknown student or class is a 404", async () => {
   expect((await db.request(`/api/syntheses?${new URLSearchParams({ classId: CLASS_ID, from: "2026-12-01", to: "2026-09-01" })}`)).status).toBe(400);
 });
 
-test("a demo visitor gets three summaries; a cached one is free, and a failed one is given back", async () => {
+test("a demo visitor gets four evidence summaries; a cached one is free, and a failed one is given back", async () => {
   const demo = await db.startDemo();
   const [cls] = await demo.json<{ id: string }[]>("/api/classes");
   const [student] = await demo.json<{ id: string }[]>(`/api/students?classId=${cls!.id}`);
@@ -139,10 +139,10 @@ test("a demo visitor gets three summaries; a cached one is free, and a failed on
       db.env.DB.prepare("INSERT INTO note_students (note_id, student_id, quotes) VALUES (?, ?, ?)").bind(NOTE_ID(n), student!.id, JSON.stringify(["Spoke up."])),
     ]);
   const post = () => app.request("/api/syntheses", signedIn(jsonInit("POST", { studentId: student!.id, ...RANGE }), { token: demo.token }), keyed());
-  const left = async () => (await demo.json<SessionUser>("/api/auth/me")).demo!.reportsLeft;
+  const left = async () => (await demo.json<SessionUser>("/api/auth/me")).demo!.evidenceLeft;
 
   await note(1, "2026-09-10");
-  await db.setUsed(demo.userId, { reports: 3 });
+  await db.setUsed(demo.userId, { evidence: 3 });
   expect((await post()).status).toBe(201);
   expect(await left()).toBe(0);
   const cached = await post();
@@ -152,10 +152,10 @@ test("a demo visitor gets three summaries; a cached one is free, and a failed on
   await note(2, "2026-09-11");
   const refused = await post();
   expect(refused.status).toBe(403);
-  expect(await refused.json()).toEqual({ error: "The demo allows 4 reports; sign in with Google to use your own classes" });
+  expect(await refused.json()).toEqual({ error: "The demo allows 4 evidence summaries; sign in with Google to use your own classes" });
   expect(synthesiseMock).toHaveBeenCalledTimes(1);
 
-  await db.setUsed(demo.userId, { reports: 3 });
+  await db.setUsed(demo.userId, { evidence: 3 });
   synthesiseMock.mockRejectedValueOnce(new ModelError("model refused synthesis"));
   expect((await quietErrors(post)).status).toBe(502);
   expect(await left()).toBe(1);

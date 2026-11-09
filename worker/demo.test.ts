@@ -168,13 +168,16 @@ test("reserve lets exactly one of two requests at the limit through, refund give
   const demo = await db.startDemo();
   const client = drizzle(db.env.DB, { schema });
   const visitor = { id: demo.userId, demo: 1 } as User;
-  await db.setUsed(demo.userId, { reports: DEMO_LIMITS.reports - 1 });
-  const results = await Promise.allSettled([reserve(client, visitor, "reports"), reserve(client, visitor, "reports")]);
+  await db.setUsed(demo.userId, { evidence: DEMO_LIMITS.evidence - 1 });
+  const results = await Promise.allSettled([reserve(client, visitor, "evidence"), reserve(client, visitor, "evidence")]);
   expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
-  expect(await count("SELECT demo_reports_used AS n FROM users WHERE id = ?", demo.userId)).toBe(DEMO_LIMITS.reports);
-  await refund(client, visitor, "reports");
+  expect(await count("SELECT demo_evidence_used AS n FROM users WHERE id = ?", demo.userId)).toBe(DEMO_LIMITS.evidence);
+  await refund(client, visitor, "evidence");
+  await expect(reserve(client, visitor, "evidence")).resolves.toBeUndefined();
+  await expect(reserve(client, visitor, "evidence")).rejects.toMatchObject({ status: 403 });
+  // Each kind has its own counter.
   await expect(reserve(client, visitor, "reports")).resolves.toBeUndefined();
-  await expect(reserve(client, visitor, "reports")).rejects.toMatchObject({ status: 403 });
+  expect(await count("SELECT demo_reports_used AS n FROM users WHERE id = ?", demo.userId)).toBe(1);
 
   const teacher = { id: DEV_USER_ID, demo: 0 } as User;
   await reserve(client, teacher, "notes", 1000);

@@ -39,3 +39,20 @@ test("each teacher sees only their own classes, and a new class belongs to whoev
   expect((await db.json<ClassRow[]>("/api/classes")).map((c) => c.id)).not.toContain(made.id);
   expect((await db.json<ClassRow[]>("/api/classes", undefined, "other")).map((c) => c.id)).toContain(made.id);
 });
+
+test("a class's report settings start empty, are written whole, and are checked", async () => {
+  const url = `/api/classes/${SEED_CLASS_ID}/settings`;
+  expect(await db.json(url)).toEqual({ reportRules: null, styleSamples: null });
+  const first = { reportRules: { sentences: 5, avoid: [" always "], notes: "Warm." }, styleSamples: "  Rowan has had a strong term.  " };
+  expect(await db.json(url, jsonInit("PUT", first))).toEqual({ reportRules: { sentences: 5, avoid: ["always"], notes: "Warm." }, styleSamples: "Rowan has had a strong term." });
+  // The second write replaces the first; blank samples read as none.
+  expect(await db.json(url, jsonInit("PUT", { reportRules: { avoid: [] }, styleSamples: "   " }))).toEqual({ reportRules: { avoid: [] }, styleSamples: null });
+  expect(await db.json(url, jsonInit("PUT", { reportRules: null, styleSamples: null }))).toEqual({ reportRules: null, styleSamples: null });
+
+  for (const body of [{}, { reportRules: { sentences: 1 }, styleSamples: null }, { reportRules: { sentences: 13 }, styleSamples: null }, { reportRules: { bogus: 1 }, styleSamples: null }, { reportRules: null, styleSamples: "x".repeat(10_001) }, { reportRules: { avoid: [""] }, styleSamples: null }]) {
+    expect((await db.request(url, jsonInit("PUT", body))).status).toBe(400);
+  }
+  expect((await db.request(`/api/classes/${OTHER_CLASS_ID}/settings`)).status).toBe(404);
+  expect((await db.request(`/api/classes/${OTHER_CLASS_ID}/settings`, jsonInit("PUT", first))).status).toBe(404);
+  expect((await db.request(`/api/classes/${OTHER_CLASS_ID}/settings`, undefined, "other")).status).toBe(200);
+});

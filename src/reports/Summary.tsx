@@ -10,9 +10,9 @@ import { useAllowance } from "../auth/allowanceStore";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-// One student's structured summary: a short narrative of the period, then the highlights and
-// themes, each point with its sources under it, and last the gaps, so the teacher reads the
-// whole picture before adding context. The teacher writes the report; this is the brief.
+// One student's evidence: a short narrative of the period, then the highlights and themes,
+// each point with its sources under it, and last the gaps, so the teacher reads the whole
+// picture before adding context. The report (Report.tsx) is written from this.
 
 const MAX_ANSWER_MS = 2 * 60 * 1000;
 

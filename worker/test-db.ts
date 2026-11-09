@@ -137,8 +137,14 @@ export function setupTestDb() {
       return { userId, token, request: (url: string, init?: RequestInit) => request(url, init, who), json: <T>(url: string, init?: RequestInit) => json<T>(url, init, who) };
     },
     // Spend some of a demo visitor's allowance directly, for tests at the limit.
-    setUsed: (userId: string, used: { notes?: number; reports?: number }) =>
-      prepare("UPDATE users SET demo_notes_used = coalesce(?, demo_notes_used), demo_reports_used = coalesce(?, demo_reports_used) WHERE id = ?", used.notes ?? null, used.reports ?? null, userId).run(),
+    setUsed: (userId: string, used: { notes?: number; evidence?: number; reports?: number }) =>
+      prepare(
+        "UPDATE users SET demo_notes_used = coalesce(?, demo_notes_used), demo_evidence_used = coalesce(?, demo_evidence_used), demo_reports_used = coalesce(?, demo_reports_used) WHERE id = ?",
+        used.notes ?? null,
+        used.evidence ?? null,
+        used.reports ?? null,
+        userId,
+      ).run(),
     // Set what an account has spent of its AI allowance, in micro-dollars, for tests at the cap.
     setSpent: (userId: string, micro: number) => prepare("UPDATE users SET ai_spent_micro = ? WHERE id = ?", micro, userId).run(),
     // Raw inserts for tests that need rows without going through tagging.
@@ -179,6 +185,9 @@ export function setupTestDb() {
         JSON.stringify(json),
         createdAt,
       ),
+    // A report written from a saved summary, untouched unless editedText is given.
+    insertReport: (id: string, synthesisId: string, generatedText: string, editedText: string | null = null, createdAt = "2026-10-21T00:00:00.000Z") =>
+      prepare("INSERT INTO reports (id, synthesis_id, model, generated_text, edited_text, created_at) VALUES (?, ?, 'claude-opus-5-5', ?, ?, ?)", id, synthesisId, generatedText, editedText, createdAt),
   };
 }
 
