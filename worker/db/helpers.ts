@@ -47,6 +47,21 @@ export async function requireNote(db: Db, userId: string, noteId: string): Promi
 // classes. The predicate is for routes that fold the check into their own statement.
 export const ownedStudent = (db: Db, userId: string, studentId: string) => and(eq(schema.students.id, studentId), inArray(schema.students.classId, ownedClasses(db, userId)));
 
+// A report the teacher owns, through its summary's student's class. A predicate, so GET and
+// PATCH fold it into their own statement and a miss reads as not found.
+export const ownedReport = (db: Db, userId: string, reportId: string) =>
+  and(
+    eq(schema.reports.id, reportId),
+    inArray(
+      schema.reports.synthesisId,
+      db
+        .select({ id: schema.syntheses.id })
+        .from(schema.syntheses)
+        .innerJoin(schema.students, eq(schema.students.id, schema.syntheses.studentId))
+        .where(inArray(schema.students.classId, ownedClasses(db, userId))),
+    ),
+  );
+
 export async function requireStudent(db: Db, userId: string, studentId: string): Promise<{ id: string; classId: string }> {
   const row = await db.select({ id: schema.students.id, classId: schema.students.classId }).from(schema.students).where(ownedStudent(db, userId, studentId)).get();
   if (!row) throw notFound("student");

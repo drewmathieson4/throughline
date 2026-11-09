@@ -7,6 +7,9 @@ export const caption = "text-xs font-extrabold tracking-[.06em] text-muted-foreg
 export const chipOn = "border-primary bg-primary text-primary-foreground";
 export const chipOff = "border-input bg-background text-secondary-foreground hover:bg-muted";
 export const chipRow = "-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 py-0.5 [scrollbar-width:none] md:mx-0 md:mt-[22px] md:flex-wrap md:px-0";
+// A search field: the bar with its icon, and the bare input inside it.
+export const searchBar = "flex min-h-[46px] items-center gap-2 rounded-[14px] bg-muted px-3.5 text-muted-foreground";
+export const searchInput = "min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none";
 
 export const dateTimeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 export const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
@@ -15,6 +18,10 @@ export const shortDateFormat = new Intl.DateTimeFormat(undefined, { month: "shor
 // A calendar day (YYYY-MM-DD, or the date part of a timestamp) read as local midnight, so it
 // shows as that day; new Date("2026-09-02") is UTC midnight, the day before west of Greenwich.
 export const calendarDay = (iso: string, format = dateFormat) => format.format(new Date(`${iso.slice(0, 10)}T00:00:00`));
+export const pad2 = (n: number) => String(n).padStart(2, "0");
+// A local calendar day as YYYY-MM-DD, built from the parts rather than a locale format so the
+// server's date check cannot trip on an ICU quirk. Local, not UTC: at 7pm it is still today.
+export const localDay = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 
 export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 // What a demo visitor has left: "12 notes · 2 evidence · 4 reports left".
@@ -31,5 +38,5 @@ export const waitingToUpload = (n: number) => `${plural(n, "note")} waiting to u
 // A recording's length as m:ss.
 export const mmss = (ms: number) => {
   const s = Math.floor(ms / 1000);
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  return `${Math.floor(s / 60)}:${pad2(s % 60)}`;
 };

@@ -94,21 +94,18 @@ export default function ReportsControls({
           Whole year
         </button>
         <span className="flex-1" />
-        {capped || (cappedReports && count === 0) ? (
-          <CappedNotice className="min-h-11" />
-        ) : (
-          <>
-            <Button type="button" className="min-h-11" disabled={!validRange(range) || !ready || busy || count === 0} onClick={onGenerateClass}>
-              <Sparkles aria-hidden />
-              {busy ? `${verb} ${busyRun.done} of ${busyRun.total}…` : `Gather evidence (${count})`}
-            </Button>
-            {!cappedReports && (
-              <Button type="button" variant="soft" className="min-h-11" disabled={!validRange(range) || !ready || busy || reportCount === 0} onClick={onWriteClass}>
-                <PenLine aria-hidden />
-                {`Write reports (${reportCount})`}
-              </Button>
-            )}
-          </>
+        {(capped || cappedReports) && <CappedNotice className="min-h-11" />}
+        {!capped && (
+          <Button type="button" className="min-h-11" disabled={!validRange(range) || !ready || busy || count === 0} onClick={onGenerateClass}>
+            <Sparkles aria-hidden />
+            {busy ? `${verb} ${busyRun.done} of ${busyRun.total}…` : `Gather evidence (${count})`}
+          </Button>
+        )}
+        {!cappedReports && (
+          <Button type="button" variant="soft" className="min-h-11" disabled={!validRange(range) || !ready || busy || reportCount === 0} onClick={onWriteClass}>
+            <PenLine aria-hidden />
+            {`Write reports (${reportCount})`}
+          </Button>
         )}
       </div>
       {!validRange(range) && <p className={cn("mt-2", errorText)}>Pick a start date on or before the end date.</p>}

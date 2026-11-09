@@ -6,13 +6,12 @@ import { daysBetween, shiftDay, todayUtc } from "./evidence";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./db/schema";
 import { TEMPLATE_QUERIES } from "../scripts/demo/template-sql.ts";
-import { CLASS_C_ID, DEV_USER_ID, MENTION_ID, NOTE_ID, PERIOD_3_COUNT, SEED_CLASS_ID as CLASS_ID, STUDENT, setupTestDb } from "./test-db";
+import { CLASS_C_ID, DEV_USER_ID, MENTION_ID, NOTE_ID, PERIOD_3_COUNT, SEED_CLASS_ID as CLASS_ID, STUDENT, SYNTHESIS_ID, setupTestDb } from "./test-db";
 
 const db = setupTestDb();
 const RANGE = { from: "2026-09-01", to: "2027-06-15" };
 const MATERIAL_ID = "55555555-5555-4555-8555-555555555501";
 const GRADE_ID = (n: number) => `66666666-6666-4666-8666-6666666666${String(n).padStart(2, "0")}`;
-const SYNTHESIS_ID = (n: number) => `77777777-7777-4777-8777-7777777777${String(n).padStart(2, "0")}`;
 const at = (day: string) => `${day}T15:00:00.000Z`;
 const count = async (sql: string, ...binds: unknown[]) => (await db.env.DB.prepare(sql).bind(...binds).first<{ n: number }>())!.n;
 

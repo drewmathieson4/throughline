@@ -3,7 +3,7 @@ import { Ellipsis } from "lucide-react";
 import { toast } from "sonner";
 import type { NoteWithTags, TaggedNoteResponse } from "../../worker/api-types";
 import { api, jsonInit } from "../api";
-import { errorText } from "../ui";
+import { errorText, localDay, pad2 } from "../ui";
 import { useAction } from "../useAction";
 import { Panel } from "@/components/Panel";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,7 @@ import { useNotes } from "./notesStore";
 // What a datetime-local input shows for an instant: local wall-clock time to the minute.
 function toLocalInput(iso: string) {
   const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${localDay(d)}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
 // The "…" on a note card: Edit opens a window over the text and the date; Delete takes the

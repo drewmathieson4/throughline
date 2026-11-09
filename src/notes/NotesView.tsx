@@ -6,7 +6,7 @@ import type { ClassRow, NoteKind } from "../../worker/db/schema";
 import type { NoteWithTags } from "../../worker/api-types";
 import NoteItem from "../NoteItem";
 import { kinds } from "../noteKinds";
-import { chipOff, chipOn, chipRow, errorText, waitingToUpload } from "../ui";
+import { chipOff, chipOn, chipRow, errorText, searchBar, searchInput, waitingToUpload } from "../ui";
 import { BackLink, PageTitle } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { useIsLaptop } from "@/lib/useIsLaptop";
@@ -140,7 +140,7 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
       {error && <p className={`mt-4 ${errorText}`}>{error}</p>}
 
       {all.length > 0 && (
-        <label className="mt-4 flex min-h-[46px] items-center gap-2 rounded-[14px] bg-muted px-3.5 text-muted-foreground md:mt-[22px]">
+        <label className={cn("mt-4 md:mt-[22px]", searchBar)}>
           <Search className="size-4 flex-none" aria-hidden />
           <input
             type="search"
@@ -148,7 +148,7 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
             placeholder="Search notes"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none [&::-webkit-search-cancel-button]:hidden"
+            className={cn(searchInput, "[&::-webkit-search-cancel-button]:hidden")}
           />
           {searching && (
             <button type="button" aria-label="Clear search" onClick={() => setQuery("")} className="-mr-1.5 inline-flex size-8 items-center justify-center rounded-full hover:bg-background">

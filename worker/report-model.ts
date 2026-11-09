@@ -10,7 +10,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import type { Citation, GradeSummary, ReportRules, Synthesis } from "./api-types";
-import type { Range } from "./evidence";
+import { pct, type Range } from "./evidence";
 import { ModelError, OPUS_MODEL, parsedOutput, wrapData } from "./model";
 
 export const REPORT_SYSTEM_PROMPT = `You write the comment that goes on a student's report card, for the student's parents, from the teacher's evidence summary. The teacher edits it before it goes out, so write the comment they would want to send, not a draft with options.
@@ -54,7 +54,6 @@ export type ReportInput = {
 const outputSchema = z.object({ report: z.string().describe("The comment: one paragraph, no heading, no salutation, no sign-off") });
 
 const monthOf = (iso: string) => new Date(iso.slice(0, 10) + "T00:00:00Z").toLocaleDateString("en-GB", { month: "long", timeZone: "UTC" });
-const pct = (n: number) => `${Math.round(n)}%`;
 
 // One citation as a line the model can read: the teacher's words with their month, or a grade.
 // A note's id is never written out.

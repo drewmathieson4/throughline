@@ -4,7 +4,7 @@ import type { ClassSettingsView, ReportView, SessionUser, Synthesis, SynthesisRo
 import { ModelError } from "../model";
 import { writeReport } from "../report-model";
 import { ACCOUNT_CAP_MICRO, TOTAL_CAP_MICRO } from "../spend";
-import { DEV_EMAIL, DEV_USER_ID, OTHER_CLASS_ID, OTHER_STUDENT_ID, OTHER_USER_ID, SEED_CLASS_ID as CLASS_ID, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb, signedIn } from "../test-db";
+import { DEV_EMAIL, DEV_USER_ID, OTHER_CLASS_ID, OTHER_STUDENT_ID, OTHER_USER_ID, REPORT_ID, SEED_CLASS_ID as CLASS_ID, STUDENT, SYNTHESIS_ID, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb, signedIn } from "../test-db";
 
 // The Opus call is stubbed: route tests never call the API.
 vi.mock(import("../report-model"), async (importOriginal) => ({ ...(await importOriginal()), writeReport: vi.fn() }));
@@ -18,8 +18,6 @@ const db = setupTestDb();
 const keyed = (): Env => ({ ...db.env, ANTHROPIC_API_KEY: "test-key" });
 
 const RANGE = { from: "2026-09-01", to: "2026-12-19" };
-const SYNTHESIS_ID = (n: number) => `77777777-7777-4777-8777-7777777777${String(n).padStart(2, "0")}`;
-const REPORT_ID = (n: number) => `88888888-8888-4888-8888-8888888888${String(n).padStart(2, "0")}`;
 const summary: Synthesis = {
   overview: "Steady term.",
   highlights: [],

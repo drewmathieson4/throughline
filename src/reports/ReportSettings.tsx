@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ClassSettingsView, ReportRules } from "../../worker/api-types";
 import { api, jsonInit, messageOf } from "../api";
 import { errorText } from "../ui";
+import { useAutosave } from "../useAutosave";
 import { Panel } from "@/components/Panel";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,8 +13,6 @@ import { cn } from "@/lib/utils";
 // writer, and pasted examples of the teacher's own past comments for the voice. Saved as
 // typed, shortly after the last change and when the window closes; there is no Save button
 // and nothing to confirm. The next report written reads them.
-
-const SAVE_AFTER_MS = 800;
 
 type Form = { sentences: string; avoid: string; notes: string; samples: string };
 
@@ -27,8 +26,8 @@ const toForm = (s: ClassSettingsView): Form => ({
 // The form as the route takes it: blank fields left out, so an untouched form stores nothing.
 function toBody(f: Form): ClassSettingsView {
   const rules: ReportRules = {};
-  const n = Number.parseInt(f.sentences, 10);
-  if (Number.isInteger(n) && n >= 2 && n <= 12) rules.sentences = n;
+  // Sent as typed; the route's bounds are the only ones, and a 400 shows in the status line.
+  if (f.sentences.trim()) rules.sentences = Number(f.sentences);
   const avoid = f.avoid
     .split("\n")
     .map((a) => a.trim())
@@ -40,49 +39,32 @@ function toBody(f: Form): ClassSettingsView {
 
 export default function ReportSettings({ classId, open, onOpenChange }: { classId: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   const [form, setForm] = useState<Form | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(true);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const url = `/api/classes/${classId}/settings`;
+  // Keyed by the open window: closing it saves what is waiting.
+  const { saved, error: saveError, edit } = useAutosave<Form>(open ? url : null, (f, to) => api<ClassSettingsView>(to, jsonInit("PUT", toBody(f))));
+  const error = loadError ?? saveError;
 
   useEffect(() => {
     if (!open) return;
     let latest = true;
     api<ClassSettingsView>(url)
       .then((s) => latest && setForm(toForm(s)))
-      .catch((e) => latest && setError(messageOf(e)));
+      .catch((e) => latest && setLoadError(messageOf(e)));
     return () => {
       latest = false;
     };
   }, [open, url]);
 
-  function save(f: Form) {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = null;
-    api<ClassSettingsView>(url, jsonInit("PUT", toBody(f)))
-      .then(() => {
-        setSaved(true);
-        setError(null);
-      })
-      .catch((e) => setError(messageOf(e)));
-  }
-
   function change(patch: Partial<Form>) {
     if (!form) return;
     const next = { ...form, ...patch };
     setForm(next);
-    setSaved(false);
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => save(next), SAVE_AFTER_MS);
-  }
-
-  function close(next: boolean) {
-    if (!next && form && timer.current) save(form);
-    onOpenChange(next);
+    edit(next);
   }
 
   return (
-    <Panel open={open} onOpenChange={close} title="Report settings" top>
+    <Panel open={open} onOpenChange={onOpenChange} title="Report settings" top>
       {form ? (
         <div className="mt-3 flex flex-col gap-4 overflow-y-auto">
           <Label>

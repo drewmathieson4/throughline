@@ -13,7 +13,7 @@ import { dayLabel } from "../notes/days";
 import { useNotes } from "../notes/notesStore";
 import NoteMenu from "../notes/NoteMenu";
 import Tags from "../notes/Tags";
-import { errorText } from "../ui";
+import { errorText, localDay } from "../ui";
 import { useAction } from "../useAction";
 import GradesCard from "./GradesCard";
 import { Avatar } from "@/components/Avatar";
@@ -24,15 +24,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-
-// Local calendar date as YYYY-MM-DD, built from the parts rather than a locale format so the
-// server's date check cannot trip on an ICU quirk. Local, not UTC: a teacher marking a
-// student as left at 7pm should get today.
-function today() {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
 
 type Patch = Partial<Pick<Student, "firstName" | "lastName" | "leftAt">>;
 
@@ -113,7 +104,7 @@ export default function StudentPage({ cls, id }: { cls: ClassRow; id: string }) 
               {student.leftAt ? (
                 <DropdownMenuItem onSelect={() => setLeft(null)}>Reactivate</DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onSelect={() => setLeft(today())}>Mark as left</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setLeft(localDay(new Date()))}>Mark as left</DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>

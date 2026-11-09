@@ -73,6 +73,8 @@ export const UNKNOWN_ID = "99999999-9999-4999-8999-999999999999";
 // Ids for notes and mentions a test inserts directly.
 export const NOTE_ID = (n: number) => `33333333-3333-4333-8333-3333333333${String(n).padStart(2, "0")}`;
 export const MENTION_ID = (n: number) => `44444444-4444-4444-8444-4444444444${String(n).padStart(2, "0")}`;
+export const SYNTHESIS_ID = (n: number) => `77777777-7777-4777-8777-7777777777${String(n).padStart(2, "0")}`;
+export const REPORT_ID = (n: number) => `88888888-8888-4888-8888-8888888888${String(n).padStart(2, "0")}`;
 
 // Same splitter `wrangler d1 execute --file` uses, so the seed file has one loader contract.
 const seedStatements = splitSql(seed);

@@ -5,6 +5,7 @@ import { Panel } from "@/components/Panel";
 import { useNotes, type Pickable } from "./notesStore";
 import { useIsLaptop } from "@/lib/useIsLaptop";
 import { cn } from "@/lib/utils";
+import { searchBar, searchInput } from "../ui";
 
 type Props = {
   open: boolean;
@@ -38,7 +39,7 @@ export default function StudentPicker({ open, onOpenChange, title, students, sel
 
   return (
     <Panel open={open} onOpenChange={change} title={title} top>
-      <label className="mt-3 flex min-h-[46px] items-center gap-2 rounded-[14px] bg-muted px-3.5 text-muted-foreground">
+      <label className={cn("mt-3", searchBar)}>
         <Search className="size-4" aria-hidden />
         <input
           autoFocus={isLaptop}
@@ -46,7 +47,7 @@ export default function StudentPicker({ open, onOpenChange, title, students, sel
           placeholder="Search students"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none"
+          className={searchInput}
         />
       </label>
       <div className="mt-2 overflow-y-auto [scrollbar-width:none]">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Sparkles } from "lucide-react";
 import type { SynthesisRosterRow, SynthesisView } from "../../worker/api-types";
 import { api, messageOf } from "../api";
@@ -16,6 +16,37 @@ import { cn } from "@/lib/utils";
 
 export type PaneTab = "evidence" | "report";
 
+// A student with no evidence for the period: gathering it, nothing to gather, or the button.
+// Both tabs show it; the report tab adds a line saying why.
+export function EvidenceEmpty({ row, running, disabled, onGenerate, lead }: { row: SynthesisRosterRow; running: boolean; disabled: boolean; onGenerate: () => void; lead?: ReactNode }) {
+  const { capped } = useAllowance();
+  return (
+    <div className="mt-[22px] px-5 py-8 text-center">
+      <span className="inline-flex size-14 items-center justify-center rounded-full bg-accent text-accent-foreground">
+        {running ? <span className="size-6 animate-spin rounded-full border-[3px] border-ring/40 border-t-primary" aria-hidden /> : <Sparkles className="size-6" aria-hidden />}
+      </span>
+      {running ? (
+        <p className="mt-3 text-base font-extrabold">Gathering evidence…</p>
+      ) : needsRun(row) ? (
+        <>
+          <p className="mt-3 text-base font-extrabold">No evidence yet</p>
+          {lead && <p className="mx-auto mt-1.5 max-w-[34ch] text-[13.5px] text-muted-foreground">{lead}</p>}
+          {capped ? (
+            <CappedNotice className="mt-4" />
+          ) : (
+            <Button type="button" className="mt-4" disabled={disabled} onClick={onGenerate}>
+              <Sparkles aria-hidden />
+              Gather evidence
+            </Button>
+          )}
+        </>
+      ) : (
+        <p className="mt-3 text-base font-extrabold">No evidence in this period</p>
+      )}
+    </div>
+  );
+}
+
 // The open student: the evidence (the cited summary) on one tab, the report written from it
 // on the other. It fetches the summary the roster row points at, so one made by a class run,
 // or regenerated, shows up as soon as the roster catches up.
@@ -27,7 +58,6 @@ export default function ReportPane({
   tab,
   onTab,
   running,
-  writing,
   disabled,
   onGenerate,
   onWrite,
@@ -41,7 +71,6 @@ export default function ReportPane({
   tab: PaneTab;
   onTab: (tab: PaneTab) => void;
   running: boolean;
-  writing: boolean;
   disabled: boolean;
   onGenerate: (period: Range) => void;
   onWrite: () => void;
@@ -49,7 +78,6 @@ export default function ReportPane({
 }) {
   const [loaded, setLoaded] = useState<SynthesisView | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { capped } = useAllowance();
   const id = row.synthesisId;
 
   useEffect(() => {
@@ -86,28 +114,7 @@ export default function ReportPane({
   ) : id ? (
     !error && <p className="mt-6 text-sm text-muted-foreground">Loading…</p>
   ) : (
-    <div className="mt-[22px] px-5 py-8 text-center">
-      <span className="inline-flex size-14 items-center justify-center rounded-full bg-accent text-accent-foreground">
-        {running ? <span className="size-6 animate-spin rounded-full border-[3px] border-ring/40 border-t-primary" aria-hidden /> : <Sparkles className="size-6" aria-hidden />}
-      </span>
-      {running ? (
-        <p className="mt-3 text-base font-extrabold">Gathering evidence…</p>
-      ) : needsRun(row) ? (
-        <>
-          <p className="mt-3 text-base font-extrabold">No evidence yet</p>
-          {capped ? (
-            <CappedNotice className="mt-4" />
-          ) : (
-            <Button type="button" className="mt-4" disabled={disabled} onClick={() => onGenerate(range)}>
-              <Sparkles aria-hidden />
-              Gather evidence
-            </Button>
-          )}
-        </>
-      ) : (
-        <p className="mt-3 text-base font-extrabold">No evidence in this period</p>
-      )}
-    </div>
+    <EvidenceEmpty row={row} running={running} disabled={disabled} onGenerate={() => onGenerate(range)} />
   );
 
   return (
@@ -133,7 +140,11 @@ export default function ReportPane({
         </TabsList>
         <TabsContent value="evidence">{evidence}</TabsContent>
         <TabsContent value="report">
-          <Report row={row} range={range} classId={classId} writing={writing} generating={running} disabled={disabled} onWrite={onWrite} onGenerate={onGenerate} />
+          {id ? (
+            <Report row={row} classId={classId} disabled={disabled} onWrite={onWrite} />
+          ) : (
+            <EvidenceEmpty row={row} running={running} disabled={disabled} onGenerate={() => onGenerate(range)} lead="A report is written from the evidence, so gather that first." />
+          )}
         </TabsContent>
       </Tabs>
     </article>

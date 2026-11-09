@@ -5,12 +5,12 @@
 // nothing from the old one. See DECISIONS.md.
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "../db/schema";
 import type { UserEnv } from "../db/client";
 import type { ReportView } from "../api-types";
-import { notFound, ownedClasses } from "../db/helpers";
+import { notFound, ownedReport } from "../db/helpers";
 import { reserved } from "../demo";
 import { idParam } from "../fields";
 import { ModelError } from "../model";
@@ -25,16 +25,6 @@ const createBody = z.object({ synthesisId: z.uuid() });
 const patchBody = z.object({ editedText: z.string().max(MAX_EDIT_CHARS, "the report is too long").nullable() });
 
 const reports = new Hono<UserEnv>();
-
-// A report the signed-in teacher owns, through its summary's student's class.
-const owned = (c: { var: UserEnv["Variables"] }, id: string) =>
-  c.var.db
-    .select({ id: schema.reports.id })
-    .from(schema.reports)
-    .innerJoin(schema.syntheses, eq(schema.syntheses.id, schema.reports.synthesisId))
-    .innerJoin(schema.students, eq(schema.students.id, schema.syntheses.studentId))
-    .where(and(eq(schema.reports.id, id), inArray(schema.students.classId, ownedClasses(c.var.db, c.var.user.id))))
-    .get();
 
 // POST /api/reports { synthesisId } → 201 with the report. 503 without an API key, 502 when
 // the model fails (nothing stored), 403 for a demo visitor out of reports or an account over
@@ -89,8 +79,7 @@ reports.post("/", validate("json", createBody), async (c) => {
 // GET /api/reports/:id → one report.
 reports.get("/:id", validate("param", idParam), async (c) => {
   const { id } = c.req.valid("param");
-  if (!(await owned(c, id))) throw notFound("report");
-  const row = await c.var.db.select().from(schema.reports).where(eq(schema.reports.id, id)).get();
+  const row = await c.var.db.select().from(schema.reports).where(ownedReport(c.var.db, c.var.user.id, id)).get();
   if (!row) throw notFound("report");
   return c.json(row satisfies ReportView);
 });
@@ -99,11 +88,10 @@ reports.get("/:id", validate("param", idParam), async (c) => {
 // it back to what was generated. The generated text is never changed.
 reports.patch("/:id", validate("param", idParam), validate("json", patchBody), async (c) => {
   const { id } = c.req.valid("param");
-  if (!(await owned(c, id))) throw notFound("report");
   const row = await c.var.db
     .update(schema.reports)
     .set({ editedText: c.req.valid("json").editedText })
-    .where(eq(schema.reports.id, id))
+    .where(ownedReport(c.var.db, c.var.user.id, id))
     .returning()
     .get();
   if (!row) throw notFound("report");

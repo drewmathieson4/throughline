@@ -160,7 +160,6 @@ function ClassReports({ classes, cls, studentId }: { classes: ClassRow[]; cls: C
       tab={tab}
       onTab={setTab}
       running={reports.running.has(selected.studentId)}
-      writing={reports.writing.has(selected.studentId)}
       disabled={busy || !ready}
       onGenerate={(period) => generateOne(selected.studentId, period)}
       onWrite={() => writeOne(selected)}

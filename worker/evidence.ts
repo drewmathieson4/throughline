@@ -76,7 +76,7 @@ function groupBy<T, K>(items: T[], key: (item: T) => K): Map<K, T[]> {
 }
 
 const round = (n: number) => Math.round(n * 10) / 10;
-const pct = (n: number) => `${Math.round(n)}%`;
+export const pct = (n: number) => `${Math.round(n)}%`;
 
 const KIND_LABEL: Record<NoteKind, string> = { text: "typed note", voice: "voice note", student_form: "student form", progress_report: "progress report" };
 
