@@ -32,7 +32,7 @@ const roster = (from = RANGE.from, to = RANGE.to) => db.json<SynthesisRosterRow[
 // A note tagged to a student with a quote, noted on `day` and written at `createdAt`.
 async function quoteNote(n: number, studentId: string, day: string, quote: string, createdAt = `${day}T15:00:00.000Z`) {
   await db.env.DB.batch([
-    db.env.DB.prepare("INSERT INTO notes (id, class_id, kind, body, noted_at, created_at) VALUES (?, ?, 'text', ?, ?, ?)").bind(NOTE_ID(n), CLASS_ID, quote, `${day}T15:00:00.000Z`, createdAt),
+    db.env.DB.prepare("INSERT INTO notes (id, owner_id, class_id, kind, body, noted_at, created_at) VALUES (?, ?, ?, 'text', ?, ?, ?)").bind(NOTE_ID(n), DEV_USER_ID, CLASS_ID, quote, `${day}T15:00:00.000Z`, createdAt),
     db.env.DB.prepare("INSERT INTO note_students (note_id, student_id, quotes) VALUES (?, ?, ?)").bind(NOTE_ID(n), studentId, JSON.stringify([quote])),
   ]);
 }
@@ -68,6 +68,15 @@ test("a second POST with nothing changed returns the saved summary without calli
   expect(await again.json()).toMatchObject({ id: first.id, cached: true });
   expect(synthesiseMock).toHaveBeenCalledTimes(1);
   expect(await storedCount()).toBe(1);
+});
+
+test("deleting a cited note makes the summary stale without counting as a new note", async () => {
+  await quoteNote(1, STUDENT.avery, "2026-09-15", "Avery led the seminar.");
+  await quoteNote(2, STUDENT.avery, "2026-09-16", "Avery wrote well.");
+  await requestWith(keyed(), { studentId: STUDENT.avery, ...RANGE });
+  expect((await roster()).find((r) => r.studentId === STUDENT.avery)!.status).toBe("current");
+  expect((await db.request(`/api/notes/${NOTE_ID(2)}`, { method: "DELETE" })).status).toBe(204);
+  expect((await roster()).find((r) => r.studentId === STUDENT.avery)).toMatchObject({ status: "stale", newNotes: 0 });
 });
 
 test("a new note makes the summary stale, counts it, and the next POST makes a new one", async () => {

@@ -11,6 +11,7 @@ import NoteItem from "../NoteItem";
 import { kinds, noteWhen } from "../noteKinds";
 import { dayLabel } from "../notes/days";
 import { useNotes } from "../notes/notesStore";
+import NoteMenu from "../notes/NoteMenu";
 import Tags from "../notes/Tags";
 import { errorText } from "../ui";
 import { useAction } from "../useAction";
@@ -142,7 +143,7 @@ export default function StudentPage({ cls, id }: { cls: ClassRow; id: string }) 
       <Panel open={shown !== undefined} onOpenChange={(open) => !open && setOpenNote(null)} title={shown ? kinds[shown.kind].label : ""}>
         {shown && (
           <ul className="mt-3 overflow-y-auto">
-            <NoteItem note={shown}>
+            <NoteItem note={shown} actions={<NoteMenu note={shown} />}>
               <Tags note={shown} />
             </NoteItem>
           </ul>

@@ -4,9 +4,23 @@ import { cn } from "@/lib/utils";
 import { kinds, noteWhen } from "./noteKinds";
 
 // One note as a card. `badge` sits at the right of the header (the notes page puts the class
-// there); `children` render under the body (the notes page puts the student tags there).
-// `fresh` fades in a note saved a moment ago.
-export default function NoteItem({ note, badge, timeOnly, fresh, children }: { note: Note; badge?: ReactNode; timeOnly?: boolean; fresh?: boolean; children?: ReactNode }) {
+// there) and `actions` after it (the "…" menu); `children` render under the body (the notes
+// page puts the student tags there). `fresh` fades in a note saved a moment ago.
+export default function NoteItem({
+  note,
+  badge,
+  actions,
+  timeOnly,
+  fresh,
+  children,
+}: {
+  note: Note;
+  badge?: ReactNode;
+  actions?: ReactNode;
+  timeOnly?: boolean;
+  fresh?: boolean;
+  children?: ReactNode;
+}) {
   const { label, icon: Icon, tile } = kinds[note.kind];
   return (
     <li className={cn("rounded-[20px] border bg-card px-4 pt-4 pb-3.5 shadow-xs", fresh && "animate-in duration-500 fade-in slide-in-from-bottom-2")}>
@@ -19,6 +33,7 @@ export default function NoteItem({ note, badge, timeOnly, fresh, children }: { n
         <time dateTime={note.notedAt}>{noteWhen(note, timeOnly)}</time>
         <span className="flex-1" />
         {badge}
+        {actions}
       </div>
       {note.sourceName && (
         <p className="mt-2.5 truncate text-[12.5px] text-muted-foreground">

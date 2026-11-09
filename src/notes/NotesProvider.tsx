@@ -17,6 +17,9 @@ import { NO_CLASS, classColours } from "@/lib/avatar";
 // server is safe to repeat: its clientId finds the note it made.
 const SEND_TIMEOUT_MS = 60_000;
 
+// How long a deleted note can be brought back from the toast before the server is told.
+const UNDO_MS = 6_000;
+
 function sendNote(note: QueuedNote) {
   const { clientId, notedAt } = note;
   const signal = AbortSignal.timeout(SEND_TIMEOUT_MS);
@@ -70,6 +73,46 @@ export function NotesProvider({ classes, children }: { classes: ClassRow[]; chil
       },
     });
   });
+
+  // Deletes the teacher may still undo: the note's id, and what sends the delete now. A
+  // delete waits out its toast rather than being undone on the server, so there is no
+  // soft-delete column; if the tab closes first the delete goes with it (keepalive), and if
+  // even that is lost the note simply comes back on the next load.
+  const [pending] = useState(() => new Map<string, () => void>());
+  useEffect(() => {
+    const flush = () => {
+      for (const fire of [...pending.values()]) fire();
+    };
+    window.addEventListener("pagehide", flush);
+    return () => window.removeEventListener("pagehide", flush);
+  }, [pending]);
+  const remove = (note: NoteWithTags) => {
+    setNotes((prev) => prev && prev.filter((n) => n.id !== note.id));
+    const restore = () => setNotes((prev) => merge(prev, [note], []));
+    const fire = () => {
+      if (!pending.delete(note.id)) return;
+      clearTimeout(timer);
+      api(`/api/notes/${note.id}`, { method: "DELETE", keepalive: true })
+        .then(() => setRosterVersion((v) => v + 1))
+        .catch((e) => {
+          toast.error(`The note was not deleted: ${messageOf(e)}`);
+          restore();
+        });
+    };
+    const timer = window.setTimeout(fire, UNDO_MS);
+    pending.set(note.id, fire);
+    toast("Note deleted", {
+      duration: UNDO_MS,
+      action: {
+        label: "Undo",
+        onClick: () => {
+          if (!pending.delete(note.id)) return;
+          clearTimeout(timer);
+          restore();
+        },
+      },
+    });
+  };
 
   // Notes captured offline go up on start-up, when the connection comes back, and when the
   // teacher returns to the app (an installed app resumes without reloading).
@@ -125,7 +168,9 @@ export function NotesProvider({ classes, children }: { classes: ClassRow[]; chil
     waiting,
     queueNote: queue.add,
     add: (made, replaced = []) => setNotes((prev) => merge(prev, made, replaced)),
-    update: (note) => setNotes((prev) => prev && prev.map((n) => (n.id === note.id ? note : n))),
+    // Through merge, so a note whose date was edited moves to its new day.
+    update: (note) => setNotes((prev) => prev && merge(prev, [note], [])),
+    remove,
   };
   return <NotesContext.Provider value={store}>{children}</NotesContext.Provider>;
 }

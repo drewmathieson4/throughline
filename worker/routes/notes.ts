@@ -17,6 +17,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type Anthropic from "@anthropic-ai/sdk";
 import { and, desc, eq, isNull, sql, type SQL } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 import { z } from "zod";
 import * as schema from "../db/schema";
 import type { Note, NoteStudent } from "../db/schema";
@@ -49,6 +50,9 @@ const createNote = z.object({
   ...captured,
 });
 const voiceQuery = classQuery.extend(captured);
+const patchNote = z
+  .object({ body: createNote.shape.body.optional(), notedAt: pastDatetime("notedAt").optional() })
+  .refine((p) => Object.keys(p).length > 0, "nothing to update");
 const addStudent = z.object({ studentId: z.uuid(), quotes: quotes.optional() });
 const assignMention = z.object({ studentId: z.uuid() });
 
@@ -277,6 +281,52 @@ notes.post("/voice", validate("query", voiceQuery), audioLimit, async (c) => {
 
   const [note, status] = await saveCounted(c.var.db, (await modelAccess(c)).client, c.var.user, { classId, kind: "voice", body: text, notedAt, clientId });
   return c.json(note, status);
+});
+
+// PATCH /api/notes/:noteId { body?, notedAt? } → the teacher corrects the text or the date.
+// 200 with the note in the create shape. A rewrite keeps the tags, since nothing records
+// which ones the teacher settled, and re-checks their quotes: a quote the new text no longer
+// contains is dropped (a tag left with no quotes stays; an open mention left with none goes,
+// it was only ever the model's guess). Only a note left with no tags and no mentions is
+// tagged again, so a typo fix never costs a model call.
+notes.patch("/:noteId", validate("param", noteParam), validate("json", patchNote), async (c) => {
+  const uid = c.var.user.id;
+  const db = c.var.db;
+  const before = await requireNote(db, uid, c.req.valid("param").noteId);
+  const patch = c.req.valid("json");
+  const note = (await db.update(schema.notes).set(patch).where(eq(schema.notes.id, before.id)).returning().get())!;
+  const done = async (): Promise<TaggedNoteResponse> => ({ ...(await withTags(db, note)), tagging: "done" });
+  if (note.body === before.body) return c.json(await done());
+
+  const current = await withTags(db, note);
+  const locate = quoteLocator(note.body);
+  const still = (qs: string[]) => union([], qs.map(locate).filter((q): q is string => q !== null));
+  const changed = (a: string[], b: string[]) => a.length !== b.length || a.some((q, i) => q !== b[i]);
+  const writes: BatchItem<"sqlite">[] = [];
+  for (const s of current.students) {
+    const kept = still(s.quotes);
+    if (changed(s.quotes, kept)) writes.push(db.update(schema.noteStudents).set({ quotes: kept }).where(tagKey(note.id, s.studentId)));
+  }
+  for (const m of current.mentions) {
+    const kept = still(m.quotes);
+    if (kept.length === 0) writes.push(db.delete(schema.noteMentions).where(mentionKey(note.id, m.id)));
+    else if (changed(m.quotes, kept)) writes.push(db.update(schema.noteMentions).set({ quotes: kept }).where(mentionKey(note.id, m.id)));
+  }
+  const [first, ...rest] = writes;
+  if (first) await db.batch([first, ...rest]);
+  const emptied = current.students.length === 0 && current.mentions.every((m) => still(m.quotes).length === 0);
+  if (emptied) return c.json(await runTagging(db, (await modelAccess(c)).client, uid, note));
+  return c.json(await done());
+});
+
+// DELETE /api/notes/:noteId → 204. Tags and open mentions go with it. A saved summary that
+// cited it keeps its copied quotes and reads as out of date, since the note's id has left
+// its evidence. The clientId is free again afterwards, so a late resend from another tab
+// would recreate the note; accepted (see DECISIONS.md).
+notes.delete("/:noteId", validate("param", noteParam), async (c) => {
+  const note = await requireNote(c.var.db, c.var.user.id, c.req.valid("param").noteId);
+  await c.var.db.delete(schema.notes).where(eq(schema.notes.id, note.id));
+  return c.body(null, 204);
 });
 
 // POST /api/notes/:noteId/retag → tag a note that has no tags and no open mentions, the state

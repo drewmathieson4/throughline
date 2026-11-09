@@ -38,8 +38,10 @@ export type NotesStore = {
   queueNote: (note: QueuedNote) => Promise<Outcome>;
   /** New notes join the list in notedAt order; `replaced` are ids a re-uploaded document made earlier. */
   add: (made: NoteWithTags[], replaced?: string[]) => void;
-  /** Swap in a note as the server now has it (after tagging, untagging, settling). */
+  /** Swap in a note as the server now has it (after tagging, untagging, settling, editing). */
   update: (note: NoteWithTags) => void;
+  /** Take a note off the list now and delete it once the Undo toast has passed. */
+  remove: (note: NoteWithTags) => void;
 };
 
 export const NotesContext = createContext<NotesStore | null>(null);

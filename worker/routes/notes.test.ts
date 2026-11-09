@@ -521,3 +521,78 @@ test("another teacher's notes, classes and students are not found, and a clientI
   expect([a.status, b.status]).toEqual([201, 201]);
   expect(((await a.json()) as Created).id).not.toBe(((await b.json()) as Created).id);
 });
+
+const patchNote = (id: string, body: unknown, env?: Env) => app.request(`/api/notes/${id}`, signedIn(jsonInit("PATCH", body)), env ?? db.env);
+
+test("PATCH /api/notes/:noteId rewrites the text, keeps the tags, and drops quotes the new text lost", async () => {
+  const note = await createTagged();
+  tagNoteMock.mockReset();
+  // Avery's line survives; Juni's is gone, so her tag stays with no quotes; "Alex" is gone, so the mention closes.
+  const res = await patchNote(note.id, { body: "Avery nailed the quiz. Everyone else was quiet." }, keyed());
+  expect(res.status).toBe(200);
+  const updated = (await res.json()) as Created;
+  expect(updated.body).toBe("Avery nailed the quiz. Everyone else was quiet.");
+  expect(updated.tagging).toBe("done");
+  expect(updated.students).toEqual([
+    { studentId: STUDENT.avery, quotes: ["Avery nailed the quiz."] },
+    { studentId: STUDENT.juniper, quotes: [] },
+  ]);
+  expect(updated.mentions).toEqual([]);
+  expect(tagNoteMock).not.toHaveBeenCalled();
+  expect((await listOf()).map((n) => n.body)).toEqual([updated.body]);
+});
+
+test("PATCH /api/notes/:noteId tags again only when the rewrite leaves no tags and no mentions", async () => {
+  // Only an open mention: rewriting it away empties the note, so the tagger runs once.
+  const note = await createTagged(result([], [{ mentionText: "Alex", quotes: ["Alex was late."], candidateIds: [STUDENT.alexMarsh, STUDENT.alexRuiz] }]));
+  tagNoteMock.mockReset();
+  tagNoteMock.mockResolvedValueOnce(result([{ studentId: STUDENT.rowan, quotes: ["Rowan was late."] }]));
+  const res = await patchNote(note.id, { body: "Rowan was late." }, keyed());
+  expect(res.status).toBe(200);
+  const updated = (await res.json()) as Created;
+  expect(tagNoteMock).toHaveBeenCalledTimes(1);
+  expect(updated).toMatchObject({ tagging: "done", students: [{ studentId: STUDENT.rowan, quotes: ["Rowan was late."] }], mentions: [] });
+
+  // A note with a tag keeps it through any rewrite and is never retagged.
+  const res2 = await patchNote(note.id, { body: "Something else entirely." }, keyed());
+  expect(res2.status).toBe(200);
+  expect((await res2.json()) as Created).toMatchObject({ students: [{ studentId: STUDENT.rowan, quotes: [] }], mentions: [] });
+  expect(tagNoteMock).toHaveBeenCalledTimes(1);
+});
+
+test("PATCH /api/notes/:noteId changes the date without touching the tags", async () => {
+  const note = await createTagged();
+  tagNoteMock.mockReset();
+  const res = await patchNote(note.id, { notedAt: "2026-09-01T09:00:00.000Z" });
+  expect(res.status).toBe(200);
+  const updated = (await res.json()) as Created;
+  expect(updated.notedAt).toBe("2026-09-01T09:00:00.000Z");
+  expect(updated.students).toEqual(note.students);
+  expect(updated.mentions).toEqual(note.mentions);
+  expect(tagNoteMock).not.toHaveBeenCalled();
+});
+
+test("PATCH /api/notes/:noteId rejects an empty body, an empty patch, a future date, and another teacher's note", async () => {
+  const note = await createTagged();
+  expect((await patchNote(note.id, { body: "   " })).status).toBe(400);
+  expect((await patchNote(note.id, {})).status).toBe(400);
+  expect((await patchNote(note.id, { notedAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() })).status).toBe(400);
+  expect((await patchNote(UNKNOWN_ID, { body: "x" })).status).toBe(404);
+  await db.insertNote(NOTE_ID(1), OTHER_CLASS_ID, "2026-10-01T00:00:00.000Z", OTHER_USER_ID).run();
+  expect((await patchNote(NOTE_ID(1), { body: "x" })).status).toBe(404);
+  expect((await db.json<NoteWithTags[]>("/api/notes", undefined, "other"))[0]!.body).toBe("note 01");
+});
+
+test("DELETE /api/notes/:noteId removes the note with its tags and mentions; a second delete and another teacher's are 404", async () => {
+  const note = await createTagged();
+  const res = await db.request(`/api/notes/${note.id}`, { method: "DELETE" });
+  expect(res.status).toBe(204);
+  expect(await listOf()).toEqual([]);
+  const rows = await db.env.DB.prepare("SELECT (SELECT count(*) FROM note_students) AS tags, (SELECT count(*) FROM note_mentions) AS mentions").first<{ tags: number; mentions: number }>();
+  expect(rows).toEqual({ tags: 0, mentions: 0 });
+  expect((await db.request(`/api/notes/${note.id}`, { method: "DELETE" })).status).toBe(404);
+
+  await db.insertNote(NOTE_ID(1), OTHER_CLASS_ID, "2026-10-01T00:00:00.000Z", OTHER_USER_ID).run();
+  expect((await db.request(`/api/notes/${NOTE_ID(1)}`, { method: "DELETE" })).status).toBe(404);
+  expect((await db.json<NoteWithTags[]>("/api/notes", undefined, "other")).map((n) => n.id)).toEqual([NOTE_ID(1)]);
+});
