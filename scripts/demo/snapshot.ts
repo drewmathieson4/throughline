@@ -10,13 +10,11 @@
 // the clone shifts them to the current week.
 import { spawnSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
-import { DEMO_TEMPLATE as TEMPLATE, TEMPLATE_QUERIES, type TemplateSection } from "./template-sql.ts";
+import { DEMO_TEMPLATE as TEMPLATE, TEMPLATE_QUERIES as QUERIES, type TemplateSection as Section } from "./template-sql.ts";
 
 const remote = process.argv.includes("--remote");
 const OUT = new URL("../../worker/demo-template.json", import.meta.url);
 
-const QUERIES = TEMPLATE_QUERIES;
-type Section = TemplateSection;
 // Columns stored as JSON text (schema.ts, mode: "json"), parsed so the file reads as data.
 const JSON_COLUMNS = new Set(["aliases", "quotes", "candidate_ids", "summary", "json"]);
 // Columns the clone rewrites for every copy, so they have no business in the file.
