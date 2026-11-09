@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useMatch, useNavigate } from "react-router";
-import { AlertCircle, ChevronDown, CloudUpload, Mic } from "lucide-react";
+import { AlertCircle, ChevronDown, CloudUpload, Mic, Search, X } from "lucide-react";
 // Type-only imports: nothing from the Worker ends up in the browser bundle.
-import type { ClassRow } from "../../worker/db/schema";
+import type { ClassRow, NoteKind } from "../../worker/db/schema";
 import type { NoteWithTags } from "../../worker/api-types";
 import NoteItem from "../NoteItem";
+import { kinds } from "../noteKinds";
 import { chipOff, chipOn, chipRow, errorText, waitingToUpload } from "../ui";
 import { BackLink, PageTitle } from "@/components/page";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import NoteMenu from "./NoteMenu";
 import { toPickable, useNotes } from "./notesStore";
 import RecordHome from "./RecordHome";
 import SavedSheet from "./SavedSheet";
+import { matches } from "./search";
 import StudentPicker from "./StudentPicker";
 import Tags from "./Tags";
 import { useCapture, type SavedNote } from "./useCapture";
@@ -40,6 +42,8 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
   const [needsOnly, setNeedsOnly] = useState(false);
   const [classFilter, setClassFilter] = useState("");
   const [studentFilter, setStudentFilter] = useState("");
+  const [kindFilter, setKindFilter] = useState<NoteKind | "">("");
+  const [query, setQuery] = useState("");
   const [picking, setPicking] = useState(false);
   // The phone's Saved sheet, and the note to fade in on the feed.
   const [saved, setSaved] = useState<SavedNote | null>(null);
@@ -85,14 +89,26 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
 
   const all = notes ?? [];
   const needs = needsOnly && needsCount > 0;
-  const shown = all.filter((n) => (!needs || n.mentions.length > 0) && (!classFilter || n.classId === classFilter) && (!studentFilter || about(n, studentFilter)));
+  const shown = all.filter(
+    (n) =>
+      (!needs || n.mentions.length > 0) &&
+      (!classFilter || n.classId === classFilter) &&
+      (!studentFilter || about(n, studentFilter)) &&
+      (!kindFilter || n.kind === kindFilter) &&
+      matches(n, query),
+  );
   const studentName = people.get(studentFilter)?.name;
-  const anyFilter = needs || classFilter || studentFilter;
+  const searching = query.trim() !== "";
+  const anyFilter = needs || classFilter || studentFilter || kindFilter || searching;
   const clearFilters = () => {
     setNeedsOnly(false);
     setClassFilter("");
     setStudentFilter("");
+    setKindFilter("");
+    setQuery("");
   };
+  // Only the kinds the teacher has notes of: a chip for a kind with nothing behind it is noise.
+  const kindChips = (Object.keys(kinds) as NoteKind[]).filter((k) => all.some((n) => n.kind === k));
   // Picking a class the chosen student is not in drops the student filter, not the notes.
   const pickClass = (id: string) => {
     const next = classFilter === id ? "" : id;
@@ -123,7 +139,26 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
       )}
       {error && <p className={`mt-4 ${errorText}`}>{error}</p>}
 
-      <div className={chipRow}>
+      {all.length > 0 && (
+        <label className="mt-4 flex min-h-[46px] items-center gap-2 rounded-[14px] bg-muted px-3.5 text-muted-foreground md:mt-[22px]">
+          <Search className="size-4 flex-none" aria-hidden />
+          <input
+            type="search"
+            aria-label="Search notes"
+            placeholder="Search notes"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none [&::-webkit-search-cancel-button]:hidden"
+          />
+          {searching && (
+            <button type="button" aria-label="Clear search" onClick={() => setQuery("")} className="-mr-1.5 inline-flex size-8 items-center justify-center rounded-full hover:bg-background">
+              <X className="size-4" aria-hidden />
+            </button>
+          )}
+        </label>
+      )}
+
+      <div className={cn(chipRow, all.length > 0 && "mt-2.5 md:mt-3")}>
         {needsCount > 0 && (
           <button
             type="button"
@@ -147,6 +182,16 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
           {studentName ?? "Any student"}
           <ChevronDown className="size-4" aria-hidden />
         </button>
+        {kindChips.length > 1 &&
+          kindChips.map((k) => {
+            const { label, icon: Icon } = kinds[k];
+            return (
+              <button key={k} type="button" aria-pressed={kindFilter === k} onClick={() => setKindFilter(kindFilter === k ? "" : k)} className={cn(chip, kindFilter === k ? chipOn : chipOff)}>
+                <Icon className="size-4" aria-hidden />
+                {label}
+              </button>
+            );
+          })}
       </div>
 
       {notes === null && !error && <p className="mt-6 text-sm text-muted-foreground">Loading…</p>}
@@ -178,7 +223,7 @@ export default function NotesView({ classes }: { classes: ClassRow[] }) {
       {notes !== null && shown.length === 0 && (
         <div className="mt-7 rounded-[22px] border-2 border-dashed border-input px-5 py-9 text-center">
           <p className="text-[15px] font-bold text-secondary-foreground">
-            {all.length === 0 ? "No notes yet" : studentName ? `No notes about ${studentName} here yet` : "Nothing matches these filters"}
+            {all.length === 0 ? "No notes yet" : searching ? `Nothing mentions “${query.trim()}”` : studentName ? `No notes about ${studentName} here yet` : "Nothing matches these filters"}
           </p>
           {anyFilter && (
             <Button type="button" variant="soft" onClick={clearFilters} className="mt-3">
