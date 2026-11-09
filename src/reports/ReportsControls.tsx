@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { PenLine, Sparkles } from "lucide-react";
 import { Link } from "react-router";
 import type { ClassRow } from "../../worker/db/schema";
 import { CappedNotice } from "../auth/CappedNotice";
@@ -14,38 +14,47 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 // The top of Reports: the class pills (the only class switcher in the app), the period, and
-// the class run. The count on the button is the only warning before a run, per the
-// no-confirm rule. A demo visitor's count stops at what they have left; at none, the way on
-// is to sign in. With the AI paused (the spend cap), the button says so instead.
+// the two class runs: evidence for everyone who needs it, then reports for every summary
+// without one. The count on a button is the only warning before a run, per the no-confirm
+// rule. A demo visitor's count stops at what they have left; at none, the way on is to sign
+// in. With the AI paused (the spend cap), the button says so instead.
 export default function ReportsControls({
   classes,
   cls,
   range,
   onRange,
   pending,
+  pendingReports,
   ready,
   run,
   onGenerateClass,
+  onWriteClass,
 }: {
   classes: ClassRow[];
   cls: ClassRow;
   range: Range;
   onRange: (range: Range) => void;
-  /** Students with no summary, or an out-of-date one, for the period. */
+  /** Students with no evidence summary, or an out-of-date one, for the period. */
   pending: number;
+  /** Students with a summary and no report written from it. */
+  pendingReports: number;
   /** False while the roster for the period shown is still loading. */
   ready: boolean;
   run: ClassRun | null;
   onGenerateClass: () => void;
+  onWriteClass: () => void;
 }) {
   const { colourOf } = useNotes();
-  const { demo, capped: noFresh } = useAllowance();
+  const { demo, capped: noFresh, reportsCapped } = useAllowance();
   const year = wholeYear(cls);
   const isYear = sameRange(range, year);
   const busyRun = runBusy(run) ? run : null;
   const busy = busyRun !== null;
-  const count = demo ? Math.min(pending, demo.reportsLeft) : pending;
+  const count = demo ? Math.min(pending, demo.evidenceLeft) : pending;
+  const reportCount = demo ? Math.min(pendingReports, demo.reportsLeft) : pendingReports;
   const capped = noFresh && pending > 0 && !busy;
+  const cappedReports = reportsCapped && pendingReports > 0 && !busy;
+  const verb = busyRun?.kind === "reports" ? "Writing" : "Generating";
 
   return (
     <>
@@ -85,22 +94,34 @@ export default function ReportsControls({
           Whole year
         </button>
         <span className="flex-1" />
-        {capped ? (
+        {capped || (cappedReports && count === 0) ? (
           <CappedNotice className="min-h-11" />
         ) : (
-          <Button type="button" className="min-h-11" disabled={!validRange(range) || !ready || busy || count === 0} onClick={onGenerateClass}>
-            <Sparkles aria-hidden />
-            {busy ? `Generating ${busyRun.done} of ${busyRun.total}…` : `Generate for class (${count})`}
-          </Button>
+          <>
+            <Button type="button" className="min-h-11" disabled={!validRange(range) || !ready || busy || count === 0} onClick={onGenerateClass}>
+              <Sparkles aria-hidden />
+              {busy ? `${verb} ${busyRun.done} of ${busyRun.total}…` : `Gather evidence (${count})`}
+            </Button>
+            {!cappedReports && (
+              <Button type="button" variant="soft" className="min-h-11" disabled={!validRange(range) || !ready || busy || reportCount === 0} onClick={onWriteClass}>
+                <PenLine aria-hidden />
+                {`Write reports (${reportCount})`}
+              </Button>
+            )}
+          </>
         )}
       </div>
       {!validRange(range) && <p className={cn("mt-2", errorText)}>Pick a start date on or before the end date.</p>}
       {busy && (
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-accent" role="progressbar" aria-label="Summaries made" aria-valuemin={0} aria-valuemax={busyRun.total} aria-valuenow={busyRun.done}>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-accent" role="progressbar" aria-label={busyRun.kind === "reports" ? "Reports written" : "Evidence gathered"} aria-valuemin={0} aria-valuemax={busyRun.total} aria-valuenow={busyRun.done}>
           <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${Math.round((busyRun.done / busyRun.total) * 100)}%` }} />
         </div>
       )}
-      {!busy && run && run.failed > 0 && <p className={cn("mt-2", errorText)}>{plural(run.failed, "summary")} could not be made; try those again.</p>}
+      {!busy && run && run.failed > 0 && (
+        <p className={cn("mt-2", errorText)}>
+          {run.kind === "reports" ? `${plural(run.failed, "report")} could not be written` : `Evidence for ${plural(run.failed, "student")} could not be gathered`}; try those again.
+        </p>
+      )}
     </>
   );
 }

@@ -85,6 +85,20 @@
       "when": 1793148171009,
       "tag": "0011_military_nextwave",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1794264535331,
+      "tag": "0012_curvy_oracle",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1794264535858,
+      "tag": "0013_conscious_tinkerer",
+      "breakpoints": true
     }
   ]
 }

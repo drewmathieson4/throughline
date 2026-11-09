@@ -1,10 +1,11 @@
 // Response shapes the routes compose from more than one table. The frontend imports these
 // type-only, like the row types in db/schema.ts, so a renamed column fails typecheck in
 // both places instead of drifting. Kept free of Hono and Env imports for that reason.
-import type { ClassMaterial, ClassRow, Note, NoteKind, NoteMention, NoteStudent, Student, SynthesisRow, User } from "./db/schema";
+import type { ClassMaterial, ClassRow, Note, NoteKind, NoteMention, NoteStudent, ReportRow, Student, SynthesisRow, User } from "./db/schema";
 
-// What a demo visitor has left of the demo's allowance (worker/demo.ts).
-export type DemoAllowance = { notesLeft: number; reportsLeft: number };
+// What a demo visitor has left of the demo's allowance (worker/demo.ts): notes to capture,
+// evidence summaries and reports to write.
+export type DemoAllowance = { notesLeft: number; evidenceLeft: number; reportsLeft: number };
 // What the account's model calls have cost against its cap (worker/spend.ts). off says
 // why the models are switched off: this account is over its cap, or the whole app is over
 // its total; null while they run.
@@ -136,7 +137,8 @@ export type Synthesis = {
 
 // The Reports tab. none: never generated for this range; current: the saved summary read
 // exactly what is there now; stale: the evidence has changed since; empty: nothing to read.
-// newNotes counts notes in the range written after the saved summary.
+// newNotes counts notes in the range written after the saved summary. reportId is the newest
+// report written from that summary, null when none has been (or the summary was remade).
 export type SynthesisStatus = "none" | "current" | "stale" | "empty";
 export type SynthesisRosterRow = Pick<Student, "firstName" | "lastName"> & {
   studentId: string;
@@ -144,7 +146,23 @@ export type SynthesisRosterRow = Pick<Student, "firstName" | "lastName"> & {
   synthesisId: string | null;
   createdAt: string | null;
   newNotes: number;
+  reportId: string | null;
 };
 export type SynthesisView = Omit<SynthesisRow, "inputHash" | "version">;
 // cached: the saved summary was returned because nothing had changed; no model call.
 export type SynthesisResult = SynthesisView & { cached: boolean };
+
+// The report: the parent-facing comment Opus writes from one saved evidence summary
+// (worker/report-model.ts), which the teacher edits before it goes out. generatedText is
+// never changed after the write; editedText is the teacher's, null until they touch it.
+export type ReportView = ReportRow;
+
+// How a class's reports should read, set by the teacher (settings.report_rules). Every field
+// is optional: the prompt has a default for each.
+export type ReportRules = {
+  sentences?: number; // target length, 2–12
+  avoid?: string[]; // phrases the report must not use
+  notes?: string; // anything else the writer should know
+};
+// GET/PUT /api/classes/:id/settings. styleSamples: past comments the teacher pasted, for the voice.
+export type ClassSettingsView = { reportRules: ReportRules | null; styleSamples: string | null };

@@ -4,7 +4,7 @@
 // integer 0/1 for booleans (SQLite has no boolean type).
 import { sql } from "drizzle-orm";
 import { sqliteTable, text, integer, real, primaryKey, index, uniqueIndex } from "drizzle-orm/sqlite-core";
-import type { Synthesis } from "../api-types";
+import type { ReportRules, Synthesis } from "../api-types";
 
 // JSON array of strings stored as text. SQLite has no array type; at this scale a JSON
 // column beats a join table, and Drizzle parses/serializes it for us (mode: "json").
@@ -25,9 +25,11 @@ export const users = sqliteTable(
     lastSigninAt: text("last_signin_at").notNull(),
     // Demo mode (worker/demo.ts): 1 for an anonymous visitor's account, which owns a private
     // copy of the synthetic classes and goes once its session has expired. The counters are
-    // what the visitor has spent of the demo's allowance of notes and summaries.
+    // what the visitor has spent of the demo's allowance of notes, evidence summaries and
+    // reports.
     demo: integer("demo").notNull().default(0),
     demoNotesUsed: integer("demo_notes_used").notNull().default(0),
+    demoEvidenceUsed: integer("demo_evidence_used").notNull().default(0),
     demoReportsUsed: integer("demo_reports_used").notNull().default(0),
     // What this account's model calls have cost so far, in micro-dollars (worker/spend.ts).
     // Every account is metered; at the cap the models are switched off for it.
@@ -218,19 +220,30 @@ export const syntheses = sqliteTable(
   (t) => [index("syntheses_student_idx").on(t.studentId, t.periodStart, t.periodEnd)],
 );
 
-// Generated text and the teacher's edits are kept apart so we can measure how much gets changed.
-export const reportDrafts = sqliteTable("report_drafts", {
-  id: text("id").primaryKey(),
-  synthesisId: text("synthesis_id").notNull().references(() => syntheses.id, { onDelete: "cascade" }),
-  generatedText: text("generated_text").notNull(),
-  editedText: text("edited_text"),
-  createdAt: text("created_at").notNull(),
-});
+// One row per report written: the parent-facing comment Opus drafts from one saved evidence
+// summary (a syntheses row) and the teacher's edit of it, kept apart so edits can be measured
+// and "reset" is free. The newest row for a synthesis is the one shown; a regenerated summary
+// has none until one is written again. edited_text null means untouched.
+export const reports = sqliteTable(
+  "reports",
+  {
+    id: text("id").primaryKey(),
+    synthesisId: text("synthesis_id").notNull().references(() => syntheses.id, { onDelete: "cascade" }),
+    model: text("model").notNull(),
+    generatedText: text("generated_text").notNull(),
+    editedText: text("edited_text"),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("reports_synthesis_idx").on(t.synthesisId)],
+);
 
+// How a class's reports should read (worker/report-model.ts): the teacher's rules as JSON
+// (ReportRules in api-types.ts) and pasted examples of their own past comments, for the
+// voice. Never seeded with real data.
 export const settings = sqliteTable("settings", {
   classId: text("class_id").primaryKey().references(() => classes.id, { onDelete: "cascade" }),
-  styleSamples: text("style_samples"), // teacher's own past reports, never seeded with real data
-  reportRules: text("report_rules"), // JSON: target length, banned phrases, etc.
+  styleSamples: text("style_samples"),
+  reportRules: text("report_rules", { mode: "json" }).$type<ReportRules>(),
 });
 
 // Row types as the API returns them; the frontend imports these (type-only) too.
@@ -243,3 +256,5 @@ export type NoteMention = typeof noteMentions.$inferSelect;
 export type ClassMaterial = typeof classMaterials.$inferSelect;
 export type GradeEntry = typeof gradeEntries.$inferSelect;
 export type SynthesisRow = typeof syntheses.$inferSelect;
+export type ReportRow = typeof reports.$inferSelect;
+export type SettingsRow = typeof settings.$inferSelect;

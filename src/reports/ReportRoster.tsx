@@ -12,8 +12,8 @@ import { cn } from "@/lib/utils";
 const STATUS: Record<SynthesisRosterRow["status"], { text: string; style: string }> = {
   current: { text: "Up to date", style: "bg-mint text-mint-foreground" },
   stale: { text: "New evidence", style: "bg-sunny text-sunny-foreground" },
-  none: { text: "No summary", style: "bg-secondary text-secondary-foreground" },
-  empty: { text: "No evidence", style: "bg-muted text-muted-foreground" },
+  none: { text: "No evidence yet", style: "bg-secondary text-secondary-foreground" },
+  empty: { text: "Nothing recorded", style: "bg-muted text-muted-foreground" },
 };
 
 // The line under the pill: when it was made, or what changed since.
@@ -24,8 +24,8 @@ function detail(r: SynthesisRosterRow): string | null {
   return null;
 }
 
-// Each student with their summary's status; the row opens the report, and the button beside
-// it makes a missing or out-of-date one.
+// Each student with their evidence's status and whether a report has been written from it;
+// the row opens the student, and the button beside it gathers missing or out-of-date evidence.
 export default function ReportRoster({
   rows,
   classId,
@@ -74,6 +74,7 @@ export default function ReportRoster({
                 <span className="block truncate text-[14.5px] font-bold">{name}</span>
                 <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                   <span className={cn("rounded-full px-2 py-0.5 text-[11.5px] font-bold", STATUS[r.status].style)}>{STATUS[r.status].text}</span>
+                  {r.reportId && <span className="rounded-full bg-accent px-2 py-0.5 text-[11.5px] font-bold text-accent-foreground">Report</span>}
                   {line && <span className="text-xs text-muted-foreground">{line}</span>}
                 </span>
               </span>
@@ -84,7 +85,7 @@ export default function ReportRoster({
               ) : (
                 <Button type="button" variant="outline" size="sm" className="border-ring/60 text-accent-foreground" disabled={busy || disabled} onClick={() => onGenerate(r.studentId)}>
                   {busy && <span className="size-3 animate-spin rounded-full border-2 border-accent border-t-primary" aria-hidden />}
-                  {busy ? "Generating…" : "Generate"}
+                  {busy ? "Gathering…" : "Gather evidence"}
                 </Button>
               ))}
           </li>
