@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Ellipsis, Sparkles } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { ClassRow, Student } from "../../worker/db/schema";
 import type { NoteWithTags, StudentDetail } from "../../worker/api-types";
@@ -35,6 +35,7 @@ export default function StudentPage({ cls, id }: { cls: ClassRow; id: string }) 
   const [data, setData] = useState<StudentDetail | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [openNote, setOpenNote] = useState<string | null>(null);
 
   const save = async (body: Patch) => {
@@ -106,6 +107,9 @@ export default function StudentPage({ cls, id }: { cls: ClassRow; id: string }) 
               ) : (
                 <DropdownMenuItem onSelect={() => setLeft(localDay(new Date()))}>Mark as left</DropdownMenuItem>
               )}
+              <DropdownMenuItem variant="destructive" onSelect={() => setDeleting(true)}>
+                Delete student
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -141,7 +145,38 @@ export default function StudentPage({ cls, id }: { cls: ClassRow; id: string }) 
         )}
       </Panel>
       <RenamePanel key={String(renaming)} open={renaming} student={student} onClose={() => setRenaming(false)} save={save} />
+      <DeletePanel open={deleting} student={student} onClose={() => setDeleting(false)} />
     </section>
+  );
+}
+
+// Delete asks once and says what goes. The notes stay, so the feed is fetched again to drop
+// the student's chips, and the roster to drop the row; the page itself is left behind.
+function DeletePanel({ open, student, onClose }: { open: boolean; student: Student; onClose: () => void }) {
+  const { refreshRoster, refreshNotes } = useNotes();
+  const navigate = useNavigate();
+  const name = `${student.firstName} ${student.lastName}`;
+  const { run, busy, error } = useAction(async () => {
+    await api(`/api/students/${student.id}`, { method: "DELETE" });
+    refreshRoster();
+    refreshNotes();
+    toast(`Deleted ${name}`);
+    navigate(`/classes/${student.classId}`);
+  });
+
+  return (
+    <Panel open={open} onOpenChange={(o) => !o && onClose()} title={`Delete ${name}?`}>
+      <p className="mt-2 text-sm text-secondary-foreground">Their tags, grades, evidence and reports go too. Notes stay. To keep the evidence, mark them as left instead.</p>
+      {error && <p className={cn("mt-2", errorText)}>{error}</p>}
+      <div className="mt-5 flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+          Cancel
+        </Button>
+        <Button type="button" variant="destructive" disabled={busy} onClick={() => run()}>
+          {busy ? "Deleting…" : "Delete"}
+        </Button>
+      </div>
+    </Panel>
   );
 }
 
