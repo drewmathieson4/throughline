@@ -67,6 +67,13 @@ export function AccountCard({ user, onSignOut, onDeleteAccount, className }: { u
           <DropdownMenuItem onSelect={onSignOut} disabled={waiting > 0}>
             Sign out
           </DropdownMenuItem>
+          {/* A plain link: the route answers as an attachment, the same-origin navigation
+              carries the cookie, and the browser does the saving. */}
+          <DropdownMenuItem asChild>
+            <a href="/api/auth/export" download>
+              Export my data
+            </a>
+          </DropdownMenuItem>
           <DropdownMenuItem variant="destructive" onSelect={() => setDeleting(true)} disabled={waiting > 0}>
             Delete account
           </DropdownMenuItem>

@@ -4,8 +4,9 @@ import type { SessionUser } from "../api-types";
 import { hashToken } from "../auth";
 import { liveDemoCount } from "../demo";
 import { googleProfile, type GoogleProfile } from "../google";
+import type { AccountExport } from "../export";
 import { ACCOUNT_CAP_MICRO } from "../spend";
-import { DEV_EMAIL, DEV_USER_ID, NOTE_ID, OTHER_USER_ID, SEED_STUDENT_COUNT, cookie, setupTestDb, signedIn } from "../test-db";
+import { CLASS_B_ID, CLASS_C_ID, DEV_EMAIL, DEV_USER_ID, NOTE_ID, OTHER_CLASS_ID, OTHER_STUDENT_ID, OTHER_USER_ID, SEED_CLASS_ID, SEED_STUDENT_COUNT, STUDENT, cookie, setupTestDb, signedIn } from "../test-db";
 
 // The calls to Google are stubbed: the flow is exercised up to and after them.
 vi.mock(import("../google"), async (importOriginal) => ({ ...(await importOriginal()), googleProfile: vi.fn() }));
@@ -191,6 +192,31 @@ test("POST /api/auth/signout ends the session on the server and clears the cooki
   expect(await sessionCount(DEV_USER_ID)).toBe(before - 1);
   expect((await db.request("/api/auth/me")).status).toBe(401);
   expect((await db.request("/api/auth/signout", { method: "POST" })).status).toBe(401);
+});
+
+test("GET /api/auth/export downloads the teacher's classes, students, notes and tags, and none of the other teacher's", async () => {
+  await db.env.DB.batch([
+    db.insertNote(NOTE_ID(1), null, "2026-10-01T00:00:00.000Z"),
+    db.tagNote(NOTE_ID(1), STUDENT.avery),
+    db.insertNote(NOTE_ID(2), OTHER_CLASS_ID, "2026-10-01T00:00:00.000Z", OTHER_USER_ID),
+    db.tagNote(NOTE_ID(2), OTHER_STUDENT_ID),
+  ]);
+  const res = await db.request("/api/auth/export");
+  expect(res.status).toBe(200);
+  expect(res.headers.get("content-disposition")).toMatch(/^attachment; filename="throughline-export-\d{4}-\d{2}-\d{2}\.json"$/);
+  const data = (await res.json()) as AccountExport;
+  expect(data.user).toEqual({ email: DEV_EMAIL, name: "Dev Teacher" });
+  expect(data.classes.map((c) => c.id)).toEqual([SEED_CLASS_ID, CLASS_B_ID, CLASS_C_ID]);
+  expect(data.classes.flatMap((c) => c.students)).toHaveLength(SEED_STUDENT_COUNT);
+  expect(data.classes[0]).toMatchObject({ settings: null, materials: [] });
+  expect(data.notes.map((n) => n.id)).toEqual([NOTE_ID(1)]);
+  expect(data.notes[0]!.tags).toEqual([{ noteId: NOTE_ID(1), studentId: STUDENT.avery, quotes: [] }]);
+  expect(data.notes[0]!.mentions).toEqual([]);
+  expect(data.evidence).toEqual([]);
+  expect(data.reports).toEqual([]);
+  const text = JSON.stringify(data);
+  for (const theirs of [OTHER_CLASS_ID, OTHER_STUDENT_ID, NOTE_ID(2)]) expect(text).not.toContain(theirs);
+  expect((await db.request("/api/auth/export", undefined, "anon")).status).toBe(401);
 });
 
 test("DELETE /api/auth/account removes the teacher with their classes, notes and sessions, clears the cookie, and leaves the other teacher alone", async () => {
