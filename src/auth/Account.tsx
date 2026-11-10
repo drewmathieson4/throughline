@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Ellipsis } from "lucide-react";
+import { Link } from "react-router";
 import type { SessionUser } from "../../worker/api-types";
 import { api } from "../api";
 import { useNotes } from "../notes/notesStore";
@@ -73,6 +74,9 @@ export function AccountCard({ user, onSignOut, className }: { user: SessionUser 
             <a href="/api/auth/export" download>
               Export my data
             </a>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/privacy">Privacy</Link>
           </DropdownMenuItem>
           <DropdownMenuItem variant="destructive" onSelect={() => setDeleting(true)} disabled={waiting > 0}>
             Delete account

@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { MessageSquareText, Sparkles, Users, type LucideIcon } from "lucide-react";
 import { Link, NavLink, Navigate, Route, Routes, useMatch } from "react-router";
+import { toast } from "sonner";
 // Type-only imports: nothing from the Worker ends up in the browser bundle.
 import type { ClassRow } from "../worker/db/schema";
 import type { SessionUser } from "../worker/api-types";
 import { api, messageOf } from "./api";
 import { AccountCard } from "./auth/Account";
 import { AllowanceProvider } from "./auth/AllowanceProvider";
+import Privacy from "./auth/Privacy";
 import SignIn from "./auth/SignIn";
 import { useSession } from "./auth/useSession";
+import { useSignInNotice } from "./auth/useSignInNotice";
 import { useOnline } from "./offline/useOnline";
 import ClassesPage from "./classes/ClassesPage";
 import ClassView, { StudentView } from "./classes/ClassView";
@@ -127,6 +130,12 @@ function Shell({ user, onSignOut }: Account) {
   const [error, setError] = useState<string | null>(null);
 
   const online = useOnline();
+  // A demo visitor who tried Google from the Sign in nudge and was refused lands back here,
+  // still in their demo: the notice is a toast, since there is no sign-in screen to show it on.
+  const notice = useSignInNotice();
+  useEffect(() => {
+    if (notice) toast.error(notice, { id: "signin" }); // one toast, even under StrictMode's double effect
+  }, [notice]);
 
   const loadClasses = () =>
     api<ClassRow[]>("/api/classes")
@@ -197,9 +206,12 @@ function Shell({ user, onSignOut }: Account) {
 
 // Nothing shows until the server has said who this is: the sign-in screen for nobody, the
 // app for a teacher or demo visitor, and the app with no name on it when the server could
-// not be reached.
+// not be reached. The privacy page is the exception: it is for someone deciding whether to
+// sign in, so it renders for anyone and does not wait on /api/auth/me.
 function App() {
   const { session, signOut, startDemo } = useSession();
+  const onPrivacy = useMatch("/privacy") !== null;
+  if (onPrivacy) return <Privacy />;
   if (session.status === "loading") return null;
   if (session.status === "out") return <SignIn onDemo={startDemo} />;
   return <Shell user={session.status === "in" ? session.user : null} onSignOut={signOut} />;
