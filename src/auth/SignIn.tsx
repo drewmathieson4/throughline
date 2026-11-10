@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
 import { messageOf } from "../api";
 import { LogoWave } from "@/components/page";
+
+// What the sign-in callback says to an email that is not on the allowlist (worker/allowlist.ts).
+const PRIVATE_TRIAL = "Throughline is a private trial. Ask the person who shared it to add your Google email.";
 
 // Google's four-colour G, the mark their sign-in button guidelines ask for.
 function GoogleG({ className }: { className?: string }) {
@@ -16,9 +20,16 @@ function GoogleG({ className }: { className?: string }) {
 
 // The only screen a signed-out teacher sees. The Google button is a plain link: the browser
 // has to leave for Google and come back, which a fetch cannot do. The demo is a request.
+// A refused sign-in comes back as ?signin=private: the notice is kept and the query dropped
+// from the address bar, so a reload or a shared link does not carry it.
 export default function SignIn({ onDemo }: { onDemo: () => Promise<void> }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [params, setParams] = useSearchParams();
+  const [notice] = useState(() => (params.get("signin") === "private" ? PRIVATE_TRIAL : null));
+  useEffect(() => {
+    if (params.has("signin")) setParams(new URLSearchParams(), { replace: true });
+  }, [params, setParams]);
   async function tryDemo() {
     setPending(true);
     setError(null);
@@ -45,7 +56,7 @@ export default function SignIn({ onDemo }: { onDemo: () => Promise<void> }) {
       <button type="button" disabled={pending} onClick={tryDemo} className="inline-flex min-h-12 items-center rounded-full border border-white/50 px-6 text-[15px] font-bold text-white disabled:opacity-60">
         {pending ? "Setting up the demo…" : "Try the demo"}
       </button>
-      {error && <p className="text-sm font-semibold text-white/85">{error}</p>}
+      {(error ?? notice) && <p className="max-w-[300px] text-center text-sm font-semibold text-white/85">{error ?? notice}</p>}
     </main>
   );
 }

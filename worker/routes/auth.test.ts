@@ -31,8 +31,8 @@ async function start() {
   const state = cookie(res, "oauth_state")!;
   return { location: new URL(res.headers.get("location")!), state: state.value, cookie: `oauth_state=${state.value}` };
 }
-const callback = (query: Record<string, string>, cookie?: string) =>
-  app.request(`/api/auth/callback?${new URLSearchParams(query)}`, cookie ? { headers: { cookie } } : undefined, configured());
+const callback = (query: Record<string, string>, cookie?: string, env = configured()) =>
+  app.request(`/api/auth/callback?${new URLSearchParams(query)}`, cookie ? { headers: { cookie } } : undefined, env);
 const userRows = async () => (await db.env.DB.prepare("SELECT id, google_sub, name FROM users WHERE google_sub = ?").bind(PROFILE.sub).all<{ id: string; name: string }>()).results;
 const sessionCount = async (userId: string) => (await db.env.DB.prepare("SELECT count(*) AS n FROM sessions WHERE user_id = ?").bind(userId).first<{ n: number }>())!.n;
 
@@ -164,6 +164,31 @@ test("an account whose email Google has not verified is refused", async () => {
   const res = await callback({ code: "x", state }, c);
   expect(res.status).toBe(403);
   expect(await userRows()).toHaveLength(0);
+});
+
+test("with ALLOWED_EMAILS set, an unlisted email is sent back to the sign-in screen with no account made; listed emails and owners get in", async () => {
+  const closed = (): Env => ({ ...configured(), ALLOWED_EMAILS: " Colleague@Example.test ,", OWNER_EMAILS: "drew@example.test" });
+  profileMock.mockResolvedValueOnce(PROFILE);
+  const refused = await start();
+  const res = await callback({ code: "x", state: refused.state }, refused.cookie, closed());
+  expect(res.status).toBe(302);
+  expect(res.headers.get("location")).toBe("/?signin=private");
+  expect(cookie(res, "session")).toBeUndefined();
+  expect(await userRows()).toHaveLength(0);
+
+  for (const email of ["colleague@example.test", "DREW@example.test"]) {
+    profileMock.mockResolvedValueOnce({ ...PROFILE, email });
+    const { state, cookie: c } = await start();
+    const ok = await callback({ code: "x", state }, c, closed());
+    expect(ok.headers.get("location")).toBe("/");
+    expect(cookie(ok, "session")).toBeDefined();
+  }
+  expect(await userRows()).toHaveLength(1);
+
+  // Empty is open, as unset is (the first callback test).
+  profileMock.mockResolvedValueOnce({ ...PROFILE, sub: "google-456", email: "anyone@example.test" });
+  const { state, cookie: c } = await start();
+  expect((await callback({ code: "x", state }, c, { ...configured(), ALLOWED_EMAILS: "" })).headers.get("location")).toBe("/");
 });
 
 test("GET /api/auth/me is a 401 with no cookie, an unknown token, or an expired session", async () => {
