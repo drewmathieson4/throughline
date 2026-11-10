@@ -2,9 +2,9 @@ import { beforeEach, expect, test, vi } from "vitest";
 import app from "../index";
 import type { Student } from "../db/schema";
 import type { ClassRow } from "../db/schema";
-import type { RosterImportResult, RosterStudent, StudentDetail } from "../api-types";
+import type { NoteWithTags, RosterImportResult, RosterStudent, StudentDetail } from "../api-types";
 import { suggestMapping } from "../roster-model";
-import { CLASS_B_ID, MENTION_ID, NOTE_ID, OTHER_CLASS_ID, OTHER_STUDENT_ID, PERIOD_3_COUNT, SEED_CLASS_ID, SEED_CLASS_NAMES, STUDENT, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb, signedIn } from "../test-db";
+import { CLASS_B_ID, MENTION_ID, NOTE_ID, OTHER_CLASS_ID, OTHER_STUDENT_ID, PERIOD_3_COUNT, REPORT_ID, SEED_CLASS_ID, SEED_CLASS_NAMES, STUDENT, SYNTHESIS_ID, UNKNOWN_ID, jsonInit, quietErrors, setupTestDb, signedIn } from "../test-db";
 
 // The model fallback for column mapping is mocked: no network, and each test says what it answers.
 vi.mock(import("../roster-model"), async (importOriginal) => ({ ...(await importOriginal()), suggestMapping: vi.fn() }));
@@ -292,4 +292,35 @@ test("another teacher's class and students are not found", async () => {
   expect((await db.request(`/api/students/${OTHER_STUDENT_ID}`, undefined, "other")).status).toBe(200);
   const roster = await db.json<RosterStudent[]>(`/api/students?classId=${OTHER_CLASS_ID}`, undefined, "other");
   expect(roster.map((s) => s.firstName)).toEqual(["Orla"]);
+});
+
+test("DELETE /api/students/:id removes the student with their tags, grades, evidence and reports, and leaves the note; a second delete and another teacher's are 404", async () => {
+  await db.env.DB.batch([
+    db.insertNote(NOTE_ID(1), SEED_CLASS_ID, "2026-10-01T00:00:00.000Z"),
+    db.tagNote(NOTE_ID(1), STUDENT.avery),
+    db.tagNote(NOTE_ID(1), STUDENT.rowan),
+    db.insertGrade("55555555-5555-4555-8555-555555555501", STUDENT.avery, "Quiz 1", 8, 1),
+    db.insertSynthesis(SYNTHESIS_ID(1), STUDENT.avery, { from: "2026-09-01", to: "2026-12-19" }, {}),
+    db.insertReport(REPORT_ID(1), SYNTHESIS_ID(1), "Generated."),
+  ]);
+  const theirs = () =>
+    db.env.DB.prepare(
+      "SELECT (SELECT count(*) FROM students WHERE id = ?1) AS students, (SELECT count(*) FROM note_students WHERE student_id = ?1) AS tags, (SELECT count(*) FROM grade_entries WHERE student_id = ?1) AS grades, (SELECT count(*) FROM syntheses WHERE student_id = ?1) AS evidence, (SELECT count(*) FROM reports) AS reports",
+    )
+      .bind(STUDENT.avery)
+      .first<{ students: number; tags: number; grades: number; evidence: number; reports: number }>();
+  expect(await theirs()).toEqual({ students: 1, tags: 1, grades: 1, evidence: 1, reports: 1 });
+
+  const res = await db.request(`/api/students/${STUDENT.avery}`, { method: "DELETE" });
+  expect(res.status).toBe(204);
+  expect(await theirs()).toEqual({ students: 0, tags: 0, grades: 0, evidence: 0, reports: 0 });
+  // The note is still there, tagged to the classmate only.
+  const [note] = await db.json<NoteWithTags[]>("/api/notes");
+  expect(note!.id).toBe(NOTE_ID(1));
+  expect(note!.students.map((s) => s.studentId)).toEqual([STUDENT.rowan]);
+  expect((await rosterJson()).map((s) => s.id)).not.toContain(STUDENT.avery);
+
+  expect((await db.request(`/api/students/${STUDENT.avery}`, { method: "DELETE" })).status).toBe(404);
+  expect((await db.request(`/api/students/${OTHER_STUDENT_ID}`, { method: "DELETE" })).status).toBe(404);
+  expect((await db.request(`/api/students/${OTHER_STUDENT_ID}`, undefined, "other")).status).toBe(200);
 });
