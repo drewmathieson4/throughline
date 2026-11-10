@@ -283,10 +283,11 @@ export async function liveDemoCount(db: Db): Promise<number> {
   return row?.n ?? 0;
 }
 
-// Delete demo users, with everything they own. Notes and classes go first: owner_id points at
+// Delete users, with everything they own. Notes and classes go first: owner_id points at
 // users without a cascade. Deleting a class takes its students, grades, materials, tags,
-// summaries and reports; deleting a user takes its sessions.
-function deleteDemoUsers(db: Db, which: ReturnType<typeof and>) {
+// summaries and reports; deleting a user takes its sessions. Written for the demo's
+// visitors; a teacher deleting their own account goes the same way (routes/auth.ts).
+export function deleteUsers(db: Db, which: ReturnType<typeof and>) {
   const gone = db.select({ id: schema.users.id }).from(schema.users).where(which);
   return db.batch([
     db.delete(schema.notes).where(inArray(schema.notes.ownerId, gone)),
@@ -297,7 +298,7 @@ function deleteDemoUsers(db: Db, which: ReturnType<typeof and>) {
 
 // Visitors whose sessions have all expired, run when a new demo starts. The Worker has no
 // scheduled jobs; a demo that nobody starts leaves nothing to clean up.
-export const purgeExpiredDemos = (db: Db) => deleteDemoUsers(db, and(eq(schema.users.demo, 1), notExists(liveSession(db))));
+export const purgeExpiredDemos = (db: Db) => deleteUsers(db, and(eq(schema.users.demo, 1), notExists(liveSession(db))));
 
 // One visitor, when they sign in with Google: their copy is not carried over.
-export const deleteDemoUser = (db: Db, id: string) => deleteDemoUsers(db, and(eq(schema.users.id, id), eq(schema.users.demo, 1)));
+export const deleteDemoUser = (db: Db, id: string) => deleteUsers(db, and(eq(schema.users.id, id), eq(schema.users.demo, 1)));

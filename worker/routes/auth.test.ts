@@ -5,7 +5,7 @@ import { hashToken } from "../auth";
 import { liveDemoCount } from "../demo";
 import { googleProfile, type GoogleProfile } from "../google";
 import { ACCOUNT_CAP_MICRO } from "../spend";
-import { DEV_EMAIL, DEV_USER_ID, cookie, setupTestDb, signedIn } from "../test-db";
+import { DEV_EMAIL, DEV_USER_ID, NOTE_ID, OTHER_USER_ID, SEED_STUDENT_COUNT, cookie, setupTestDb, signedIn } from "../test-db";
 
 // The calls to Google are stubbed: the flow is exercised up to and after them.
 vi.mock(import("../google"), async (importOriginal) => ({ ...(await importOriginal()), googleProfile: vi.fn() }));
@@ -191,6 +191,31 @@ test("POST /api/auth/signout ends the session on the server and clears the cooki
   expect(await sessionCount(DEV_USER_ID)).toBe(before - 1);
   expect((await db.request("/api/auth/me")).status).toBe(401);
   expect((await db.request("/api/auth/signout", { method: "POST" })).status).toBe(401);
+});
+
+test("DELETE /api/auth/account removes the teacher with their classes, notes and sessions, clears the cookie, and leaves the other teacher alone", async () => {
+  await db.insertNote(NOTE_ID(1), null, "2026-10-01T00:00:00.000Z").run();
+  const owned = (userId: string) =>
+    db.env.DB.prepare(
+      "SELECT (SELECT count(*) FROM users WHERE id = ?1) AS users, (SELECT count(*) FROM classes WHERE owner_id = ?1) AS classes, (SELECT count(*) FROM students WHERE class_id IN (SELECT id FROM classes WHERE owner_id = ?1)) AS students, (SELECT count(*) FROM notes WHERE owner_id = ?1) AS notes, (SELECT count(*) FROM sessions WHERE user_id = ?1) AS sessions",
+    )
+      .bind(userId)
+      .first<{ users: number; classes: number; students: number; notes: number; sessions: number }>();
+  expect(await owned(DEV_USER_ID)).toEqual({ users: 1, classes: 3, students: SEED_STUDENT_COUNT, notes: 1, sessions: 1 });
+  const theirs = await owned(OTHER_USER_ID);
+
+  const res = await db.request("/api/auth/account", { method: "DELETE" });
+  expect(res.status).toBe(204);
+  expect(cookie(res, "session")!.attrs["max-age"]).toBe("0");
+  expect(await owned(DEV_USER_ID)).toEqual({ users: 0, classes: 0, students: 0, notes: 0, sessions: 0 });
+  expect(await owned(OTHER_USER_ID)).toEqual(theirs);
+  expect((await db.request("/api/auth/me")).status).toBe(401);
+  expect((await db.request("/api/auth/account", { method: "DELETE" }, "anon")).status).toBe(401);
+
+  // A demo visitor can leave the same way.
+  const demo = await db.startDemo();
+  expect((await demo.request("/api/auth/account", { method: "DELETE" })).status).toBe(204);
+  expect(await owned(demo.userId)).toEqual({ users: 0, classes: 0, students: 0, notes: 0, sessions: 0 });
 });
 
 test("health, sign-in and the demo need no session; every other /api route does", async () => {
