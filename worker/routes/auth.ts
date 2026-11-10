@@ -13,8 +13,8 @@ import type { User } from "../db/schema";
 import type { AppEnv } from "../db/client";
 import type { SessionUser } from "../api-types";
 import { SESSION_COOKIE, STATE_COOKIE, cookieOptions, deleteSession, newToken, requireUser, startSession } from "../auth";
-import { DEMO_MAX_LIVE, DEMO_SESSION_DAYS, allowanceOf, cloneDemo, deleteDemoUser, deleteUsers, liveDemoCount, purgeExpiredDemos } from "../demo";
-import { exportAccount } from "../export";
+import { deleteUsers, exportAccount } from "../account";
+import { DEMO_MAX_LIVE, DEMO_SESSION_DAYS, allowanceOf, cloneDemo, deleteDemoUser, liveDemoCount, purgeExpiredDemos } from "../demo";
 import { authorizeUrl, googleProfile } from "../google";
 import { spendState } from "../spend";
 import { validate } from "../validate";
@@ -102,7 +102,7 @@ auth.post("/signout", requireUser, async (c) => {
   return c.json({ ok: true });
 });
 
-// GET /api/auth/export → everything the account owns as one JSON file (worker/export.ts),
+// GET /api/auth/export → everything the account owns as one JSON file (worker/account.ts),
 // served as a download: the menu item is a plain link, and the browser saves it under a
 // dated name.
 auth.get("/export", requireUser, async (c) => {

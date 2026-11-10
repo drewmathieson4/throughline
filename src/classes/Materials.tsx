@@ -4,23 +4,16 @@ import { toast } from "sonner";
 import type { MaterialRow } from "../../worker/api-types";
 import { api } from "../api";
 import { caption, dateFormat, errorText } from "../ui";
-import { useAction } from "../useAction";
 import type { useMaterials } from "./useMaterials";
-import { Panel } from "@/components/Panel";
+import { ConfirmPanel } from "@/components/ConfirmPanel";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 // Class-level things: the course materials (syllabus, unit plan, grading policy) that tell
 // the reports what the course is for and how grades are calculated. They arrive through the
 // Add menu's contextual documents; delete asks once, since only a fresh import brings it back.
-export default function Materials({ materials, setMaterials, error: loadError }: ReturnType<typeof useMaterials>) {
+export default function Materials({ materials, setMaterials, error }: ReturnType<typeof useMaterials>) {
   const [deleting, setDeleting] = useState<MaterialRow | null>(null);
-  const { run: remove, busy: removing, error: removeError } = useAction(async (m: MaterialRow) => {
-    await api(`/api/materials/${m.id}`, { method: "DELETE" });
-    setMaterials((prev) => prev?.filter((x) => x.id !== m.id) ?? null);
-    toast(`Deleted ${m.name}`);
-  });
-  const error = loadError ?? removeError;
 
   return (
     <div className="mt-4 flex flex-col gap-3.5">
@@ -35,7 +28,7 @@ export default function Materials({ materials, setMaterials, error: loadError }:
               <h3 className="text-[15px] font-bold [overflow-wrap:anywhere]">{m.name}</h3>
               <p className="mt-0.5 text-[12.5px] text-muted-foreground">Added {dateFormat.format(new Date(m.createdAt))}</p>
             </div>
-            <Button type="button" variant="outline" size="sm" disabled={removing} onClick={() => setDeleting(m)}>
+            <Button type="button" variant="outline" size="sm" onClick={() => setDeleting(m)}>
               Delete
             </Button>
           </div>
@@ -46,24 +39,20 @@ export default function Materials({ materials, setMaterials, error: loadError }:
         <p className="mt-1 text-center text-sm text-muted-foreground">No course materials yet.</p>
       )}
 
-      <Panel open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)} title={`Delete ${deleting?.name ?? ""}?`}>
-        <p className="mt-2 text-sm text-secondary-foreground">Reports stop using its goals and grading weights.</p>
-        <div className="mt-5 flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => setDeleting(null)}>
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            disabled={removing}
-            onClick={async () => {
-              if (deleting && (await remove(deleting))) setDeleting(null);
-            }}
-          >
-            {removing ? "Deleting…" : "Delete"}
-          </Button>
-        </div>
-      </Panel>
+      <ConfirmPanel
+        open={deleting !== null}
+        onClose={() => setDeleting(null)}
+        title={`Delete ${deleting?.name ?? ""}?`}
+        onConfirm={async () => {
+          if (!deleting) return;
+          await api(`/api/materials/${deleting.id}`, { method: "DELETE" });
+          setMaterials((prev) => prev?.filter((x) => x.id !== deleting.id) ?? null);
+          toast(`Deleted ${deleting.name}`);
+          setDeleting(null);
+        }}
+      >
+        <p className="text-sm text-secondary-foreground">Reports stop using its goals and grading weights.</p>
+      </ConfirmPanel>
     </div>
   );
 }

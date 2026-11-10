@@ -4,7 +4,7 @@ import type { SessionUser } from "../api-types";
 import { hashToken } from "../auth";
 import { liveDemoCount } from "../demo";
 import { googleProfile, type GoogleProfile } from "../google";
-import type { AccountExport } from "../export";
+import type { AccountExport } from "../account";
 import { ACCOUNT_CAP_MICRO } from "../spend";
 import { CLASS_B_ID, CLASS_C_ID, DEV_EMAIL, DEV_USER_ID, NOTE_ID, OTHER_CLASS_ID, OTHER_STUDENT_ID, OTHER_USER_ID, SEED_CLASS_ID, SEED_STUDENT_COUNT, STUDENT, cookie, setupTestDb, signedIn } from "../test-db";
 

@@ -8,7 +8,7 @@ import { z } from "zod";
 import * as schema from "../db/schema";
 import type { UserEnv } from "../db/client";
 import type { ImportedClass, RosterImportResult, RosterStudent, StudentDetail } from "../api-types";
-import { insertChunks, notFound, ownedClasses, ownedStudent, requireClass, requireStudent, selectClasses, selectRoster } from "../db/helpers";
+import { insertChunks, notFound, ownedClasses, ownedStudent, pruneMentions, requireClass, requireStudent, selectClasses, selectRoster } from "../db/helpers";
 import { classIdQuery, dateField, idParam, nameField, notInFuture } from "../fields";
 import { summarise } from "../grades";
 import { gradingWeights, selectMaterialSummaries } from "../materials";
@@ -218,12 +218,15 @@ students.patch("/:id", validate("param", idParam), validate("json", patchStudent
 });
 
 // DELETE /api/students/:id → 204. A hard delete, for a student who should not be in the app
-// at all: their tags, grades, evidence and reports cascade with the row. The notes stay; one
-// left with no tags reads as class context, which is what an untagged note already means. A
-// student who has merely left the class is marked (PATCH leftAt), so the evidence survives.
+// at all: their tags, grades, evidence and reports cascade with the row, and open mentions
+// stop offering them. The notes stay; one left with no tags reads as class context, which is
+// what an untagged note already means. A student who has merely left the class is marked
+// (PATCH leftAt), so the evidence survives.
 students.delete("/:id", validate("param", idParam), async (c) => {
-  const student = await requireStudent(c.var.db, c.var.user.id, c.req.valid("param").id);
-  await c.var.db.delete(schema.students).where(eq(schema.students.id, student.id));
+  const db = c.var.db;
+  const uid = c.var.user.id;
+  const student = await requireStudent(db, uid, c.req.valid("param").id);
+  await db.batch([db.delete(schema.students).where(eq(schema.students.id, student.id)), ...pruneMentions(db, uid)]);
   return c.body(null, 204);
 });
 

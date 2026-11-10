@@ -1,12 +1,12 @@
-// Everything an account owns, as one JSON document the teacher can download: the way their
-// data leaves the app. Built on the same owner-scoped predicates the routes use, so it holds
-// exactly what the teacher can see, nested the way the app shows it. One request: a
-// teacher's data is hundreds of rows, and the Worker has no scheduler for anything longer.
-import { asc, eq, inArray } from "drizzle-orm";
+// What happens to an account as a whole: its data leaving as one JSON document, and the
+// account going with everything it owns. Both are built on the same owner-scoped predicates
+// the routes use, so the export holds exactly what the teacher can see and the delete takes
+// exactly that. The demo's purge of expired visitors is the same delete (worker/demo.ts).
+import { asc, eq, inArray, type SQL } from "drizzle-orm";
 import * as schema from "./db/schema";
 import type { ClassMaterial, ClassRow, GradeEntry, Note, NoteMention, NoteStudent, ReportRow, SettingsRow, Student, SynthesisRow, User } from "./db/schema";
 import type { Db } from "./db/client";
-import { ownedClasses } from "./db/helpers";
+import { groupBy, ownedClasses } from "./db/helpers";
 
 export type AccountExport = {
   exportedAt: string;
@@ -17,17 +17,8 @@ export type AccountExport = {
   reports: ReportRow[];
 };
 
-// Rows under their parent's id, in the order they came.
-function under<T, K extends keyof T>(rows: T[], key: K): Map<T[K], T[]> {
-  const groups = new Map<T[K], T[]>();
-  for (const row of rows) {
-    const list = groups.get(row[key]);
-    if (list) list.push(row);
-    else groups.set(row[key], [row]);
-  }
-  return groups;
-}
-
+// Everything the account owns, nested the way the app shows it. One request: a teacher's
+// data is hundreds of rows, and the Worker has no scheduler for anything longer.
 export async function exportAccount(db: Db, user: User): Promise<AccountExport> {
   const mine = ownedClasses(db, user.id);
   const myStudents = db.select({ id: schema.students.id }).from(schema.students).where(inArray(schema.students.classId, mine));
@@ -46,11 +37,11 @@ export async function exportAccount(db: Db, user: User): Promise<AccountExport> 
     db.select().from(schema.reports).where(inArray(schema.reports.synthesisId, mySyntheses)).orderBy(asc(schema.reports.createdAt)),
   ]);
   const settingsOf = new Map(settings.map((s) => [s.classId, s]));
-  const studentsOf = under(students, "classId");
-  const gradesOf = under(grades, "studentId");
-  const materialsOf = under(materials, "classId");
-  const tagsOf = under(tags, "noteId");
-  const mentionsOf = under(mentions, "noteId");
+  const studentsOf = groupBy(students, (s) => s.classId);
+  const gradesOf = groupBy(grades, (g) => g.studentId);
+  const materialsOf = groupBy(materials, (m) => m.classId);
+  const tagsOf = groupBy(tags, (t) => t.noteId);
+  const mentionsOf = groupBy(mentions, (m) => m.noteId);
   return {
     exportedAt: new Date().toISOString(),
     user: { email: user.email, name: user.name },
@@ -64,4 +55,16 @@ export async function exportAccount(db: Db, user: User): Promise<AccountExport> 
     evidence,
     reports,
   };
+}
+
+// Delete the users `which` picks, with everything they own. Notes and classes go first:
+// owner_id points at users without a cascade. Deleting a class takes its students, grades,
+// materials, tags, summaries and reports; deleting a user takes its sessions.
+export function deleteUsers(db: Db, which: SQL | undefined) {
+  const gone = db.select({ id: schema.users.id }).from(schema.users).where(which);
+  return db.batch([
+    db.delete(schema.notes).where(inArray(schema.notes.ownerId, gone)),
+    db.delete(schema.classes).where(inArray(schema.classes.ownerId, gone)),
+    db.delete(schema.users).where(which),
+  ]);
 }

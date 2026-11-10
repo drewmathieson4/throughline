@@ -11,6 +11,7 @@ import * as schema from "./db/schema";
 import type { CourseSummary, GradeEntry, Note, NoteKind, SynthesisRow } from "./db/schema";
 import type { Db } from "./db/client";
 import type { Citation, Coverage, GradeSummary } from "./api-types";
+import { groupBy } from "./db/helpers";
 import { summarise } from "./grades";
 import { gradingWeights, selectMaterialSummaries } from "./materials";
 import { wrapData } from "./model";
@@ -62,18 +63,6 @@ export const dayAfter = (day: string) => shiftDay(day, 1);
 const inRange = (day: string, r: Range) => day >= r.from && day <= r.to;
 // Undated grades (wide grade-book exports rarely carry dates) belong to every range.
 const gradeInRange = (e: GradeEntry, r: Range) => e.dueDate === null || inRange(e.dueDate, r);
-
-// Map.groupBy, which the worker's lib setting predates.
-function groupBy<T, K>(items: T[], key: (item: T) => K): Map<K, T[]> {
-  const out = new Map<K, T[]>();
-  for (const item of items) {
-    const k = key(item);
-    const list = out.get(k);
-    if (list) list.push(item);
-    else out.set(k, [item]);
-  }
-  return out;
-}
 
 const round = (n: number) => Math.round(n * 10) / 10;
 export const pct = (n: number) => `${Math.round(n)}%`;

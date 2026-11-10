@@ -36,12 +36,5 @@ export function useSession() {
     setSession({ status: "in", user });
   }, []);
 
-  // The account and everything in it go on the server, which clears the cookie with its
-  // answer. Unlike sign-out a failure is the caller's to show: nothing has been deleted.
-  const deleteAccount = useCallback(async () => {
-    await api("/api/auth/account", { method: "DELETE" });
-    setSession({ status: "out" });
-  }, []);
-
-  return { session, signOut, startDemo, deleteAccount };
+  return { session, signOut, startDemo };
 }

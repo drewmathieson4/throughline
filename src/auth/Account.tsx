@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Ellipsis } from "lucide-react";
 import type { SessionUser } from "../../worker/api-types";
+import { api } from "../api";
 import { useNotes } from "../notes/notesStore";
-import { allowanceLine, errorText, spendLine, waitingToUpload } from "../ui";
-import { useAction } from "../useAction";
+import { allowanceLine, spendLine, waitingToUpload } from "../ui";
 import { useAllowance } from "./allowanceStore";
 import { SignInNudge } from "./SignInNudge";
 import { Avatar } from "@/components/Avatar";
-import { Panel } from "@/components/Panel";
+import { ConfirmPanel } from "@/components/ConfirmPanel";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -23,13 +23,13 @@ function AccountAvatar({ user }: { user: SessionUser }) {
   return <img src={user.pictureUrl} alt="" referrerPolicy="no-referrer" className="size-9 flex-none rounded-full bg-muted" />;
 }
 
-// Who is signed in, with the way out: a menu with Sign out and Delete account. Both wait
-// while captured notes are still on the device: they would otherwise upload under whoever
-// signs in next. Nothing is shown when the app opened without an answer from the server
-// (offline); the user is unknown until it does. A demo visitor sees what they have left and
-// the way to their own account instead; a teacher who has spent some of their AI allowance
-// sees how much.
-export function AccountCard({ user, onSignOut, onDeleteAccount, className }: { user: SessionUser | null; onSignOut: () => void; onDeleteAccount: () => Promise<void>; className?: string }) {
+// Who is signed in, with the way out: a menu with Sign out, Export my data and Delete
+// account. Signing out and deleting wait while captured notes are still on the device: they
+// would otherwise upload under whoever signs in next. Nothing is shown when the app opened
+// without an answer from the server (offline); the user is unknown until it does. A demo
+// visitor sees what they have left and the way to their own account instead; a teacher who
+// has spent some of their AI allowance sees how much.
+export function AccountCard({ user, onSignOut, className }: { user: SessionUser | null; onSignOut: () => void; className?: string }) {
   const { waiting } = useNotes();
   const { demo, ai } = useAllowance();
   const [deleting, setDeleting] = useState(false);
@@ -79,43 +79,36 @@ export function AccountCard({ user, onSignOut, onDeleteAccount, className }: { u
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <DeleteAccountPanel key={String(deleting)} open={deleting} user={user} onClose={() => setDeleting(false)} onDelete={onDeleteAccount} />
+      <DeleteAccountPanel key={String(deleting)} open={deleting} user={user} onClose={() => setDeleting(false)} onDeleted={onSignOut} />
     </div>
   );
 }
 
 // The one typed confirmation in the app: the teacher's email, because nothing is bigger
 // than this and nothing brings it back. Keyed by whether it is open, so each opening starts
-// empty. A success signs the browser out, so there is nothing to close.
-function DeleteAccountPanel({ open, user, onClose, onDelete }: { open: boolean; user: SessionUser; onClose: () => void; onDelete: () => Promise<void> }) {
+// empty. The server clears the cookie with its answer; signing out then only tidies the
+// browser (its request gets a 401, which the sign-out already swallows).
+function DeleteAccountPanel({ open, user, onClose, onDeleted }: { open: boolean; user: SessionUser; onClose: () => void; onDeleted: () => void }) {
   const [typed, setTyped] = useState("");
-  const { run, busy, error } = useAction(onDelete);
   const matches = typed.trim().toLowerCase() === user.email.toLowerCase();
 
   return (
-    <Panel open={open} onOpenChange={(o) => !o && onClose()} title="Delete your account?">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (matches) void run();
-        }}
-        className="mt-2 flex flex-col gap-3"
-      >
-        <p className="text-sm text-secondary-foreground">Every class, note, grade, evidence and report is deleted now. There is no undo.</p>
-        <Label>
-          Type {user.email} to confirm
-          <Input value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" autoCapitalize="none" spellCheck={false} />
-        </Label>
-        {error && <p className={errorText}>{error}</p>}
-        <div className="mt-1 flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-            Cancel
-          </Button>
-          <Button type="submit" variant="destructive" disabled={busy || !matches}>
-            {busy ? "Deleting…" : "Delete account"}
-          </Button>
-        </div>
-      </form>
-    </Panel>
+    <ConfirmPanel
+      open={open}
+      onClose={onClose}
+      title="Delete your account?"
+      confirmLabel="Delete account"
+      disabled={!matches}
+      onConfirm={async () => {
+        await api("/api/auth/account", { method: "DELETE" });
+        onDeleted();
+      }}
+    >
+      <p className="text-sm text-secondary-foreground">Every class, note, grade, evidence and report is deleted now. There is no undo.</p>
+      <Label>
+        Type {user.email} to confirm
+        <Input value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" autoCapitalize="none" spellCheck={false} />
+      </Label>
+    </ConfirmPanel>
   );
 }

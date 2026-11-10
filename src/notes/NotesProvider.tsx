@@ -44,9 +44,8 @@ export function NotesProvider({ classes, children }: { classes: ClassRow[]; chil
   // Kept with the class list it was fetched for: until the rosters for the current classes
   // arrive, a class page shows Loading rather than an empty roster.
   const [roster, setRoster] = useState<{ classes: ClassRow[]; rows: RosterStudent[] } | null>(null);
-  // Bumped by refreshRoster and refreshNotes so the effects below fetch again.
-  const [rosterVersion, setRosterVersion] = useState(0);
-  const [notesVersion, setNotesVersion] = useState(0);
+  // Bumped by refresh so the effects below fetch again.
+  const [version, setVersion] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [waiting, setWaiting] = useState(0);
   const onNotes = useMatch("/notes/*") !== null;
@@ -94,7 +93,7 @@ export function NotesProvider({ classes, children }: { classes: ClassRow[]; chil
       if (!pending.delete(note.id)) return;
       clearTimeout(timer);
       api(`/api/notes/${note.id}`, { method: "DELETE", keepalive: true })
-        .then(() => setRosterVersion((v) => v + 1))
+        .then(() => setVersion((v) => v + 1))
         .catch((e) => {
           toast.error(`The note was not deleted: ${messageOf(e)}`);
           restore();
@@ -130,20 +129,22 @@ export function NotesProvider({ classes, children }: { classes: ClassRow[]; chil
     };
   }, [queue]);
 
-  // Notes and the rosters load independently, so the list renders even if names do not.
+  // Notes and the rosters load independently, so the list renders even if names do not. Both
+  // follow the class list, so a deleted class drops its notes without anyone asking. A note
+  // still inside its Undo window is left off a fresh list: the server has not been told yet.
   useEffect(() => {
     let current = true;
     api<NoteWithTags[]>("/api/notes")
       .then((n) => {
         if (!current) return;
-        setNotes(n);
+        setNotes(n.filter((note) => !pending.has(note.id)));
         setError(null);
       })
       .catch((e) => current && setError(messageOf(e)));
     return () => {
       current = false;
     };
-  }, [onNotes, online, notesVersion]);
+  }, [classes, onNotes, online, version, pending]);
   useEffect(() => {
     let current = true;
     Promise.all(classes.map((c) => api<RosterStudent[]>(`/api/students?classId=${c.id}`)))
@@ -152,7 +153,7 @@ export function NotesProvider({ classes, children }: { classes: ClassRow[]; chil
     return () => {
       current = false;
     };
-  }, [classes, onNotes, online, rosterVersion]);
+  }, [classes, onNotes, online, version]);
 
   const students = roster?.rows ?? [];
   const colours = classColours(classes.map((c) => c.id));
@@ -161,8 +162,7 @@ export function NotesProvider({ classes, children }: { classes: ClassRow[]; chil
     error,
     roster: students,
     rosterLoaded: roster?.classes === classes,
-    refreshRoster: () => setRosterVersion((v) => v + 1),
-    refreshNotes: () => setNotesVersion((v) => v + 1),
+    refresh: () => setVersion((v) => v + 1),
     people: new Map(students.map((s) => [s.id, { name: `${s.firstName} ${s.lastName}`, first: s.firstName, classId: s.classId, left: s.leftAt !== null }])),
     classNames: new Map(classes.map((c) => [c.id, c.name])),
     colourOf: (classId) => (classId && colours.get(classId)) || NO_CLASS,

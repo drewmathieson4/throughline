@@ -5,7 +5,7 @@
 // exists but is someone else's reads as not found, never as forbidden, so an id proves
 // nothing. Classes and notes carry owner_id; everything else is owned through its class.
 import { HTTPException } from "hono/http-exception";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import * as schema from "./schema";
 import type { Note } from "./schema";
@@ -61,6 +61,36 @@ export const ownedReport = (db: Db, userId: string, reportId: string) =>
         .where(inArray(schema.students.classId, ownedClasses(db, userId))),
     ),
   );
+
+// Map.groupBy, which the worker's lib setting predates.
+export function groupBy<T, K>(items: T[], key: (item: T) => K): Map<K, T[]> {
+  const out = new Map<K, T[]>();
+  for (const item of items) {
+    const k = key(item);
+    const list = out.get(k);
+    if (list) list.push(item);
+    else out.set(k, [item]);
+  }
+  return out;
+}
+
+// After a student or a class is deleted: an open mention on a surviving note may still name
+// the gone students in candidate_ids, a JSON list no foreign key reaches, and would go on
+// offering them. A mention whose every candidate is gone is deleted (it was only the model's
+// guess at them); one with some left keeps those. Mentions that never had a candidate are
+// left alone. Two statements, for the caller's batch after its delete.
+export function pruneMentions(db: Db, userId: string) {
+  const m = schema.noteMentions;
+  const mine = inArray(m.noteId, db.select({ id: schema.notes.id }).from(schema.notes).where(eq(schema.notes.ownerId, userId)));
+  const enrolled = db.select({ id: schema.students.id }).from(schema.students).where(inArray(schema.students.classId, ownedClasses(db, userId)));
+  const someGone = sql`exists (select 1 from json_each(${m.candidateIds}) where json_each.value not in ${enrolled})`;
+  const someLeft = sql`exists (select 1 from json_each(${m.candidateIds}) where json_each.value in ${enrolled})`;
+  const kept = sql`(select json_group_array(json_each.value) from json_each(${m.candidateIds}) where json_each.value in ${enrolled})`;
+  return [
+    db.delete(m).where(and(mine, someGone, sql`not ${someLeft}`)),
+    db.update(m).set({ candidateIds: kept }).where(and(mine, someGone)),
+  ];
+}
 
 export async function requireStudent(db: Db, userId: string, studentId: string): Promise<{ id: string; classId: string }> {
   const row = await db.select({ id: schema.students.id, classId: schema.students.classId }).from(schema.students).where(ownedStudent(db, userId, studentId)).get();

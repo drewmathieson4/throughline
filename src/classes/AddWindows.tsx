@@ -30,7 +30,7 @@ const items: { key: Choice; label: string; icon: LucideIcon; tile: string }[] = 
 // with a toast and hands the full result up for the card above the roster.
 // onClassesChanged: a roster file can name other classes, which the import creates.
 export default function AddMenu({ classId, onClassesChanged, onResult }: { classId: string; onClassesChanged: () => void; onResult: (r: ImportResult) => void }) {
-  const { refreshRoster } = useNotes();
+  const { refresh } = useNotes();
   const [open, setOpen] = useState<Choice | null>(null);
   const close = (o: boolean) => !o && setOpen(null);
 
@@ -59,7 +59,7 @@ export default function AddMenu({ classId, onClassesChanged, onResult }: { class
       </DropdownMenu>
 
       <Panel open={open === "student"} onOpenChange={close} title="Add a student">
-        <AddStudentForm classId={classId} onAdded={refreshRoster} />
+        <AddStudentForm classId={classId} onAdded={refresh} />
       </Panel>
       <Panel open={open === "roster"} onOpenChange={close} title="Import roster">
         <ImportRoster
@@ -67,7 +67,7 @@ export default function AddMenu({ classId, onClassesChanged, onResult }: { class
           onImported={(result) => {
             // New classes reload the class list, and with it every roster; otherwise just the rosters.
             if (result.classes.some((k) => k.created)) onClassesChanged();
-            else refreshRoster();
+            else refresh();
             toast.success(rosterHeadline(result));
             setOpen(null);
             onResult({ kind: "roster", result });
