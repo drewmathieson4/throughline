@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import type { ClassRow } from "../db/schema";
-import { CLASS_B_ID, CLASS_C_ID, OTHER_CLASS_ID, OTHER_USER_ID, SEED_CLASS_ID, jsonInit, setupTestDb } from "../test-db";
+import type { NoteWithTags } from "../api-types";
+import { CLASS_B_ID, CLASS_C_ID, MENTION_ID, NOTE_ID, OTHER_CLASS_ID, OTHER_USER_ID, PERIOD_3_COUNT, SEED_CLASS_ID, STUDENT, jsonInit, setupTestDb } from "../test-db";
 
 const db = setupTestDb();
 
@@ -55,4 +56,35 @@ test("a class's report settings start empty, are written whole, and are checked"
   expect((await db.request(`/api/classes/${OTHER_CLASS_ID}/settings`)).status).toBe(404);
   expect((await db.request(`/api/classes/${OTHER_CLASS_ID}/settings`, jsonInit("PUT", first))).status).toBe(404);
   expect((await db.request(`/api/classes/${OTHER_CLASS_ID}/settings`, undefined, "other")).status).toBe(200);
+});
+
+test("DELETE /api/classes/:id removes the class with its students, notes, tags, materials and settings; an unassigned note tagged to its student survives untagged", async () => {
+  await db.request(`/api/classes/${SEED_CLASS_ID}/settings`, jsonInit("PUT", { reportRules: { sentences: 4 }, styleSamples: null }));
+  await db.env.DB.batch([
+    db.insertNote(NOTE_ID(1), SEED_CLASS_ID, "2026-10-01T00:00:00.000Z"),
+    db.insertNote(NOTE_ID(2), null, "2026-10-02T00:00:00.000Z"),
+    db.tagNote(NOTE_ID(1), STUDENT.avery),
+    db.tagNote(NOTE_ID(2), STUDENT.avery),
+    db.mentionNote(MENTION_ID(1), NOTE_ID(1), [STUDENT.avery, STUDENT.rowan]),
+    db.insertMaterial("66666666-6666-4666-8666-666666666601", SEED_CLASS_ID, []),
+  ]);
+  const ofClass = () =>
+    db.env.DB.prepare(
+      "SELECT (SELECT count(*) FROM students WHERE class_id = ?1) AS students, (SELECT count(*) FROM notes WHERE class_id = ?1) AS notes, (SELECT count(*) FROM note_students WHERE student_id IN (SELECT id FROM students WHERE class_id = ?1)) AS tags, (SELECT count(*) FROM note_mentions) AS mentions, (SELECT count(*) FROM class_materials WHERE class_id = ?1) AS materials, (SELECT count(*) FROM settings WHERE class_id = ?1) AS settings",
+    )
+      .bind(SEED_CLASS_ID)
+      .first<{ students: number; notes: number; tags: number; mentions: number; materials: number; settings: number }>();
+  expect(await ofClass()).toEqual({ students: PERIOD_3_COUNT, notes: 1, tags: 2, mentions: 1, materials: 1, settings: 1 });
+
+  const res = await db.request(`/api/classes/${SEED_CLASS_ID}`, { method: "DELETE" });
+  expect(res.status).toBe(204);
+  expect(await ofClass()).toEqual({ students: 0, notes: 0, tags: 0, mentions: 0, materials: 0, settings: 0 });
+  expect((await db.json<ClassRow[]>("/api/classes")).map((c) => c.id)).toEqual([CLASS_B_ID, CLASS_C_ID]);
+  const notes = await db.json<NoteWithTags[]>("/api/notes");
+  expect(notes.map((n) => n.id)).toEqual([NOTE_ID(2)]);
+  expect(notes[0]!.students).toEqual([]);
+
+  expect((await db.request(`/api/classes/${SEED_CLASS_ID}`, { method: "DELETE" })).status).toBe(404);
+  expect((await db.request(`/api/classes/${OTHER_CLASS_ID}`, { method: "DELETE" })).status).toBe(404);
+  expect((await db.json<ClassRow[]>("/api/classes", undefined, "other")).map((c) => c.id)).toEqual([OTHER_CLASS_ID]);
 });

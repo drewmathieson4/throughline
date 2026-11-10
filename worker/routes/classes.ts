@@ -76,4 +76,15 @@ classes.put("/:id/settings", validate("param", idParam), validate("json", settin
   return c.json(settingsView(row));
 });
 
+// DELETE /api/classes/:id → 204. One row delete; the foreign keys cascade through the
+// students (and their tags, grades, evidence and reports), every note filed under the class
+// (with its tags and mentions), the materials and the settings. A note with no class that
+// was tagged to one of its students stays, untagged: notes hang off the owner, not the class.
+classes.delete("/:id", validate("param", idParam), async (c) => {
+  const { id } = c.req.valid("param");
+  await requireClass(c.var.db, c.var.user.id, id);
+  await c.var.db.delete(schema.classes).where(eq(schema.classes.id, id));
+  return c.body(null, 204);
+});
+
 export default classes;

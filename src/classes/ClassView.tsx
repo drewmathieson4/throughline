@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { X } from "lucide-react";
-import { useParams } from "react-router";
+import { Ellipsis, X } from "lucide-react";
+import { useNavigate, useParams } from "react-router";
+import { toast } from "sonner";
 import type { ClassRow } from "../../worker/db/schema";
+import { api } from "../api";
 import { useNotes } from "../notes/notesStore";
 import { GradesSummary } from "../students/ImportGrades";
 import { RosterSummary } from "../students/ImportRoster";
 import StudentPage from "../students/StudentPage";
-import { caption } from "../ui";
+import { caption, errorText } from "../ui";
+import { useAction } from "../useAction";
 import AddMenu, { type ImportResult } from "./AddWindows";
 import { DocumentSummary } from "./ImportDocument";
 import Materials from "./Materials";
@@ -15,7 +18,11 @@ import { termLabel } from "./term";
 import { useMaterials } from "./useMaterials";
 import { Avatar } from "@/components/Avatar";
 import { BackLink, titleText } from "@/components/page";
+import { Panel } from "@/components/Panel";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 function Missing() {
   return (
@@ -40,6 +47,7 @@ function ClassPage({ cls, onClassesChanged }: { cls: ClassRow; onClassesChanged:
   const materials = useMaterials(cls.id);
   const [tab, setTab] = useState("students");
   const [result, setResult] = useState<ImportResult | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const active = roster.filter((s) => s.classId === cls.id && !s.leftAt).length;
   // A document lands on the tab it went to, and may have added or replaced materials.
   const onResult = (r: ImportResult) => {
@@ -59,6 +67,20 @@ function ClassPage({ cls, onClassesChanged }: { cls: ClassRow; onClassesChanged:
           <p className="mt-1 text-[13.5px] text-muted-foreground">{termLabel(cls)}</p>
         </div>
         <AddMenu classId={cls.id} onClassesChanged={onClassesChanged} onResult={onResult} />
+        {/* Not modal: the menu opens the delete window, and a modal menu closing under a
+            dialog can leave the page unclickable. */}
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" aria-label="More actions">
+              <Ellipsis className="size-5" aria-hidden />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-auto">
+            <DropdownMenuItem variant="destructive" onSelect={() => setDeleting(true)}>
+              Delete class
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <Tabs value={tab} onValueChange={setTab} className="mt-[22px]">
         <TabsList className="h-auto bg-track p-1">
@@ -78,7 +100,37 @@ function ClassPage({ cls, onClassesChanged }: { cls: ClassRow; onClassesChanged:
           <Materials {...materials} />
         </TabsContent>
       </Tabs>
+      <DeletePanel open={deleting} cls={cls} onClose={() => setDeleting(false)} onClassesChanged={onClassesChanged} />
     </section>
+  );
+}
+
+// Delete asks once and says what goes. The class list and the notes are fetched again (the
+// sidebar and the feed drop it at once); the page itself is left behind.
+function DeletePanel({ open, cls, onClose, onClassesChanged }: { open: boolean; cls: ClassRow; onClose: () => void; onClassesChanged: () => void }) {
+  const { refreshNotes } = useNotes();
+  const navigate = useNavigate();
+  const { run, busy, error } = useAction(async () => {
+    await api(`/api/classes/${cls.id}`, { method: "DELETE" });
+    onClassesChanged();
+    refreshNotes();
+    toast(`Deleted ${cls.name}`);
+    navigate("/classes");
+  });
+
+  return (
+    <Panel open={open} onOpenChange={(o) => !o && onClose()} title={`Delete ${cls.name}?`}>
+      <p className="mt-2 text-sm text-secondary-foreground">Its students, notes, materials, grades, evidence and reports go too.</p>
+      {error && <p className={cn("mt-2", errorText)}>{error}</p>}
+      <div className="mt-5 flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+          Cancel
+        </Button>
+        <Button type="button" variant="destructive" disabled={busy} onClick={() => run()}>
+          {busy ? "Deleting…" : "Delete"}
+        </Button>
+      </div>
+    </Panel>
   );
 }
 
