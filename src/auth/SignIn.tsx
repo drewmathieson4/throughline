@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { messageOf } from "../api";
 import { LogoWave } from "@/components/page";
 
@@ -57,6 +57,9 @@ export default function SignIn({ onDemo }: { onDemo: () => Promise<void> }) {
         {pending ? "Setting up the demo…" : "Try the demo"}
       </button>
       {(error ?? notice) && <p className="max-w-[300px] text-center text-sm font-semibold text-white/85">{error ?? notice}</p>}
+      <Link to="/privacy" className="text-xs text-white/60 hover:underline">
+        Privacy
+      </Link>
     </main>
   );
 }

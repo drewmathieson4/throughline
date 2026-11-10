@@ -7,6 +7,7 @@ import type { SessionUser } from "../worker/api-types";
 import { api, messageOf } from "./api";
 import { AccountCard } from "./auth/Account";
 import { AllowanceProvider } from "./auth/AllowanceProvider";
+import Privacy from "./auth/Privacy";
 import SignIn from "./auth/SignIn";
 import { useSession } from "./auth/useSession";
 import { useOnline } from "./offline/useOnline";
@@ -197,9 +198,12 @@ function Shell({ user, onSignOut }: Account) {
 
 // Nothing shows until the server has said who this is: the sign-in screen for nobody, the
 // app for a teacher or demo visitor, and the app with no name on it when the server could
-// not be reached.
+// not be reached. The privacy page is the exception: it is for someone deciding whether to
+// sign in, so it renders for anyone and does not wait on /api/auth/me.
 function App() {
   const { session, signOut, startDemo } = useSession();
+  const onPrivacy = useMatch("/privacy") !== null;
+  if (onPrivacy) return <Privacy />;
   if (session.status === "loading") return null;
   if (session.status === "out") return <SignIn onDemo={startDemo} />;
   return <Shell user={session.status === "in" ? session.user : null} onSignOut={signOut} />;
