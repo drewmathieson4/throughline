@@ -17,6 +17,8 @@
 		"enabled": true
 	},
 	"upload_source_maps": true,
+	// The app's own address; the workers.dev address keeps working alongside it.
+	"routes": [{ "pattern": "throughline.drewmathieson.com", "custom_domain": true }],
 	// Bindings: resources exposed to the Worker as properties on `env`.
 	"d1_databases": [
 		{

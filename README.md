@@ -30,3 +30,8 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+## Deploy
+
+`npm run deploy` serves the app at https://throughline.drewmathieson.com (the workers.dev address keeps working).
+The Google OAuth client must list `https://throughline.drewmathieson.com/api/auth/callback` as an authorised redirect URI.
