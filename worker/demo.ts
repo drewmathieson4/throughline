@@ -8,11 +8,12 @@
 // and each note keeps its weekday. Everything is a new row under a new user, so the ordinary
 // ownership checks keep each visitor to their own copy. See DECISIONS.md.
 import { HTTPException } from "hono/http-exception";
-import { and, eq, exists, inArray, notExists, sql } from "drizzle-orm";
+import { and, eq, exists, notExists, sql } from "drizzle-orm";
 import * as schema from "./db/schema";
 import type { ClassMaterial, ClassRow, GradeEntry, Note, NoteMention, NoteStudent, Student, SynthesisRow, User } from "./db/schema";
 import type { Db } from "./db/client";
 import { insertChunks } from "./db/helpers";
+import { deleteUsers } from "./account";
 import type { DemoAllowance } from "./api-types";
 import { sessionLive } from "./auth";
 import { buildEvidence, daysBetween, loadEvidence, shiftDay, shiftIso, todayUtc } from "./evidence";
@@ -283,21 +284,9 @@ export async function liveDemoCount(db: Db): Promise<number> {
   return row?.n ?? 0;
 }
 
-// Delete users, with everything they own. Notes and classes go first: owner_id points at
-// users without a cascade. Deleting a class takes its students, grades, materials, tags,
-// summaries and reports; deleting a user takes its sessions. Written for the demo's
-// visitors; a teacher deleting their own account goes the same way (routes/auth.ts).
-export function deleteUsers(db: Db, which: ReturnType<typeof and>) {
-  const gone = db.select({ id: schema.users.id }).from(schema.users).where(which);
-  return db.batch([
-    db.delete(schema.notes).where(inArray(schema.notes.ownerId, gone)),
-    db.delete(schema.classes).where(inArray(schema.classes.ownerId, gone)),
-    db.delete(schema.users).where(which),
-  ]);
-}
-
-// Visitors whose sessions have all expired, run when a new demo starts. The Worker has no
-// scheduled jobs; a demo that nobody starts leaves nothing to clean up.
+// Visitors whose sessions have all expired, with everything they own (deleteUsers in
+// worker/account.ts), run when a new demo starts. The Worker has no scheduled jobs; a demo
+// that nobody starts leaves nothing to clean up.
 export const purgeExpiredDemos = (db: Db) => deleteUsers(db, and(eq(schema.users.demo, 1), notExists(liveSession(db))));
 
 // One visitor, when they sign in with Google: their copy is not carried over.

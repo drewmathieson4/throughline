@@ -51,7 +51,7 @@ export default function NoteMenu({ note }: { note: NoteWithTags }) {
 // whether it is open, so each opening starts from the note as it stands. Only what changed
 // is sent: a rewrite re-checks the tags' quotes on the server, a date change does not.
 function EditPanel({ open, note, onClose }: { open: boolean; note: NoteWithTags; onClose: () => void }) {
-  const { update, refreshRoster } = useNotes();
+  const { update, refresh } = useNotes();
   const [body, setBody] = useState(note.body);
   const [when, setWhen] = useState(toLocalInput(note.notedAt));
   const { run, busy, error } = useAction(async () => {
@@ -63,7 +63,7 @@ function EditPanel({ open, note, onClose }: { open: boolean; note: NoteWithTags;
     if (Object.keys(patch).length === 0) return;
     const updated = await api<TaggedNoteResponse>(`/api/notes/${note.id}`, jsonInit("PATCH", patch));
     update(updated);
-    if (patch.notedAt) refreshRoster();
+    if (patch.notedAt) refresh();
     toast.success("Note updated");
   });
 

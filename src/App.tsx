@@ -50,18 +50,18 @@ function Wordmark() {
   );
 }
 
-type Account = { user: SessionUser | null; onSignOut: () => void; onDeleteAccount: () => Promise<void> };
+type Account = { user: SessionUser | null; onSignOut: () => void };
 
 // Laptop: a slim sidebar, the account pinned at the bottom. Phone: the same three tabs as a
 // bar along the bottom, the account under each screen's content.
-function SideNav({ user, onSignOut, onDeleteAccount }: Account) {
+function SideNav({ user, onSignOut }: Account) {
   return (
     <nav aria-label="Main" className="sticky top-0 hidden h-svh w-62 flex-none flex-col gap-1 border-r border-border px-4 pt-7 pb-5 md:flex">
       <Wordmark />
       {tabs.map((tab) => (
         <SideTab key={tab.to} {...tab} />
       ))}
-      <AccountCard user={user} onSignOut={onSignOut} onDeleteAccount={onDeleteAccount} className="mt-auto" />
+      <AccountCard user={user} onSignOut={onSignOut} className="mt-auto" />
       {user?.demo && <p className="mt-2 rounded-[14px] bg-muted px-3.5 py-3 text-[12.5px] leading-normal text-muted-foreground">{DEMO_NOTICE}</p>}
     </nav>
   );
@@ -122,7 +122,7 @@ function BottomTab({ to, label, icon: Icon }: (typeof tabs)[number]) {
 
 // The app a signed-in teacher uses. Mounted fresh at each sign-in, so nothing loaded for one
 // teacher is still on screen for the next.
-function Shell({ user, onSignOut, onDeleteAccount }: Account) {
+function Shell({ user, onSignOut }: Account) {
   const [classes, setClasses] = useState<ClassRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -155,7 +155,7 @@ function Shell({ user, onSignOut, onDeleteAccount }: Account) {
           {/* The home-screen app draws under the iPhone status bar, whose text iOS makes white:
               Record is cobalt up to the top edge, every other phone screen gets a cobalt strip. */}
           {!recordHome && <div aria-hidden className="fixed inset-x-0 top-0 z-40 h-(--statusbar-h) bg-primary md:hidden" />}
-          <SideNav user={user} onSignOut={onSignOut} onDeleteAccount={onDeleteAccount} />
+          <SideNav user={user} onSignOut={onSignOut} />
           <main className={cn("min-w-0 flex-1 md:pb-0", !recordHome && "pt-(--statusbar-h) pb-[calc(var(--tabbar-h)+18px)] md:pt-0")}>
             <div
               className={cn(
@@ -181,7 +181,7 @@ function Shell({ user, onSignOut, onDeleteAccount }: Account) {
 
               {!recordHome && (
                 <div className="mt-10 md:hidden">
-                  <AccountCard user={user} onSignOut={onSignOut} onDeleteAccount={onDeleteAccount} />
+                  <AccountCard user={user} onSignOut={onSignOut} />
                   {user?.demo && <p className="mt-4 text-center text-xs text-muted-foreground">{DEMO_NOTICE}</p>}
                 </div>
               )}
@@ -199,10 +199,10 @@ function Shell({ user, onSignOut, onDeleteAccount }: Account) {
 // app for a teacher or demo visitor, and the app with no name on it when the server could
 // not be reached.
 function App() {
-  const { session, signOut, startDemo, deleteAccount } = useSession();
+  const { session, signOut, startDemo } = useSession();
   if (session.status === "loading") return null;
   if (session.status === "out") return <SignIn onDemo={startDemo} />;
-  return <Shell user={session.status === "in" ? session.user : null} onSignOut={signOut} onDeleteAccount={deleteAccount} />;
+  return <Shell user={session.status === "in" ? session.user : null} onSignOut={signOut} />;
 }
 
 export default App;

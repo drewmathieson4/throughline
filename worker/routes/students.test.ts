@@ -294,14 +294,19 @@ test("another teacher's class and students are not found", async () => {
   expect(roster.map((s) => s.firstName)).toEqual(["Orla"]);
 });
 
-test("DELETE /api/students/:id removes the student with their tags, grades, evidence and reports, and leaves the note; a second delete and another teacher's are 404", async () => {
+test("DELETE /api/students/:id removes the student with their tags, grades, evidence and reports, prunes open mentions, and leaves the note; a second delete and another teacher's are 404", async () => {
   await db.env.DB.batch([
     db.insertNote(NOTE_ID(1), SEED_CLASS_ID, "2026-10-01T00:00:00.000Z"),
+    db.insertNote(NOTE_ID(2), null, "2026-10-02T00:00:00.000Z"),
     db.tagNote(NOTE_ID(1), STUDENT.avery),
     db.tagNote(NOTE_ID(1), STUDENT.rowan),
     db.insertGrade("55555555-5555-4555-8555-555555555501", STUDENT.avery, "Quiz 1", 8, 1),
     db.insertSynthesis(SYNTHESIS_ID(1), STUDENT.avery, { from: "2026-09-01", to: "2026-12-19" }, {}),
     db.insertReport(REPORT_ID(1), SYNTHESIS_ID(1), "Generated."),
+    // Open mentions that could be the deleted student: one with another candidate, one without.
+    db.mentionNote(MENTION_ID(1), NOTE_ID(1), [STUDENT.avery, STUDENT.rowan]),
+    db.mentionNote(MENTION_ID(2), NOTE_ID(2), [STUDENT.avery]),
+    db.mentionNote(MENTION_ID(3), NOTE_ID(2), []),
   ]);
   const theirs = () =>
     db.env.DB.prepare(
@@ -314,10 +319,14 @@ test("DELETE /api/students/:id removes the student with their tags, grades, evid
   const res = await db.request(`/api/students/${STUDENT.avery}`, { method: "DELETE" });
   expect(res.status).toBe(204);
   expect(await theirs()).toEqual({ students: 0, tags: 0, grades: 0, evidence: 0, reports: 0 });
-  // The note is still there, tagged to the classmate only.
-  const [note] = await db.json<NoteWithTags[]>("/api/notes");
-  expect(note!.id).toBe(NOTE_ID(1));
-  expect(note!.students.map((s) => s.studentId)).toEqual([STUDENT.rowan]);
+  // The notes are still there: the first tagged to the classmate only, its mention offering
+  // the classmate only; the mention that could only have been the student is gone, and the
+  // one that never had a candidate is untouched.
+  const notes = await db.json<NoteWithTags[]>("/api/notes");
+  expect(notes.map((n) => n.id)).toEqual([NOTE_ID(2), NOTE_ID(1)]);
+  expect(notes[1]!.students.map((s) => s.studentId)).toEqual([STUDENT.rowan]);
+  expect(notes[1]!.mentions.map((m) => m.candidateIds)).toEqual([[STUDENT.rowan]]);
+  expect(notes[0]!.mentions.map((m) => [m.id, m.candidateIds])).toEqual([[MENTION_ID(3), []]]);
   expect((await rosterJson()).map((s) => s.id)).not.toContain(STUDENT.avery);
 
   expect((await db.request(`/api/students/${STUDENT.avery}`, { method: "DELETE" })).status).toBe(404);

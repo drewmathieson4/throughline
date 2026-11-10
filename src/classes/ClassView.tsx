@@ -8,8 +8,7 @@ import { useNotes } from "../notes/notesStore";
 import { GradesSummary } from "../students/ImportGrades";
 import { RosterSummary } from "../students/ImportRoster";
 import StudentPage from "../students/StudentPage";
-import { caption, errorText } from "../ui";
-import { useAction } from "../useAction";
+import { caption } from "../ui";
 import AddMenu, { type ImportResult } from "./AddWindows";
 import { DocumentSummary } from "./ImportDocument";
 import Materials from "./Materials";
@@ -17,12 +16,11 @@ import Roster from "./Roster";
 import { termLabel } from "./term";
 import { useMaterials } from "./useMaterials";
 import { Avatar } from "@/components/Avatar";
+import { ConfirmPanel } from "@/components/ConfirmPanel";
 import { BackLink, titleText } from "@/components/page";
-import { Panel } from "@/components/Panel";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
 
 function Missing() {
   return (
@@ -105,32 +103,24 @@ function ClassPage({ cls, onClassesChanged }: { cls: ClassRow; onClassesChanged:
   );
 }
 
-// Delete asks once and says what goes. The class list and the notes are fetched again (the
-// sidebar and the feed drop it at once); the page itself is left behind.
+// Delete asks once and says what goes. The class list is fetched again, and the notes and
+// rosters follow it (the sidebar and the feed drop it at once); the page itself is left behind.
 function DeletePanel({ open, cls, onClose, onClassesChanged }: { open: boolean; cls: ClassRow; onClose: () => void; onClassesChanged: () => void }) {
-  const { refreshNotes } = useNotes();
   const navigate = useNavigate();
-  const { run, busy, error } = useAction(async () => {
-    await api(`/api/classes/${cls.id}`, { method: "DELETE" });
-    onClassesChanged();
-    refreshNotes();
-    toast(`Deleted ${cls.name}`);
-    navigate("/classes");
-  });
-
   return (
-    <Panel open={open} onOpenChange={(o) => !o && onClose()} title={`Delete ${cls.name}?`}>
-      <p className="mt-2 text-sm text-secondary-foreground">Its students, notes, materials, grades, evidence and reports go too.</p>
-      {error && <p className={cn("mt-2", errorText)}>{error}</p>}
-      <div className="mt-5 flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-          Cancel
-        </Button>
-        <Button type="button" variant="destructive" disabled={busy} onClick={() => run()}>
-          {busy ? "Deleting…" : "Delete"}
-        </Button>
-      </div>
-    </Panel>
+    <ConfirmPanel
+      open={open}
+      onClose={onClose}
+      title={`Delete ${cls.name}?`}
+      onConfirm={async () => {
+        await api(`/api/classes/${cls.id}`, { method: "DELETE" });
+        onClassesChanged();
+        toast(`Deleted ${cls.name}`);
+        navigate("/classes");
+      }}
+    >
+      <p className="text-sm text-secondary-foreground">Its students, notes, materials, grades, evidence and reports go too.</p>
+    </ConfirmPanel>
   );
 }
 

@@ -1,4 +1,4 @@
-// Sign in with Google, the demo, sign out, who am I, and the account's deletion. GET /google and GET /callback are
+// Sign in with Google, the demo, sign out, who am I, and the account's export and deletion. GET /google and GET /callback are
 // browser navigations, not fetches: the teacher leaves for Google and comes back with a code.
 // The state cookie ties the two together so a callback the app did not start is refused.
 // POST /demo is the other way in: an account with no Google behind it (worker/demo.ts).
@@ -13,7 +13,8 @@ import type { User } from "../db/schema";
 import type { AppEnv } from "../db/client";
 import type { SessionUser } from "../api-types";
 import { SESSION_COOKIE, STATE_COOKIE, cookieOptions, deleteSession, newToken, requireUser, startSession } from "../auth";
-import { DEMO_MAX_LIVE, DEMO_SESSION_DAYS, allowanceOf, cloneDemo, deleteDemoUser, deleteUsers, liveDemoCount, purgeExpiredDemos } from "../demo";
+import { deleteUsers, exportAccount } from "../account";
+import { DEMO_MAX_LIVE, DEMO_SESSION_DAYS, allowanceOf, cloneDemo, deleteDemoUser, liveDemoCount, purgeExpiredDemos } from "../demo";
 import { authorizeUrl, googleProfile } from "../google";
 import { spendState } from "../spend";
 import { validate } from "../validate";
@@ -99,6 +100,15 @@ auth.post("/signout", requireUser, async (c) => {
   if (token) await deleteSession(c.var.db, token);
   deleteCookie(c, SESSION_COOKIE, { path: "/" });
   return c.json({ ok: true });
+});
+
+// GET /api/auth/export → everything the account owns as one JSON file (worker/account.ts),
+// served as a download: the menu item is a plain link, and the browser saves it under a
+// dated name.
+auth.get("/export", requireUser, async (c) => {
+  const data = await exportAccount(c.var.db, c.var.user!);
+  c.header("Content-Disposition", `attachment; filename="throughline-export-${data.exportedAt.slice(0, 10)}.json"`);
+  return c.json(data);
 });
 
 // DELETE /api/auth/account → 204. The account and everything it owns, now: the purge the

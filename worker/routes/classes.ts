@@ -4,7 +4,7 @@ import { z } from "zod";
 import * as schema from "../db/schema";
 import type { UserEnv } from "../db/client";
 import type { ClassSettingsView, ReportRules } from "../api-types";
-import { requireClass } from "../db/helpers";
+import { pruneMentions, requireClass } from "../db/helpers";
 import { dateField, idParam, nameField } from "../fields";
 import { validate } from "../validate";
 
@@ -80,10 +80,13 @@ classes.put("/:id/settings", validate("param", idParam), validate("json", settin
 // students (and their tags, grades, evidence and reports), every note filed under the class
 // (with its tags and mentions), the materials and the settings. A note with no class that
 // was tagged to one of its students stays, untagged: notes hang off the owner, not the class.
+// Open mentions on such notes stop offering the class's students.
 classes.delete("/:id", validate("param", idParam), async (c) => {
   const { id } = c.req.valid("param");
-  await requireClass(c.var.db, c.var.user.id, id);
-  await c.var.db.delete(schema.classes).where(eq(schema.classes.id, id));
+  const db = c.var.db;
+  const uid = c.var.user.id;
+  await requireClass(db, uid, id);
+  await db.batch([db.delete(schema.classes).where(eq(schema.classes.id, id)), ...pruneMentions(db, uid)]);
   return c.body(null, 204);
 });
 

@@ -17,6 +17,7 @@ import { errorText, localDay } from "../ui";
 import { useAction } from "../useAction";
 import GradesCard from "./GradesCard";
 import { Avatar } from "@/components/Avatar";
+import { ConfirmPanel } from "@/components/ConfirmPanel";
 import { BackLink, titleText } from "@/components/page";
 import { Panel } from "@/components/Panel";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -31,7 +32,7 @@ type Patch = Partial<Pick<Student, "firstName" | "lastName" | "leftAt">>;
 // student's own route; their notes, with the quotes about them, from the notes store, so a
 // tag changed in the note window shows here at once.
 export default function StudentPage({ cls, id }: { cls: ClassRow; id: string }) {
-  const { notes, refreshRoster, colourOf } = useNotes();
+  const { notes, refresh, colourOf } = useNotes();
   const [data, setData] = useState<StudentDetail | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
@@ -41,7 +42,7 @@ export default function StudentPage({ cls, id }: { cls: ClassRow; id: string }) 
   const save = async (body: Patch) => {
     const student = await api<Student>(`/api/students/${id}`, jsonInit("PATCH", body));
     setData((prev) => prev && { ...prev, student });
-    refreshRoster();
+    refresh();
     return student;
   };
   const { run: setLeft, busy, error } = useAction(async (leftAt: string | null) => {
@@ -150,33 +151,26 @@ export default function StudentPage({ cls, id }: { cls: ClassRow; id: string }) 
   );
 }
 
-// Delete asks once and says what goes. The notes stay, so the feed is fetched again to drop
-// the student's chips, and the roster to drop the row; the page itself is left behind.
+// Delete asks once and says what goes. The notes stay, so the feed and the roster are fetched
+// again to drop the student's chips and row; the page itself is left behind.
 function DeletePanel({ open, student, onClose }: { open: boolean; student: Student; onClose: () => void }) {
-  const { refreshRoster, refreshNotes } = useNotes();
+  const { refresh } = useNotes();
   const navigate = useNavigate();
   const name = `${student.firstName} ${student.lastName}`;
-  const { run, busy, error } = useAction(async () => {
-    await api(`/api/students/${student.id}`, { method: "DELETE" });
-    refreshRoster();
-    refreshNotes();
-    toast(`Deleted ${name}`);
-    navigate(`/classes/${student.classId}`);
-  });
-
   return (
-    <Panel open={open} onOpenChange={(o) => !o && onClose()} title={`Delete ${name}?`}>
-      <p className="mt-2 text-sm text-secondary-foreground">Their tags, grades, evidence and reports go too. Notes stay. To keep the evidence, mark them as left instead.</p>
-      {error && <p className={cn("mt-2", errorText)}>{error}</p>}
-      <div className="mt-5 flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
-          Cancel
-        </Button>
-        <Button type="button" variant="destructive" disabled={busy} onClick={() => run()}>
-          {busy ? "Deleting…" : "Delete"}
-        </Button>
-      </div>
-    </Panel>
+    <ConfirmPanel
+      open={open}
+      onClose={onClose}
+      title={`Delete ${name}?`}
+      onConfirm={async () => {
+        await api(`/api/students/${student.id}`, { method: "DELETE" });
+        refresh();
+        toast(`Deleted ${name}`);
+        navigate(`/classes/${student.classId}`);
+      }}
+    >
+      <p className="text-sm text-secondary-foreground">Their tags, grades, evidence and reports go too. Notes stay. To keep the evidence, mark them as left instead.</p>
+    </ConfirmPanel>
   );
 }
 

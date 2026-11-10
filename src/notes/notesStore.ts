@@ -24,10 +24,8 @@ export type NotesStore = {
   /** Every class's students, departed ones included. Empty until the first load. */
   roster: RosterStudent[];
   rosterLoaded: boolean;
-  /** Fetch the rosters again after a student is added, imported, renamed or marked as left. */
-  refreshRoster: () => void;
-  /** Fetch the notes again after a delete elsewhere changed them (a student or class gone). */
-  refreshNotes: () => void;
+  /** Fetch the notes and rosters again: a student added, imported, renamed, marked as left or deleted. */
+  refresh: () => void;
   people: Map<string, Person>;
   classNames: Map<string, string>;
   /** A class's colour, worn by its students too; grey for no class. See lib/avatar.ts. */
