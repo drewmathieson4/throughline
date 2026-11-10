@@ -19,6 +19,8 @@
 	"upload_source_maps": true,
 	// The app's own address; the workers.dev address keeps working alongside it.
 	"routes": [{ "pattern": "throughline.drewmathieson.com", "custom_domain": true }],
+	// Wrangler switches workers.dev off once a route exists unless told otherwise.
+	"workers_dev": true,
 	// Bindings: resources exposed to the Worker as properties on `env`.
 	"d1_databases": [
 		{
