@@ -12,6 +12,7 @@ import * as schema from "../db/schema";
 import type { User } from "../db/schema";
 import type { AppEnv } from "../db/client";
 import type { SessionUser } from "../api-types";
+import { isAllowed } from "../allowlist";
 import { SESSION_COOKIE, STATE_COOKIE, cookieOptions, deleteSession, newToken, requireUser, startSession } from "../auth";
 import { deleteUsers, exportAccount } from "../account";
 import { DEMO_MAX_LIVE, DEMO_SESSION_DAYS, allowanceOf, cloneDemo, deleteDemoUser, liveDemoCount, purgeExpiredDemos } from "../demo";
@@ -63,6 +64,9 @@ auth.get("/callback", validate("query", callbackQuery), async (c) => {
 
   const profile = await googleProfile({ code, redirectUri: callbackUri(c.req.url), clientId: c.env.GOOGLE_CLIENT_ID, clientSecret: c.env.GOOGLE_CLIENT_SECRET });
   if (!profile.email_verified) throw new HTTPException(403, { message: "Google has not verified that email address" });
+  // A private trial: an email not on the list goes back to the sign-in screen, which says
+  // so. No account is made for it.
+  if (!isAllowed(profile.email, c.env)) return c.redirect("/?signin=private");
 
   const now = new Date().toISOString();
   const refreshed = { email: profile.email, name: profile.name ?? null, pictureUrl: profile.picture ?? null, lastSigninAt: now };

@@ -9,4 +9,6 @@ interface Env {
   GOOGLE_CLIENT_SECRET: string;
   // Comma-separated emails exempt from the per-account AI spend cap (worker/spend.ts).
   OWNER_EMAILS?: string;
+  // Comma-separated emails that may sign in; unset or empty, anyone can (worker/allowlist.ts).
+  ALLOWED_EMAILS?: string;
 }

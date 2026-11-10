@@ -108,6 +108,8 @@ export function setupTestDb() {
     // Likewise the Google client: the auth tests set their own and mock the calls to Google.
     delete (env as Partial<Env>).GOOGLE_CLIENT_ID;
     delete (env as Partial<Env>).GOOGLE_CLIENT_SECRET;
+    // And the allowlist: sign-in is open in tests unless one sets ALLOWED_EMAILS itself.
+    delete (env as Partial<Env>).ALLOWED_EMAILS;
     dispose = proxy.dispose;
     await migrate(drizzle(env.DB), { migrationsFolder: "drizzle" });
     hashes = { dev: await hashToken(TOKENS.dev), other: await hashToken(TOKENS.other) };

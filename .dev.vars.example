@@ -6,3 +6,6 @@ ANTHROPIC_API_KEY=
 # http://localhost:5173/api/auth/callback (and the deployed host's, for production).
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
+# Who may sign in, comma-separated Google emails. Empty leaves sign-in open; OWNER_EMAILS
+# accounts are always allowed.
+ALLOWED_EMAILS=

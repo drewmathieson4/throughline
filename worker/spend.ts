@@ -13,6 +13,7 @@ import * as schema from "./db/schema";
 import type { User } from "./db/schema";
 import type { Db, UserEnv } from "./db/client";
 import type { AiAllowance } from "./api-types";
+import { emailList } from "./allowlist";
 import { HAIKU_MODEL, OPUS_MODEL } from "./model";
 
 const MICRO = 1_000_000;
@@ -83,8 +84,7 @@ export async function charge(db: Db, userId: string, model: string, usage: Usage
 // Exempt from the account cap, not from the total. A demo visitor has no email.
 export function isOwner(user: Pick<User, "email">, env: Pick<Env, "OWNER_EMAILS">): boolean {
   if (!user.email) return false;
-  const owners = (env.OWNER_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
-  return owners.includes(user.email.toLowerCase());
+  return emailList(env.OWNER_EMAILS).includes(user.email.toLowerCase());
 }
 
 // Where the account stands, as /api/auth/me reports it. The total is a sum over every
