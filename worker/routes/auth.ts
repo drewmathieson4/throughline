@@ -1,4 +1,4 @@
-// Sign in with Google, the demo, sign out, and who am I. GET /google and GET /callback are
+// Sign in with Google, the demo, sign out, who am I, and the account's deletion. GET /google and GET /callback are
 // browser navigations, not fetches: the teacher leaves for Google and comes back with a code.
 // The state cookie ties the two together so a callback the app did not start is refused.
 // POST /demo is the other way in: an account with no Google behind it (worker/demo.ts).
@@ -6,13 +6,14 @@
 import { Hono, type Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import * as schema from "../db/schema";
 import type { User } from "../db/schema";
 import type { AppEnv } from "../db/client";
 import type { SessionUser } from "../api-types";
 import { SESSION_COOKIE, STATE_COOKIE, cookieOptions, deleteSession, newToken, requireUser, startSession } from "../auth";
-import { DEMO_MAX_LIVE, DEMO_SESSION_DAYS, allowanceOf, cloneDemo, deleteDemoUser, liveDemoCount, purgeExpiredDemos } from "../demo";
+import { DEMO_MAX_LIVE, DEMO_SESSION_DAYS, allowanceOf, cloneDemo, deleteDemoUser, deleteUsers, liveDemoCount, purgeExpiredDemos } from "../demo";
 import { authorizeUrl, googleProfile } from "../google";
 import { spendState } from "../spend";
 import { validate } from "../validate";
@@ -98,6 +99,15 @@ auth.post("/signout", requireUser, async (c) => {
   if (token) await deleteSession(c.var.db, token);
   deleteCookie(c, SESSION_COOKIE, { path: "/" });
   return c.json({ ok: true });
+});
+
+// DELETE /api/auth/account → 204. The account and everything it owns, now: the purge the
+// demo uses (notes, then classes, then the user and its sessions), so a visitor and a
+// teacher go the same way. The cookie is cleared as sign-out does.
+auth.delete("/account", requireUser, async (c) => {
+  await deleteUsers(c.var.db, eq(schema.users.id, c.var.user!.id));
+  deleteCookie(c, SESSION_COOKIE, { path: "/" });
+  return c.body(null, 204);
 });
 
 export default auth;
