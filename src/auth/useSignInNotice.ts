@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 
 // What the sign-in callback says to an email that is not on the allowlist (worker/allowlist.ts).
-const PRIVATE_TRIAL = "Throughline is a private trial. Ask the person who shared it to add your Google email.";
+// It names Drew's address because the link may reach someone nobody invited (a resume reader).
+export const CONTACT_EMAIL = "drewmathieson4@gmail.com";
+const PRIVATE_TRIAL = `Throughline is a private trial. To be added, email Drew at ${CONTACT_EMAIL} from your Google address.`;
 
 // A refused sign-in comes back as ?signin=private. The notice is read once and the query
 // dropped from the address bar, so a reload or a shared link does not carry it. Both the
