@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { messageOf } from "../api";
-import { useSignInNotice } from "./useSignInNotice";
+import { CONTACT_EMAIL, useSignInNotice } from "./useSignInNotice";
 import { LogoWave } from "@/components/page";
 
 // Google's four-colour G, the mark their sign-in button guidelines ask for.
@@ -49,7 +49,15 @@ export default function SignIn({ onDemo }: { onDemo: () => Promise<void> }) {
       <button type="button" disabled={pending} onClick={tryDemo} className="inline-flex min-h-12 items-center rounded-full border border-white/50 px-6 text-[15px] font-bold text-white disabled:opacity-60">
         {pending ? "Setting up the demo…" : "Try the demo"}
       </button>
-      {(error ?? notice) && <p className="max-w-[300px] text-center text-sm font-semibold text-white/85">{error ?? notice}</p>}
+      {(error ?? notice) && (
+        <p className="max-w-[300px] text-center text-sm font-semibold text-white/85">
+          {error ?? (
+            <a href={`mailto:${CONTACT_EMAIL}?subject=Throughline%20access`} className="underline">
+              {notice}
+            </a>
+          )}
+        </p>
+      )}
       <Link to="/privacy" className="text-xs text-white/60 hover:underline">
         Privacy
       </Link>
