@@ -1,35 +1,36 @@
-# React + TypeScript + Vite
+# Throughline
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A teacher speaks or types quick notes about their students. Throughline tags each note to the students it mentions, then writes a cited summary of each student and a draft report for parents from that evidence.
 
-Currently, two official plugins are available:
+**Try it:** https://throughline.drewmathieson.com ("Try the demo" needs no account; the students are synthetic.)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+<p>
+  <img src="docs/record.png" alt="Phone: record a note" width="220" />
+  <img src="docs/reports.png" alt="Laptop: a student's evidence and report" width="600" />
+</p>
 
-## React Compiler
+## How it works
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Notes:** voice notes are transcribed by Whisper on Workers AI; the audio is never stored.
+- **Tagging:** Claude Haiku 5.5 matches each note to students, keeping the verbatim quotes as evidence.
+- **Evidence and reports:** Claude Opus 5.5 writes each student's summary from their notes and grades, then a parent-facing report the teacher can edit.
+- **Guardrails:** Google sign-in with per-teacher data, an allowlist, a per-account AI spend cap, hard deletes, a JSON export and a [privacy page](https://throughline.drewmathieson.com/privacy).
 
-## Expanding the Oxlint configuration
+## Stack
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+React 19, Vite and Tailwind on the front; one Cloudflare Worker (Hono) with D1 through Drizzle on the back. It installs to a phone's home screen and takes notes offline.
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+The reasoning behind each choice is in [DECISIONS.md](DECISIONS.md).
+
+## Run it
+
 ```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+cp .dev.vars.example .dev.vars   # fill in the keys
+npm install
+npm run db:migrate:local
+npm run dev
+npm run test
+```
 
 ## Deploy
 
@@ -39,3 +40,7 @@ The Google OAuth client must list `https://throughline.drewmathieson.com/api/aut
 ## Who can sign in
 
 Sign-in is open to any Google account unless `ALLOWED_EMAILS` is set: a comma-separated list of Google emails, `npx wrangler secret put ALLOWED_EMAILS` in production and `ALLOWED_EMAILS=` in `.dev.vars` locally. Accounts on `OWNER_EMAILS` are always allowed. Someone taken off the list is stopped at their next sign-in; a session they already hold runs on.
+
+## License
+
+[MIT](LICENSE)
